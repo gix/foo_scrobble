@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="UnixClock.h" />
+    <ClInclude Include="ScrobbleCache.h" />
+    <ClInclude Include="AsyncHelper.h" />
+    <ClInclude Include="Authorizer.h" />
+    <ClInclude Include="Bindings.h" />
+    <ClInclude Include="ScrobbleConfig.h" />
+    <ClInclude Include="fb2ksdk.h" />
+    <ClInclude Include="Precompiled.h" />
+    <ClInclude Include="Resources.h" />
+    <ClInclude Include="Result.h" />
+    <ClInclude Include="ScrobbleService.h" />
+    <ClInclude Include="ServiceHelper.h" />
+    <ClInclude Include="TokenBucketRateLimiter.h" />
+    <ClInclude Include="Track.h" />
+    <ClInclude Include="WebService.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Authorizer.cpp" />
+    <ClCompile Include="Bindings.cpp" />
+    <ClCompile Include="ScrobbleConfig.cpp" />
+    <ClCompile Include="LastfmScrobbleService.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PlaybackScrobbler.cpp" />
+    <ClCompile Include="Precompiled.cpp" />
+    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="ScrobbleCache.cpp" />
+    <ClCompile Include="ScrobbleService.cpp" />
+    <ClCompile Include="WebService.cpp" />
+    <ClCompile Include="Keys.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources.rc" />
+  </ItemGroup>
+</Project>

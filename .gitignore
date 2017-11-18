@@ -1,0 +1,28 @@
+/build
+/src/foo_scrobble/Version.h
+/src/foobar2000_sdk.user.props
+
+obj/
+Debug/
+Release/
+packages/
+
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache/options directory
+.vs/
+
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.opendb
