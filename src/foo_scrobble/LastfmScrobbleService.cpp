@@ -258,9 +258,17 @@ void LastfmScrobbleService::OnScrobbleResponse(lastfm::Status status)
         ExclusiveLock lock(mutex_);
 
         LogResponseStatus("Scrobbling"sv, status);
-        if (status == lastfm::Status::Success) {
+
+        switch (status) {
+        case lastfm::Status::Success:
+        case lastfm::Status::InvalidParameters: // Invalid entry so retrying is of no use.
             scrobbleCache_.Evict(pendingSubmissionSize_);
             pendingSubmissionSize_ = 0;
+            break;
+
+        default:
+            // Retry.
+            break;
         }
 
         HandleResponseStatus(status);
@@ -275,8 +283,18 @@ void LastfmScrobbleService::OnNowPlayingResponse(lastfm::Status status)
         ExclusiveLock lock(mutex_);
 
         LogResponseStatus("NowPlaying notification"sv, status);
-        if (status == lastfm::Status::Success)
+
+        switch (status) {
+        case lastfm::Status::InvalidSessionKey:
+        case lastfm::Status::ServiceOffline:
+        case lastfm::Status::ServiceTemporarilyUnavailable:
+            // The only cases that make sense to retry later.
+            break;
+
+        case lastfm::Status::Success:
+        default:
             pendingNowPlaying_ = {};
+        }
 
         HandleResponseStatus(status);
     }
