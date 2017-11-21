@@ -30,6 +30,7 @@ public:
     pfc::string8 AlbumArtistMapping;
     pfc::string8 TrackNumberMapping;
     pfc::string8 MBTrackIdMapping;
+    pfc::string8 SkipSubmissionFormat;
 
     pfc::string8 SessionKey;
 
@@ -38,7 +39,7 @@ private:
     virtual void set_data_raw(stream_reader* p_stream, t_size p_sizehint,
                               abort_callback& p_abort) override;
 
-    static unsigned const Version = 1;
+    static unsigned const Version = 2;
 };
 
 class NOVTABLE ScrobbleConfigNotify : public service_base

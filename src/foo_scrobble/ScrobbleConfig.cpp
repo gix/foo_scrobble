@@ -37,8 +37,44 @@ void ScrobbleConfig::get_data_raw(stream_writer* p_stream, abort_callback& p_abo
     p_stream->write_string(AlbumArtistMapping, p_abort);
     p_stream->write_string(TrackNumberMapping, p_abort);
     p_stream->write_string(MBTrackIdMapping, p_abort);
+    p_stream->write_string(SkipSubmissionFormat, p_abort);
 
     p_stream->write_string(SessionKey, p_abort);
+}
+
+void SetDataV1(ScrobbleConfig& cfg, stream_reader* p_stream, abort_callback& p_abort)
+{
+    p_stream->read_lendian_t(cfg.EnableScrobbling, p_abort);
+    p_stream->read_lendian_t(cfg.EnableNowPlaying, p_abort);
+    p_stream->read_lendian_t(cfg.SubmitOnlyInLibrary, p_abort);
+    p_stream->read_lendian_t(cfg.SubmitDynamicSources, p_abort);
+
+    p_stream->read_string(cfg.ArtistMapping, p_abort);
+    p_stream->read_string(cfg.TitleMapping, p_abort);
+    p_stream->read_string(cfg.AlbumMapping, p_abort);
+    p_stream->read_string(cfg.AlbumArtistMapping, p_abort);
+    p_stream->read_string(cfg.TrackNumberMapping, p_abort);
+    p_stream->read_string(cfg.MBTrackIdMapping, p_abort);
+
+    p_stream->read_string(cfg.SessionKey, p_abort);
+}
+
+void SetDataV2(ScrobbleConfig& cfg, stream_reader* p_stream, abort_callback& p_abort)
+{
+    p_stream->read_lendian_t(cfg.EnableScrobbling, p_abort);
+    p_stream->read_lendian_t(cfg.EnableNowPlaying, p_abort);
+    p_stream->read_lendian_t(cfg.SubmitOnlyInLibrary, p_abort);
+    p_stream->read_lendian_t(cfg.SubmitDynamicSources, p_abort);
+
+    p_stream->read_string(cfg.ArtistMapping, p_abort);
+    p_stream->read_string(cfg.TitleMapping, p_abort);
+    p_stream->read_string(cfg.AlbumMapping, p_abort);
+    p_stream->read_string(cfg.AlbumArtistMapping, p_abort);
+    p_stream->read_string(cfg.TrackNumberMapping, p_abort);
+    p_stream->read_string(cfg.MBTrackIdMapping, p_abort);
+    p_stream->read_string(cfg.SkipSubmissionFormat, p_abort);
+
+    p_stream->read_string(cfg.SessionKey, p_abort);
 }
 
 void ScrobbleConfig::set_data_raw(stream_reader* p_stream, t_size /*p_sizehint*/,
@@ -46,22 +82,15 @@ void ScrobbleConfig::set_data_raw(stream_reader* p_stream, t_size /*p_sizehint*/
 {
     unsigned version;
     p_stream->read_lendian_t(version, p_abort);
-    if (version != Version)
-        return;
 
-    p_stream->read_lendian_t(EnableScrobbling, p_abort);
-    p_stream->read_lendian_t(EnableNowPlaying, p_abort);
-    p_stream->read_lendian_t(SubmitOnlyInLibrary, p_abort);
-    p_stream->read_lendian_t(SubmitDynamicSources, p_abort);
-
-    p_stream->read_string(ArtistMapping, p_abort);
-    p_stream->read_string(TitleMapping, p_abort);
-    p_stream->read_string(AlbumMapping, p_abort);
-    p_stream->read_string(AlbumArtistMapping, p_abort);
-    p_stream->read_string(TrackNumberMapping, p_abort);
-    p_stream->read_string(MBTrackIdMapping, p_abort);
-
-    p_stream->read_string(SessionKey, p_abort);
+    switch (version) {
+    case 1:
+        SetDataV1(*this, p_stream, p_abort);
+        break;
+    case 2:
+        SetDataV2(*this, p_stream, p_abort);
+        break;
+    }
 
     std::pair<pfc::string8*, char const*> mappings[] = {
         {&ArtistMapping, DefaultArtistMapping},
@@ -69,6 +98,7 @@ void ScrobbleConfig::set_data_raw(stream_reader* p_stream, t_size /*p_sizehint*/
         {&AlbumArtistMapping, DefaultAlbumArtistMapping},
         {&TitleMapping, DefaultTitleMapping},
         {&MBTrackIdMapping, DefaultMBTrackIdMapping},
+        {&SkipSubmissionFormat, ""},
     };
 
     static_api_ptr_t<titleformat_compiler> compiler;

@@ -3,7 +3,6 @@
 #include "Bindings.h"
 #include "Resources.h"
 #include "ScrobbleConfig.h"
-#include "ScrobbleService.h"
 #include "fb2ksdk.h"
 
 #include <pplawait.h>
@@ -66,6 +65,7 @@ public:
     COMMAND_HANDLER_EX(IDC_ARTIST_MAPPING_EDIT, EN_CHANGE, OnEditChange)
     COMMAND_HANDLER_EX(IDC_TITLE_MAPPING_EDIT, EN_CHANGE, OnEditChange)
     COMMAND_HANDLER_EX(IDC_MBTRACKID_MAPPING_EDIT, EN_CHANGE, OnEditChange)
+    COMMAND_HANDLER_EX(IDC_SKIP_SUBMISSION_FORMAT_EDIT, EN_CHANGE, OnEditChange)
     MESSAGE_HANDLER(WM_EXECUTE_TASK, ExecuteTaskShim)
     END_MSG_MAP()
 
@@ -101,6 +101,7 @@ BOOL ScrobblerPreferencesDialog::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lIn
     bindings_.Bind(config_.AlbumMapping, m_hWnd, IDC_ALBUM_MAPPING_EDIT);
     bindings_.Bind(config_.TitleMapping, m_hWnd, IDC_TITLE_MAPPING_EDIT);
     bindings_.Bind(config_.MBTrackIdMapping, m_hWnd, IDC_MBTRACKID_MAPPING_EDIT);
+    bindings_.Bind(config_.SkipSubmissionFormat, m_hWnd, IDC_SKIP_SUBMISSION_FORMAT_EDIT);
     bindings_.FlowToControl();
 
     if (authTooltip_.Create(m_hWnd, nullptr, nullptr, TTS_NOPREFIX | TTS_BALLOON)) {
@@ -213,6 +214,7 @@ void ScrobblerPreferencesDialog::reset()
     uSetDlgItemText(m_hWnd, IDC_ALBUM_MAPPING_EDIT, DefaultAlbumMapping);
     uSetDlgItemText(m_hWnd, IDC_TITLE_MAPPING_EDIT, DefaultTitleMapping);
     uSetDlgItemText(m_hWnd, IDC_MBTRACKID_MAPPING_EDIT, DefaultMBTrackIdMapping);
+    uSetDlgItemText(m_hWnd, IDC_SKIP_SUBMISSION_FORMAT_EDIT, "");
     authorizer_ = Authorizer(Config.SessionKey);
     savedAuthorizerState_ = authorizer_.GetState();
 

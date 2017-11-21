@@ -42,6 +42,11 @@ public:
         return mbidFormat_;
     }
 
+    titleformat_object::ptr const& GetSkipSubmissionFormat() const
+    {
+        return skipSubmissionFormat_;
+    }
+
     void Recompile(ScrobbleConfig const& config)
     {
         auto compiler = standard_api_create_t<titleformat_compiler>();
@@ -54,6 +59,11 @@ public:
         Compile(compiler, trackNumberFormat_, config.TrackNumberMapping,
                 DefaultTrackNumberMapping);
         Compile(compiler, mbidFormat_, config.MBTrackIdMapping, DefaultMBTrackIdMapping);
+
+        if (!config.SkipSubmissionFormat.is_empty())
+            compiler->compile(skipSubmissionFormat_, config.SkipSubmissionFormat);
+        else
+            skipSubmissionFormat_ = nullptr;
     }
 
 private:
@@ -70,6 +80,7 @@ private:
     titleformat_object::ptr albumFormat_;
     titleformat_object::ptr trackNumberFormat_;
     titleformat_object::ptr mbidFormat_;
+    titleformat_object::ptr skipSubmissionFormat_;
 };
 
 class PendingTrack : public Track
@@ -93,12 +104,12 @@ public:
 
     bool CanScrobble(SecondsD const& playbackTime) const
     {
-        return playbackTime >= RequiredScrobbleTime() && HasRequiredFields();
+        return playbackTime >= RequiredScrobbleTime() && !skip_ && HasRequiredFields();
     }
 
     bool ShouldSendNowPlaying(std::chrono::duration<double> elapsedPlayback) const
     {
-        return !notifiedNowPlaying_ && HasRequiredFields() &&
+        return !notifiedNowPlaying_ && !skip_ && HasRequiredFields() &&
                elapsedPlayback >= NowPlayingMinimumPlaybackTime;
     }
 
@@ -122,6 +133,14 @@ public:
         track.format_title(nullptr, TrackNumber, formatContext.GetTrackNumberFormat(),
                            nullptr);
 
+        auto skipFormat = formatContext.GetSkipSubmissionFormat();
+        if (!skipFormat.is_empty()) {
+            pfc::string8_fast skip;
+            track.format_title(nullptr, skip, formatContext.GetSkipSubmissionFormat(),
+                               nullptr);
+            skip_ = !skip.is_empty();
+        }
+
         Duration = SecondsD{track.get_length()};
         IsDynamic = false;
 
@@ -141,6 +160,15 @@ public:
         TrackNumber.force_reset();
         MusicBrainzId.force_reset();
 
+        auto skipFormat = formatContext.GetSkipSubmissionFormat();
+        if (!skipFormat.is_empty()) {
+            pfc::string8_fast skip;
+            pc->playback_format_title(nullptr, skip,
+                                      formatContext.GetSkipSubmissionFormat(), nullptr,
+                                      playback_control::display_level_titles);
+            skip_ = !skip.is_empty();
+        }
+
         Timestamp = unix_clock::now();
         Duration = SecondsD{dynamicTrack.get_length()};
         IsDynamic = true;
@@ -151,6 +179,7 @@ public:
 private:
     unix_clock::time_point lastUpdateTime_;
     bool notifiedNowPlaying_ = false;
+    bool skip_;
 };
 } // namespace
 
