@@ -102,14 +102,33 @@ public:
         return Artist.get_length() > 0 && Title.get_length() > 0;
     }
 
-    bool CanScrobble(SecondsD const& playbackTime) const
+    bool IsSkipped() const { return skip_; }
+
+    bool CanScrobble(SecondsD const& playbackTime, bool logFailure = false) const
     {
-        return playbackTime >= RequiredScrobbleTime() && !skip_ && HasRequiredFields();
+        if (playbackTime < RequiredScrobbleTime())
+            return false;
+
+        if (IsSkipped()) {
+            if (logFailure)
+                FB2K_console_formatter()
+                    << "foo_scrobble: Skipping track based on skip conditions";
+            return false;
+        }
+
+        if (!HasRequiredFields()) {
+            if (logFailure)
+                FB2K_console_formatter()
+                    << "foo_scrobble: Skipping track due to missing artist or title";
+            return false;
+        }
+
+        return true;
     }
 
     bool ShouldSendNowPlaying(std::chrono::duration<double> elapsedPlayback) const
     {
-        return !notifiedNowPlaying_ && !skip_ && HasRequiredFields() &&
+        return !notifiedNowPlaying_ && !IsSkipped() && HasRequiredFields() &&
                elapsedPlayback >= NowPlayingMinimumPlaybackTime;
     }
 
@@ -347,7 +366,7 @@ bool PlaybackScrobbler::ShouldScrobble(metadb_handle_ptr const& track) const
 
 void PlaybackScrobbler::FlushCurrentTrack()
 {
-    if (isActive_ && pendingTrack_.CanScrobble(accumulatedPlaybackTime_))
+    if (isActive_ && pendingTrack_.CanScrobble(accumulatedPlaybackTime_, true))
         GetScrobbleService().ScrobbleAsync(std::move(static_cast<Track&>(pendingTrack_)));
 
     accumulatedPlaybackTime_ = SecondsD::zero();
