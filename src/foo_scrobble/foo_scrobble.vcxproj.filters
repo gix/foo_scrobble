@@ -30,6 +30,7 @@
     <ClCompile Include="ScrobbleService.cpp" />
     <ClCompile Include="WebService.cpp" />
     <ClCompile Include="Keys.cpp" />
+    <ClCompile Include="MainMenuCommands.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resources.rc" />
