@@ -15,7 +15,7 @@ To get started, open foobar2000's preferences, navigate to `Tools > Last.fm Scro
 
 ## Prerequisites
 
-You may have to install `Visual C++ Redistributable for Visual Studio 2017` ([32-bit](https://go.microsoft.com/fwlink/?LinkId=746571)/[64-bit](https://go.microsoft.com/fwlink/?LinkId=746572)). Windows 7 also requires `Update for Windows 7 (KB2999226)` ([32-bit](https://www.microsoft.com/en-us/download/details.aspx?id=49077)/[64-bit](https://www.microsoft.com/en-us/download/details.aspx?id=49093)) which usually is already installed via Windows Update.
+You may have to install [Visual C++ Redistributable for Visual Studio 2017](https://go.microsoft.com/fwlink/?LinkId=746571). Windows 7 also requires [Update for Windows 7 (KB2999226)](https://www.microsoft.com/en-us/download/details.aspx?id=49077) which usually is already installed via Windows Update.
 
 
 ## Building
