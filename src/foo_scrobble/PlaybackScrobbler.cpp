@@ -86,9 +86,20 @@ public:
 #endif
     }
 
+    bool HasRequiredFields() const
+    {
+        return Artist.get_length() > 0 && Title.get_length() > 0;
+    }
+
+    bool CanScrobble(SecondsD const& playbackTime) const
+    {
+        return playbackTime >= RequiredScrobbleTime() && HasRequiredFields();
+    }
+
     bool ShouldSendNowPlaying(std::chrono::duration<double> elapsedPlayback) const
     {
-        return !notifiedNowPlaying_ && elapsedPlayback >= NowPlayingMinimumPlaybackTime;
+        return !notifiedNowPlaying_ && HasRequiredFields() &&
+               elapsedPlayback >= NowPlayingMinimumPlaybackTime;
     }
 
     void NowPlayingSent() { notifiedNowPlaying_ = true; }
@@ -307,7 +318,7 @@ bool PlaybackScrobbler::ShouldScrobble(metadb_handle_ptr const& track) const
 
 void PlaybackScrobbler::FlushCurrentTrack()
 {
-    if (isActive_ && accumulatedPlaybackTime_ >= pendingTrack_.RequiredScrobbleTime())
+    if (isActive_ && pendingTrack_.CanScrobble(accumulatedPlaybackTime_))
         GetScrobbleService().ScrobbleAsync(std::move(static_cast<Track&>(pendingTrack_)));
 
     accumulatedPlaybackTime_ = SecondsD::zero();
