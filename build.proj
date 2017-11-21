@@ -62,5 +62,7 @@
   <Target Name="Package" DependsOnTargets="Build">
     <Zip Files="build\x86\bin\foo_scrobble.dll"
          OutputFilename="$(PackageDir)foo_scrobble.fb2k-component"/>
+    <Zip Files="build\x86\bin\foo_scrobble.dll;build\x86\bin\foo_scrobble.pdb"
+         OutputFilename="$(PackageDir)foo_scrobble-$(CommitInfo).zip"/>
   </Target>
 </Project>
