@@ -4,6 +4,20 @@
 
 foo_scrobble is a foobar2000 component for scrobbling to [https://www.last.fm/](https://www.last.fm/).
 
+- Uses the [Scrobbling 2.0 API](https://www.last.fm/api/scrobbling). You authorize the component with last.fm instead of entering your login credentials into foobar2000.
+- Supports "Now Playing" notifications.
+- Handles intermittent network outages or reconnects well. No "waiting for handshake" issue.
+- Manages the scrobble cache automatically. There is no need to manually submit the cache.
+- Allows custom tags for scrobbled details.
+
+To get started, open foobar2000's preferences, navigate to `Tools > Last.fm Scrobbling` and use the top button to authorize your client. The button has a helpful tooltip with detailed instructions.
+
+
+## Prerequisites
+
+You may have to install `Visual C++ Redistributable for Visual Studio 2017` ([32-bit](https://go.microsoft.com/fwlink/?LinkId=746571)/[64-bit](https://go.microsoft.com/fwlink/?LinkId=746572)). Windows 7 also requires `Update for Windows 7 (KB2999226)` ([32-bit](https://www.microsoft.com/en-us/download/details.aspx?id=49077)/[64-bit](https://www.microsoft.com/en-us/download/details.aspx?id=49093)) which usually is already installed via Windows Update.
+
+
 ## Building
 
 Requires:
