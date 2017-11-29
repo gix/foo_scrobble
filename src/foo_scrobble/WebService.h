@@ -1,11 +1,12 @@
 ﻿#pragma once
-#include "Result.h"
+#include "Outcome.h"
+#include "OutcomeCompat.h"
+#include "fb2ksdk.h"
 
 #include <map>
 #include <system_error>
 
 #include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
 
 namespace lastfm
 {
@@ -64,7 +65,26 @@ enum class Status
 
     InvalidResponse = -1,
     InternalError = -2,
+    ConnectionError = -3,
 };
+
+} // namespace lastfm
+
+namespace std
+{
+template<>
+struct is_error_code_enum<lastfm::Status> : true_type
+{
+};
+
+template<>
+struct is_error_condition_enum<lastfm::Status> : true_type
+{
+};
+} // namespace std
+
+namespace lastfm
+{
 
 class ErrorCategory : public std::error_category
 {
@@ -74,6 +94,8 @@ public:
     virtual std::string message(int ev) const override
     {
         switch (static_cast<Status>(ev)) {
+        case Status::Success:
+            return "Success";
         case Status::InvalidService:
             return "The service does not exist.";
         case Status::InvalidMethod:
@@ -97,12 +119,19 @@ public:
         case Status::InvalidMethodSignature:
             return "Invalid method signature supplied.";
         case Status::ServiceTemporarilyUnavailable:
-            return "There was a temporary error processing your request. Try again "
-                   "later.";
+            return "There was a temporary error processing your request. Try again later.";
         case Status::SuspendedAPIKey:
             return "Access for the API account has been suspended.";
         case Status::RateLimitExceeded:
             return "Your IP has made too many requests in a short period.";
+        case Status::TokenNotAuthorized:
+            return "Token has not been authorized.";
+        case Status::InvalidResponse:
+            return "Invalid response.";
+        case Status::InternalError:
+            return "Internal error.";
+        case Status::ConnectionError:
+            return "Connection error.";
         default:
             return "Unknown error";
         }
@@ -115,18 +144,18 @@ inline std::error_category const& webservice_category()
     return instance;
 }
 
-} // namespace lastfm
+inline std::error_code make_error_code(Status st)
+{
+    return {static_cast<int>(st), webservice_category()};
+}
 
-namespace std
-{
-template<>
-struct is_error_condition_enum<lastfm::Status> : true_type
-{
-};
-} // namespace std
+} // namespace lastfm
 
 namespace foo_scrobble
 {
+
+using OUTCOME_V2_NAMESPACE::outcome;
+
 class Track;
 
 class WebService
@@ -139,18 +168,18 @@ public:
         sessionKey_ = std::move(newSessionKey);
     }
 
-    pplx::task<Result<std::string, lastfm::Status>>
+    pplx::task<outcome<std::string>>
     GetAuthToken(pplx::cancellation_token cancellationToken);
 
-    pplx::task<Result<std::string, lastfm::Status>>
+    pplx::task<outcome<std::string>>
     GetSessionKey(std::string_view authToken, pplx::cancellation_token cancellationToken);
 
-    pplx::task<lastfm::Status> SendNowPlaying(Track const& track,
-                                              pplx::cancellation_token cancellationToken);
+    pplx::task<outcome<void>> SendNowPlaying(Track const& track,
+                                             pplx::cancellation_token cancellationToken);
 
-    pplx::task<lastfm::Status> Scrobble(Track const& track,
-                                        pplx::cancellation_token cancellationToken);
-    
+    pplx::task<outcome<void>> Scrobble(Track const& track,
+                                       pplx::cancellation_token cancellationToken);
+
     class MapIndex
     {
         static constexpr size_t const MaxSize = 16;
@@ -175,7 +204,7 @@ public:
         size_t length() const noexcept { return length_; }
         std::string_view string() const noexcept { return {name_, length_}; }
 
-        bool operator<(MapIndex const &other) const noexcept;
+        bool operator<(MapIndex const& other) const noexcept;
 
     private:
         void AddIndex(uint8_t index)
@@ -218,20 +247,14 @@ public:
 
     ScrobbleRequest CreateScrobbleRequest();
 
-    pplx::task<lastfm::Status>
-    Scrobble(ScrobbleRequest request, pplx::cancellation_token cancellationToken);
+    pplx::task<outcome<void>> Scrobble(ScrobbleRequest request,
+                                       pplx::cancellation_token cancellationToken);
 
 private:
     ParamsMap NewParams(std::string_view method) const;
     ParamsMap NewAuthedParams(std::string_view method) const;
 
     void SignRequestParams(ParamsMap& params);
-
-    pplx::task<web::http::http_response> Get(ParamsMap const& params,
-                                             pplx::cancellation_token cancellationToken)
-    {
-        return Request(web::http::methods::GET, params, cancellationToken);
-    }
 
     pplx::task<web::http::http_response> Post(ParamsMap const& params,
                                               pplx::cancellation_token cancellationToken)
@@ -250,6 +273,19 @@ private:
 };
 
 using ::operator<<;
-pfc::string_base& operator<<(pfc::string_base& fmt, lastfm::Status status);
+
+pfc::string_base& operator<<(pfc::string_base& os, lastfm::Status status);
+pfc::string_base& operator<<(pfc::string_base& os, std::exception_ptr const& ptr);
+pfc::string_base& operator<<(pfc::string_base& os, std::error_code const& ec);
+
+template<typename R, typename S, typename E, typename P>
+pfc::string_base& operator<<(pfc::string_base& os, outcome<R, S, E, P> const& result)
+{
+    if (result.has_exception())
+        os << result.exception();
+    else if (result.has_error())
+        os << result.error();
+    return os;
+}
 
 } // namespace foo_scrobble

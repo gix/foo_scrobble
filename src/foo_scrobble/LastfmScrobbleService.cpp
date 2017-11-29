@@ -3,12 +3,13 @@
 #include "AsyncHelper.h"
 #include "ScrobbleCache.h"
 #include "ScrobbleConfig.h"
+#include "ServiceHelper.h"
 #include "TokenBucketRateLimiter.h"
 #include "Track.h"
 #include "WebService.h"
 
-#include "ServiceHelper.h"
 #include <string_view>
+#include <winhttp.h>
 
 using namespace std::chrono;
 using namespace std::string_view_literals;
@@ -59,12 +60,12 @@ private:
         ShutDown,
     };
 
-    void OnScrobbleResponse(lastfm::Status status);
-    void OnNowPlayingResponse(lastfm::Status status);
+    void OnScrobbleResponse(outcome<void> result);
+    void OnNowPlayingResponse(outcome<void> result);
     void OnWakeUp();
 
-    void HandleResponseStatus(lastfm::Status status);
-    void LogResponseStatus(std::string_view task, lastfm::Status status);
+    void LogResponse(std::string_view task, outcome<void> const& result);
+    void HandleResponseStatus(lastfm::Status result);
 
     void ProcessLocked();
     void PauseProcessing(duration<int, std::milli> delay);
@@ -109,6 +110,8 @@ void LastfmScrobbleService::ScrobbleAsync(Track track)
         FB2K_console_formatter() << "foo_scrobble: Queuing scrobble (Invalid API key)";
         return;
     case State::Sleeping:
+        FB2K_console_formatter() << "foo_scrobble: Queuing scrobble (Sleeping)";
+        return;
     case State::AwaitingResponse:
     case State::ShuttingDown:
     case State::ShutDown:
@@ -216,7 +219,7 @@ void LastfmScrobbleService::ProcessLocked()
     if (pendingNowPlaying_.IsValid()) {
         state_ = State::AwaitingResponse;
         auto task = webService_.SendNowPlaying(pendingNowPlaying_, cts_.get_token());
-        task.then([&](lastfm::Status status) { OnNowPlayingResponse(status); });
+        task.then([&](outcome<void> result) { OnNowPlayingResponse(std::move(result)); });
         return;
     }
 
@@ -227,7 +230,7 @@ void LastfmScrobbleService::ProcessLocked()
 
         state_ = State::AwaitingResponse;
         auto task = webService_.Scrobble(scrobbleCache_[0], cts_.get_token());
-        task.then([&](lastfm::Status status) { OnScrobbleResponse(status); });
+        task.then([&](outcome<void> result) { OnScrobbleResponse(std::move(result)); });
     } else if (scrobbleCache_.Count() > 1) {
         size_t const maxScrobblesPerRequest = 50;
         size_t const batchSize = std::min(scrobbleCache_.Count(), maxScrobblesPerRequest);
@@ -242,7 +245,7 @@ void LastfmScrobbleService::ProcessLocked()
 
         state_ = State::AwaitingResponse;
         auto task = webService_.Scrobble(std::move(request), cts_.get_token());
-        task.then([&](lastfm::Status status) { OnScrobbleResponse(status); });
+        task.then([&](outcome<void> result) { OnScrobbleResponse(std::move(result)); });
     }
 }
 
@@ -252,12 +255,43 @@ void LastfmScrobbleService::PauseProcessing(duration<int, std::milli> delay)
     create_delay(delay, cts_.get_token()).then([&]() { OnWakeUp(); });
 }
 
-void LastfmScrobbleService::OnScrobbleResponse(lastfm::Status status)
+lastfm::Status MapException(web::http::http_exception const& ex)
+{
+    switch (ex.error_code().value()) {
+    case ERROR_WINHTTP_TIMEOUT:
+    case ERROR_WINHTTP_NAME_NOT_RESOLVED:
+    case ERROR_WINHTTP_CANNOT_CONNECT:
+    case ERROR_WINHTTP_CONNECTION_ERROR:
+        return lastfm::Status::ConnectionError;
+    default:
+        return lastfm::Status::InternalError;
+    }
+}
+
+lastfm::Status AsStatus(outcome<void> const& result)
+{
+    if (result)
+        return lastfm::Status::Success;
+    if (result.has_error() && result.error().category() == lastfm::webservice_category())
+        return static_cast<lastfm::Status>(result.error().value());
+
+    try {
+        std::rethrow_exception(result.exception());
+    } catch (web::http::http_exception const& ex) {
+        return MapException(ex);
+    } catch (...) {
+        return lastfm::Status::InternalError;
+    }
+}
+
+void LastfmScrobbleService::OnScrobbleResponse(outcome<void> result)
 {
     {
         ExclusiveLock lock(mutex_);
 
-        LogResponseStatus("Scrobbling"sv, status);
+        LogResponse("Scrobbling"sv, result);
+
+        auto const status = AsStatus(result);
 
         switch (status) {
         case lastfm::Status::Success:
@@ -277,17 +311,20 @@ void LastfmScrobbleService::OnScrobbleResponse(lastfm::Status status)
     cv_.notify_all();
 }
 
-void LastfmScrobbleService::OnNowPlayingResponse(lastfm::Status status)
+void LastfmScrobbleService::OnNowPlayingResponse(outcome<void> result)
 {
     {
         ExclusiveLock lock(mutex_);
 
-        LogResponseStatus("NowPlaying notification"sv, status);
+        LogResponse("NowPlaying notification"sv, result);
+
+        auto const status = AsStatus(result);
 
         switch (status) {
         case lastfm::Status::InvalidSessionKey:
         case lastfm::Status::ServiceOffline:
         case lastfm::Status::ServiceTemporarilyUnavailable:
+        case lastfm::Status::ConnectionError:
             // The only cases that make sense to retry later.
             break;
 
@@ -323,11 +360,20 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
 
         case lastfm::Status::ServiceOffline:
         case lastfm::Status::ServiceTemporarilyUnavailable:
-            PauseProcessing(minutes(5));
+            PauseProcessing(minutes(2));
             break;
 
         case lastfm::Status::RateLimitExceeded:
             PauseProcessing(minutes(2));
+            break;
+
+        case lastfm::Status::InvalidResponse:
+        case lastfm::Status::InternalError:
+            PauseProcessing(minutes(1));
+            break;
+
+        case lastfm::Status::ConnectionError:
+            PauseProcessing(seconds(30));
             break;
         }
     } else {
@@ -336,9 +382,26 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
     }
 }
 
-void LastfmScrobbleService::LogResponseStatus(std::string_view task,
-                                              lastfm::Status status)
+void LastfmScrobbleService::LogResponse(std::string_view task,
+                                        outcome<void> const& result)
 {
+    if (result.has_value())
+        return;
+
+    if (result.has_exception()) {
+        FB2K_console_formatter()
+            << "foo_scrobble: " << task << " failed (" << result << ")";
+        return;
+    }
+
+    if (result.error().category() != lastfm::webservice_category()) {
+        FB2K_console_formatter()
+            << "foo_scrobble: " << task << " failed (" << result << ")";
+        return;
+    }
+
+    auto const status = static_cast<lastfm::Status>(result.error().value());
+
     switch (status) {
     case lastfm::Status::Success:
         break;
@@ -369,6 +432,7 @@ void LastfmScrobbleService::LogResponseStatus(std::string_view task,
 
     case lastfm::Status::ServiceOffline:
     case lastfm::Status::ServiceTemporarilyUnavailable:
+    case lastfm::Status::ConnectionError:
         FB2K_console_formatter()
             << "foo_scrobble: " << task << " failed (" << status << ")";
         break;

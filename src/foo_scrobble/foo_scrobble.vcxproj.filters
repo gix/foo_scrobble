@@ -10,12 +10,13 @@
     <ClInclude Include="fb2ksdk.h" />
     <ClInclude Include="Precompiled.h" />
     <ClInclude Include="Resources.h" />
-    <ClInclude Include="Result.h" />
     <ClInclude Include="ScrobbleService.h" />
     <ClInclude Include="ServiceHelper.h" />
     <ClInclude Include="TokenBucketRateLimiter.h" />
     <ClInclude Include="Track.h" />
     <ClInclude Include="WebService.h" />
+    <ClInclude Include="Outcome.h" />
+    <ClInclude Include="OutcomeCompat.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Authorizer.cpp" />

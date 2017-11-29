@@ -2,13 +2,13 @@
 
 #include "Track.h"
 
+#include <exception>
 #include <experimental/resumable>
 #include <string_view>
 
 #include <cpprest/http_msg.h>
 #include <cpprest/json.h>
 #include <pplawait.h>
-#include <winhttp.h>
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -31,46 +31,6 @@ std::string ToLowercaseHex(hasher_md5_result const& result)
     }
 
     return hash;
-}
-
-char const* ErrorMessage(lastfm::Status ec)
-{
-    switch (ec) {
-    case lastfm::Status::InvalidService:
-        return "The service does not exist.";
-    case lastfm::Status::InvalidMethod:
-        return "No method with that name in this package.";
-    case lastfm::Status::InvalidFormat:
-        return "The service does not exist in that format.";
-    case lastfm::Status::InvalidParameters:
-        return "Request is missing a required parameter.";
-    case lastfm::Status::InvalidResourceSpecified:
-        return "Invalid resource specified.";
-    case lastfm::Status::InvalidMethodSignature:
-        return "Invalid method signature supplied.";
-
-    case lastfm::Status::OperationFailed:
-        return "Operation failed.";
-
-    case lastfm::Status::AuthenticationFailed:
-        return "No permissions to access the service.";
-    case lastfm::Status::InvalidSessionKey:
-        return "Invalid session key. Please re-authenticate.";
-    case lastfm::Status::ServiceOffline:
-        return "The service is temporarily offline.";
-    case lastfm::Status::ServiceTemporarilyUnavailable:
-        return "There was a temporary error processing the request.";
-    case lastfm::Status::RateLimitExceeded:
-        return "Too many requests in a short period.";
-
-    case lastfm::Status::InvalidAPIKey:
-        return "Invalid API key. Please check for an updated version of foo_scrobble.";
-    case lastfm::Status::SuspendedAPIKey:
-        return "Access for the API account has been suspended. Please check for an updated version of foo_scrobble.";
-
-    default:
-        return "<unknown error>";
-    }
 }
 
 class FormDataBuilder
@@ -210,21 +170,9 @@ bool IsSuccess(web::http::http_response const& response)
     return response.status_code() == web::http::status_codes::OK;
 }
 
-lastfm::Status MapException(web::http::http_exception const& ex)
-{
-    switch (ex.error_code().value()) {
-    case ERROR_WINHTTP_TIMEOUT:
-    case ERROR_WINHTTP_NAME_NOT_RESOLVED:
-    case ERROR_WINHTTP_CANNOT_CONNECT:
-    case ERROR_WINHTTP_CONNECTION_ERROR:
-        return lastfm::Status::ServiceOffline;
-    default:
-        return lastfm::Status::InternalError;
-    }
-}
-
 #if _DEBUG
-wchar_t const* const ServiceBaseUrl = L"http://localhost:64660/";
+//wchar_t const* const ServiceBaseUrl = L"http://localhost:64660/";
+wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
 #else
 wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
 #endif
@@ -273,7 +221,7 @@ void WebService::SignRequestParams(ParamsMap& params)
     params["api_sig"sv] = ToLowercaseHex(hasher->get_result(state));
 }
 
-pplx::task<Result<std::string, lastfm::Status>>
+pplx::task<outcome<std::string>>
 WebService::GetAuthToken(pplx::cancellation_token cancellationToken)
 {
     auto params = NewParams("auth.getToken");
@@ -287,16 +235,12 @@ WebService::GetAuthToken(pplx::cancellation_token cancellationToken)
 
         std::wstring token = msg.at(L"token").as_string();
         co_return utility::conversions::to_utf8string(token);
-    } catch (web::json::json_exception const&) {
-        co_return lastfm::Status::InvalidResponse;
-    } catch (web::http::http_exception const& ex) {
-        co_return MapException(ex);
-    } catch (std::exception const&) {
-        co_return lastfm::Status::InternalError;
+    } catch (...) {
+        co_return std::current_exception();
     }
 }
 
-pplx::task<Result<std::string, lastfm::Status>>
+pplx::task<outcome<std::string>>
 WebService::GetSessionKey(std::string_view authToken,
                           pplx::cancellation_token cancellationToken)
 {
@@ -312,16 +256,12 @@ WebService::GetSessionKey(std::string_view authToken,
 
         std::wstring key = msg.at(L"session").at(L"key").as_string();
         co_return utility::conversions::to_utf8string(key);
-    } catch (web::json::json_exception const&) {
-        co_return lastfm::Status::InvalidResponse;
-    } catch (web::http::http_exception const& ex) {
-        co_return MapException(ex);
-    } catch (std::exception const&) {
-        co_return lastfm::Status::InternalError;
+    } catch (...) {
+        co_return std::current_exception();
     }
 }
 
-pplx::task<lastfm::Status>
+pplx::task<outcome<void>>
 WebService::SendNowPlaying(Track const& track, pplx::cancellation_token cancellationToken)
 {
     auto params = NewAuthedParams("track.updateNowPlaying");
@@ -334,16 +274,14 @@ WebService::SendNowPlaying(Track const& track, pplx::cancellation_token cancella
         if (!IsSuccess(response))
             co_return ExtractError(msg);
 
-        co_return lastfm::Status::Success;
-    } catch (web::http::http_exception const& ex) {
-        co_return MapException(ex);
-    } catch (std::exception const&) {
-        co_return lastfm::Status::InternalError;
+        co_return success();
+    } catch (...) {
+        co_return std::current_exception();
     }
 }
 
-pplx::task<lastfm::Status>
-WebService::Scrobble(Track const& track, pplx::cancellation_token cancellationToken)
+pplx::task<outcome<void>> WebService::Scrobble(Track const& track,
+                                               pplx::cancellation_token cancellationToken)
 {
     auto params = NewAuthedParams("track.scrobble");
     FillParamsFromTrack(params, track);
@@ -355,11 +293,9 @@ WebService::Scrobble(Track const& track, pplx::cancellation_token cancellationTo
         if (!IsSuccess(response))
             co_return ExtractError(msg);
 
-        co_return lastfm::Status::Success;
-    } catch (web::http::http_exception const& ex) {
-        co_return MapException(ex);
-    } catch (std::exception const&) {
-        co_return lastfm::Status::InternalError;
+        co_return success();
+    } catch (...) {
+        co_return std::current_exception();
     }
 }
 
@@ -380,8 +316,8 @@ bool WebService::ScrobbleRequest::AddTrack(Track const& track)
     return true;
 }
 
-pplx::task<lastfm::Status>
-WebService::Scrobble(ScrobbleRequest request, pplx::cancellation_token cancellationToken)
+pplx::task<outcome<void>> WebService::Scrobble(ScrobbleRequest request,
+                                               pplx::cancellation_token cancellationToken)
 {
     auto params = request.TakeParams();
     SignRequestParams(params);
@@ -393,11 +329,9 @@ WebService::Scrobble(ScrobbleRequest request, pplx::cancellation_token cancellat
         if (!IsSuccess(response))
             co_return ExtractError(msg);
 
-        co_return lastfm::Status::Success;
-    } catch (web::http::http_exception const& ex) {
-        co_return MapException(ex);
-    } catch (std::exception const&) {
-        co_return lastfm::Status::InternalError;
+        co_return success();
+    } catch (...) {
+        co_return std::current_exception();
     }
 }
 
@@ -415,10 +349,50 @@ WebService::Request(web::http::method method, ParamsMap const& params,
     return client_.request(req, cancellationToken);
 }
 
-pfc::string_base& operator<<(pfc::string_base& fmt, lastfm::Status status)
+pfc::string_base& operator<<(pfc::string_base& os, lastfm::Status status)
 {
-    fmt << "error: " << static_cast<int>(status) << ", " << ErrorMessage(status);
-    return fmt;
+    os << make_error_code(status);
+    return os;
+}
+
+static size_t TrimmedLength(std::string const& str)
+{
+    auto length = str.length();
+    while (length > 0 && (str[length - 1] == '\r' || str[length - 1] == '\n'))
+        --length;
+    return length;
+}
+
+static size_t TrimmedLength(char const* str)
+{
+    if (!str)
+        return 0;
+
+    auto length = strlen(str);
+    while (length > 0 && (str[length - 1] == '\r' || str[length - 1] == '\n'))
+        --length;
+    return length;
+}
+
+pfc::string_base& operator<<(pfc::string_base& os, std::exception_ptr const& ptr)
+{
+    try {
+        std::rethrow_exception(ptr);
+    } catch (std::exception const& ex) {
+        char const* str = ex.what();
+        os.add_string(str, TrimmedLength(str));
+    } catch (...) {
+        os << "<unknown non-standard exception>";
+    }
+    return os;
+}
+
+pfc::string_base& operator<<(pfc::string_base& os, std::error_code const& ec)
+{
+    os << "error: " << static_cast<int>(ec.value()) << ", ";
+    std::string const& message = ec.message();
+    os.add_string(message.c_str(), TrimmedLength(message));
+    return os;
 }
 
 } // namespace foo_scrobble

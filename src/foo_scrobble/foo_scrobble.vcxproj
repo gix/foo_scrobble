@@ -61,21 +61,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Common.props" />
     <Import Project="..\foobar2000_sdk.props" />
+    <Import Project="..\..\third-party\outcome\outcome.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Common.props" />
     <Import Project="..\foobar2000_sdk.props" />
+    <Import Project="..\..\third-party\outcome\outcome.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Common.props" />
     <Import Project="..\foobar2000_sdk.props" />
+    <Import Project="..\..\third-party\outcome\outcome.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Common.props" />
     <Import Project="..\foobar2000_sdk.props" />
+    <Import Project="..\..\third-party\outcome\outcome.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -177,11 +181,12 @@
     <ClInclude Include="AsyncHelper.h" />
     <ClInclude Include="Authorizer.h" />
     <ClInclude Include="Bindings.h" />
+    <ClInclude Include="Outcome.h" />
+    <ClInclude Include="OutcomeCompat.h" />
     <ClInclude Include="ScrobbleConfig.h" />
     <ClInclude Include="Precompiled.h" />
     <ClInclude Include="fb2ksdk.h" />
     <ClInclude Include="Resources.h" />
-    <ClInclude Include="Result.h" />
     <ClInclude Include="ScrobbleCache.h" />
     <ClInclude Include="ScrobbleService.h" />
     <ClInclude Include="ServiceHelper.h" />

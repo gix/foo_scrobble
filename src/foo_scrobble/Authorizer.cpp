@@ -56,17 +56,16 @@ pplx::task<bool> Authorizer::RequestAuthAsync()
     console::info("foo_scrobble: Requesting auth token");
 
     WebService service(lastfm::ApiKey, lastfm::Secret);
-    Result<std::string, lastfm::Status> result =
-        co_await service.GetAuthToken(cts_.get_token());
+    outcome<std::string> result = co_await service.GetAuthToken(cts_.get_token());
 
     if (!result) {
         FB2K_console_formatter()
-            << "foo_scrobble: Failed to get auth token. (" << result.Error() << ")";
+            << "foo_scrobble: Failed to get auth token (" << result << ")";
         state_ = FromSessionKey(sessionKey_);
         co_return false;
     }
 
-    std::string& authToken = *result;
+    std::string& authToken = result.value();
     FB2K_console_formatter() << "foo_scrobble: Received auth token: "
                              << authToken.c_str();
     OpenAuthConfirmationInBrowser(authToken);
@@ -85,17 +84,17 @@ pplx::task<bool> Authorizer::CompleteAuthAsync()
     console::info("foo_scrobble: Requesting session key");
 
     WebService service(lastfm::ApiKey, lastfm::Secret);
-    Result<std::string, lastfm::Status> result =
+    outcome<std::string> result =
         co_await service.GetSessionKey(authToken_.c_str(), cts_.get_token());
 
     if (!result) {
         FB2K_console_formatter()
-            << "foo_scrobble: Failed to get session key. (" << result.Error() << ")";
+            << "foo_scrobble: Failed to get session key (" << result << ")";
         state_ = FromSessionKey(sessionKey_);
         co_return false;
     }
 
-    std::string& sessionKey = *result;
+    std::string& sessionKey = result.value();
     FB2K_console_formatter() << "foo_scrobble: New session key: " << sessionKey.c_str();
 
     sessionKey_ = sessionKey.c_str();
