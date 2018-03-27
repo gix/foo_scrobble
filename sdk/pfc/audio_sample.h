@@ -1,3 +1,4 @@
+#pragma once
 #include <math.h>
 
 #define audio_sample_size 32
@@ -41,7 +42,6 @@ namespace pfc {
 			return (double)p_samples / (double)p_sample_rate;
 		}
 
-
 #if defined(_MSC_VER) && defined(_M_IX86)
 		inline static t_int64 rint64(audio_sample val) {
 			t_int64 rv;
@@ -51,6 +51,11 @@ namespace pfc {
 			}
 			return rv;
 		}
+#if defined(_M_IX86_FP) && _M_IX86_FP >= 1
+		static inline t_int32 rint32(float p_val) {
+			return (t_int32)_mm_cvtss_si32(_mm_load_ss(&p_val));
+		}
+#else
 		inline static t_int32 rint32(audio_sample val) {
 			t_int32 rv;
 			_asm {
@@ -59,6 +64,8 @@ namespace pfc {
 			}
 			return rv;
 		}
+#endif
+
 #elif defined(_MSC_VER) && defined(_M_X64)
 		inline static t_int64 rint64(audio_sample val) { return (t_int64)floor(val + 0.5); }
 		static inline t_int32 rint32(float p_val) {
@@ -78,6 +85,8 @@ namespace pfc {
 		static audio_sample decodeFloat24ptr(const void * sourcePtr);
 		static audio_sample decodeFloat24ptrbs(const void * sourcePtr);
 		static audio_sample decodeFloat16(uint16_t source);
+
+		static unsigned bitrate_kbps( uint64_t fileSize, double duration );
 	}; // class audio_math
 
 } // namespace pfc

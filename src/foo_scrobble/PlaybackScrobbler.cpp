@@ -49,7 +49,7 @@ public:
 
     void Recompile(ScrobbleConfig const& config)
     {
-        auto compiler = standard_api_create_t<titleformat_compiler>();
+        auto compiler = titleformat_compiler::get();
 
         Compile(compiler, artistFormat_, config.ArtistMapping, DefaultArtistMapping);
         Compile(compiler, titleFormat_, config.TitleMapping, DefaultTitleMapping);
@@ -203,8 +203,7 @@ private:
 } // namespace
 
 class PlaybackScrobbler
-    : public play_callback_static
-    , public ScrobbleConfigNotify
+    : public service_multi_inherit<play_callback_static, ScrobbleConfigNotify>
 {
 public:
     PlaybackScrobbler() = default;
@@ -361,7 +360,7 @@ unsigned int PlaybackScrobbler::get_flags()
 bool PlaybackScrobbler::ShouldScrobble(metadb_handle_ptr const& track) const
 {
     return !config_.SubmitOnlyInLibrary ||
-           standard_api_create_t<library_manager>()->is_item_in_library(track);
+           library_manager::get()->is_item_in_library(track);
 }
 
 void PlaybackScrobbler::FlushCurrentTrack()

@@ -1,18 +1,26 @@
+#pragma once
+
 class NOVTABLE mainmenu_group : public service_base {
+	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(mainmenu_group);
 public:
 	virtual GUID get_guid() = 0;
 	virtual GUID get_parent() = 0;
 	virtual t_uint32 get_sort_priority() = 0;
-
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(mainmenu_group);
 };
 
 class NOVTABLE mainmenu_group_popup : public mainmenu_group {
+	FB2K_MAKE_SERVICE_INTERFACE(mainmenu_group_popup, mainmenu_group);
 public:
 	virtual void get_display_string(pfc::string_base & p_out) = 0;
 	void get_name(pfc::string_base & out) {get_display_string(out);}
+};
 
-	FB2K_MAKE_SERVICE_INTERFACE(mainmenu_group_popup,mainmenu_group);
+//! \since 1.4
+//! Allows you to control whether to render the group as a popup or inline.
+class NOVTABLE mainmenu_group_popup_v2 : public mainmenu_group_popup {
+	FB2K_MAKE_SERVICE_INTERFACE(mainmenu_group_popup_v2, mainmenu_group_popup);
+public:
+	virtual bool popup_condition() = 0;
 };
 
 class NOVTABLE mainmenu_commands : public service_base {
@@ -25,7 +33,7 @@ public:
 		//! Replaces the old return-false-from-get_display() behavior - use this to make your command hidden by default but accessible when holding shift.
 		flag_defaulthidden = 1<<3,
 		sort_priority_base = 0x10000,
-		sort_priority_dontcare = 0x80000000,
+		sort_priority_dontcare = 0x80000000u,
 		sort_priority_last = ~0,
 	};
 
@@ -79,7 +87,7 @@ public:
 
 	virtual bool get_description(t_uint32 p_id,pfc::string_base & p_out) = 0;
 
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(mainmenu_manager);
+	FB2K_MAKE_SERVICE_COREAPI(mainmenu_manager);
 };
 
 class mainmenu_groups {
@@ -87,7 +95,7 @@ public:
 	static const GUID file,view,edit,playback,library,help;
 	static const GUID file_open,file_add,file_playlist,file_etc;
 	static const GUID playback_controls,playback_etc;
-	static const GUID view_visualisations, view_alwaysontop;
+	static const GUID view_visualisations, view_alwaysontop, view_dsp;
 	static const GUID edit_part1,edit_part2,edit_part3;
 	static const GUID edit_part2_selection,edit_part2_sort,edit_part2_selection_sort;
 	static const GUID file_etc_preferences, file_etc_exit;

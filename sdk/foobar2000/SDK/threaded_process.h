@@ -1,3 +1,6 @@
+#pragma once
+#include <functional>
+
 //! Callback class passed to your threaded_process client code; allows you to give various visual feedback to the user.
 class NOVTABLE threaded_process_status {
 public:
@@ -33,6 +36,9 @@ public:
 	void set_progress_float(double p_state);
 	//! Helper; sets secondary progress with a float 0..1 scale.
 	void set_progress_secondary_float(double p_state);
+	//! Helper; gracefully reports multiple items being concurrently worked on.
+	void set_items( metadb_handle_list_cref items );
+	void set_items( pfc::list_base_const_t<const char*> const & paths );
 protected:
 	threaded_process_status() {}
 	~threaded_process_status() {}
@@ -41,13 +47,15 @@ protected:
 //! Callback class for the threaded_process API. You must implement this to create your own threaded_process client.
 class NOVTABLE threaded_process_callback : public service_base {
 public:
+	typedef HWND ctx_t; // fb2k mobile compatibility
+
 	//! Called from the main thread before spawning the worker thread. \n
 	//! Note that you should not access the window handle passed to on_init() in the worker thread later on.
-	virtual void on_init(HWND p_wnd) {}
+	virtual void on_init(ctx_t p_wnd) {}
 	//! Called from the worker thread. Do all the hard work here.
 	virtual void run(threaded_process_status & p_status,abort_callback & p_abort) = 0;
 	//! Called after the worker thread has finished executing.
-	virtual void on_done(HWND p_wnd,bool p_was_aborted) {}
+	virtual void on_done(ctx_t p_wnd,bool p_was_aborted) {}
 
 	FB2K_MAKE_SERVICE_INTERFACE(threaded_process_callback,service_base);
 };
@@ -103,7 +111,7 @@ public:
 	//! Queries user settings; returns whether various timeconsuming tasks should be blocking machine standby.
 	static bool g_query_preventStandby();
 
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(threaded_process);
+	FB2K_MAKE_SERVICE_COREAPI(threaded_process);
 };
 
 
@@ -116,4 +124,24 @@ public:
 	void on_done(HWND p_wnd,bool p_was_aborted) {m_target->tpc_on_done(p_wnd, p_was_aborted);	}
 private:
 	const service_ptr_t<TTarget> m_target;
+};
+
+//! Helper - lambda based threaded_process_callback implementation
+class threaded_process_callback_lambda : public threaded_process_callback {
+public:
+	typedef std::function<void(ctx_t)> on_init_t;
+	typedef std::function<void(threaded_process_status&, abort_callback&)> run_t;
+	typedef std::function<void(ctx_t, bool)> on_done_t;
+
+	static service_ptr_t<threaded_process_callback_lambda> create();
+	static service_ptr_t<threaded_process_callback_lambda> create(run_t f);
+	static service_ptr_t<threaded_process_callback_lambda> create(on_init_t f1, run_t f2, on_done_t f3);
+
+	on_init_t m_on_init;
+	run_t m_run;
+	on_done_t m_on_done;
+
+	void on_init(ctx_t p_ctx);
+	void run(threaded_process_status & p_status, abort_callback & p_abort);
+	void on_done(ctx_t p_ctx, bool p_was_aborted);
 };

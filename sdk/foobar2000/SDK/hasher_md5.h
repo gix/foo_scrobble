@@ -1,3 +1,5 @@
+#pragma once
+
 struct hasher_md5_state {
 	char m_data[128];
 };
@@ -6,6 +8,8 @@ struct hasher_md5_result {
 	char m_data[16];
 
 	t_uint64 xorHalve() const;
+	GUID asGUID() const;
+	pfc::string8 asString() const;
 
 	static hasher_md5_result null() {hasher_md5_result h = {}; return h;}
 };
@@ -43,7 +47,7 @@ public:
 	//! Helper
 	void process_string(hasher_md5_state & p_state,const char * p_string,t_size p_length = ~0) {return process(p_state,p_string,pfc::strlen_max(p_string,p_length));}
 
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(hasher_md5);
+	FB2K_MAKE_SERVICE_COREAPI(hasher_md5);
 };
 
 
@@ -64,8 +68,9 @@ public:
 	}
 private:
 	hasher_md5_state m_state;
-	static_api_ptr_t<hasher_md5> m_hasher;	
+	const hasher_md5::ptr m_hasher = hasher_md5::get();
 };
+
 template<bool isBigEndian = false>
 class stream_formatter_hasher_md5 : public stream_writer_formatter<isBigEndian> {
 public:

@@ -1,5 +1,4 @@
-#ifndef _PFC_GUID_H_
-#define _PFC_GUID_H_
+#pragma once
 
 namespace pfc {
 
@@ -32,19 +31,11 @@ namespace pfc {
 		GUID temp; memxor(&temp, &v1, &v2, sizeof(GUID)); return temp;
 	}
 
-	class format_guid_cpp : public pfc::string_formatter {
+	class format_guid_cpp : public string_formatter {
 	public:
-		format_guid_cpp(const GUID & guid) {
-			*this << "{0x" << pfc::format_hex(guid.Data1,8) << ", 0x" << pfc::format_hex(guid.Data2, 4) << ", 0x" << pfc::format_hex(guid.Data3,4) << ", {0x" << pfc::format_hex(guid.Data4[0],2);
-			for(int n = 1; n < 8; ++n) {
-				*this << ", 0x" << pfc::format_hex(guid.Data4[n],2);
-			}
-			*this << "}}";
-		}
+		format_guid_cpp(const GUID & guid);
 	};
     
     GUID createGUID();
+	uint64_t halveGUID( const GUID & id );
 }
-
-
-#endif

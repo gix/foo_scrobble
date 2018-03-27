@@ -1,4 +1,18 @@
+#pragma once
+
 #ifdef _WIN32
+
+#ifdef WINAPI_FAMILY_PARTITION
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define CPowerRequestAPI_Avail
+#endif
+#else // no WINAPI_FAMILY_PARTITION, desktop SDK
+#define CPowerRequestAPI_Avail
+#endif
+
+#endif // _WIN32
+
+#ifdef CPowerRequestAPI_Avail
 
 typedef HANDLE (WINAPI * pPowerCreateRequest_t) (
     __in void* Context
@@ -98,4 +112,4 @@ private:
 	void operator=(const CPowerRequest&);
 };
 
-#endif
+#endif // CPowerRequestAPI_Avail

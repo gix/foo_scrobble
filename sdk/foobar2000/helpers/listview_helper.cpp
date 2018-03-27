@@ -1,7 +1,9 @@
 #include "stdafx.h"
 
-#ifdef _WIN32
+#ifdef FOOBAR2000_DESKTOP_WINDOWS
 
+#include "win32_misc.h"
+#include "listview_helper.h"
 
 namespace listview_helper {
 
@@ -43,7 +45,7 @@ namespace listview_helper {
 	{
 		pfc::stringcvt::string_os_from_utf8 os_string_temp(p_name);
 
-		RECT rect = {0,0,p_width_dlu,0};
+		RECT rect = {0,0,(LONG)p_width_dlu,0};
 		MapDialogRect(GetParent(p_listview),&rect);
 
 		LVCOLUMN data = {};
@@ -188,4 +190,4 @@ int ListView_GetColumnCount(HWND listView) {
 }
 #endif
 
-#endif // _WIN32
+#endif // FOOBAR2000_DESKTOP_WINDOWS

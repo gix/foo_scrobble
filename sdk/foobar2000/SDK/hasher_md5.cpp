@@ -2,10 +2,14 @@
 
 GUID hasher_md5::guid_from_result(const hasher_md5_result & param)
 {
-	assert(sizeof(GUID) == sizeof(hasher_md5_result));
+	static_assert(sizeof(GUID) == sizeof(hasher_md5_result), "sanity");
 	GUID temp = * reinterpret_cast<const GUID*>(&param);
 	byte_order::order_le_to_native_t(temp);
 	return temp;
+}
+
+GUID hasher_md5_result::asGUID() const {
+	return hasher_md5::guid_from_result( *this );
 }
 
 hasher_md5_result hasher_md5::process_single(const void * p_buffer,t_size p_bytes)
@@ -32,4 +36,8 @@ t_uint64 hasher_md5_result::xorHalve() const {
 	const t_uint64 * v = reinterpret_cast<const t_uint64*>(&m_data);
 	return v[0] ^ v[1];
 #endif
+}
+
+pfc::string8 hasher_md5_result::asString() const {
+	return pfc::format_hexdump( this->m_data, sizeof(m_data), "").get_ptr();
 }

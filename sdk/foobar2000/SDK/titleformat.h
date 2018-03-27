@@ -50,9 +50,9 @@ public:
 };
 
 //! Standard service for instantiating titleformat_object. Implemented by the core; do not reimplement.
-//! To instantiate, use static_api_ptr_t<titleformat_compiler>.
-class NOVTABLE titleformat_compiler : public service_base
-{
+//! To instantiate, use titleformat_compiler::get().
+class NOVTABLE titleformat_compiler : public service_base {
+	FB2K_MAKE_SERVICE_COREAPI(titleformat_compiler);
 public:
 	//! Returns false in case of a compilation error.
 	virtual bool compile(titleformat_object::ptr & p_out,const char * p_spec) = 0;
@@ -72,15 +72,13 @@ public:
 	static void remove_forbidden_chars(titleformat_text_out * p_out,const GUID & p_inputtype,const char * p_source,t_size p_source_len,const char * p_forbidden_chars);
 	static void remove_forbidden_chars_string_append(pfc::string_receiver & p_out,const char * p_source,t_size p_source_len,const char * p_forbidden_chars);
 	static void remove_forbidden_chars_string(pfc::string_base & p_out,const char * p_source,t_size p_source_len,const char * p_forbidden_chars);
-
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(titleformat_compiler);
 };
 
 
 class titleformat_object_wrapper {
 public:
 	titleformat_object_wrapper(const char * p_script) {
-		static_api_ptr_t<titleformat_compiler>()->compile_force(m_script,p_script);
+		titleformat_compiler::get()->compile_force(m_script,p_script);
 	}
 
 	operator const service_ptr_t<titleformat_object> &() const {return m_script;}
@@ -118,7 +116,7 @@ public:
 	virtual bool process_function(const file_info & p_info,const playable_location & p_location,titleformat_text_out * p_out,const char * p_name,t_size p_name_length,titleformat_hook_function_params * p_params,bool & p_found_flag) = 0;
 	virtual bool remap_meta(const file_info & p_info,t_size & p_index, const char * p_name, t_size p_name_length) = 0;
 	
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(titleformat_common_methods);
+	FB2K_MAKE_SERVICE_COREAPI(titleformat_common_methods);
 };
 
 class titleformat_hook_impl_file_info : public titleformat_hook
@@ -132,7 +130,7 @@ protected:
 	const file_info * m_info;
 private:
 	const playable_location & m_location;
-	static_api_ptr_t<titleformat_common_methods> m_api;
+	const titleformat_common_methods::ptr m_api = titleformat_common_methods::get();
 };
 
 class titleformat_hook_impl_splitter : public titleformat_hook {
@@ -224,4 +222,20 @@ public:
 private:
 	titleformat_text_out * const m_out;
 	const GUID m_inputType;
+};
+
+
+class titleformat_object_cache {
+public:
+	titleformat_object_cache(const char * pattern) : m_pattern(pattern) {}
+	operator titleformat_object::ptr() {
+		PFC_ASSERT(core_api::assert_main_thread());
+		if (m_obj.is_empty()) {
+			titleformat_compiler::get()->compile_force(m_obj, m_pattern);
+		}
+		return m_obj;
+	}
+private:
+	const char * const m_pattern;
+	titleformat_object::ptr m_obj;
 };

@@ -29,9 +29,8 @@ pfc::string_base& operator<<(pfc::string_base& fmt, std::string_view str)
 }
 
 class LastfmScrobbleService
-    : public ScrobbleService
-    , public ScrobbleConfigNotify
-    , public init_stage_callback
+    : public service_multi_inherit3<ScrobbleService, ScrobbleConfigNotify,
+                                    init_stage_callback>
 {
 public:
     virtual ~LastfmScrobbleService() = default;

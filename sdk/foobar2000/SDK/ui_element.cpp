@@ -66,6 +66,8 @@ bool ui_element_subclass_description(const GUID & id, pfc::string_base & p_out) 
 		p_out = "Utility"; return true;
 	} else if (id == ui_element_subclass_containers) {
 		p_out = "Containers"; return true;
+	} else if ( id == ui_element_subclass_dsp ) {
+		p_out = "DSP"; return true;
 	} else {
 		return false;
 	}
@@ -121,4 +123,70 @@ t_size ui_element_instance_callback::notify_(ui_element_instance * source, const
 	ui_element_instance_callback_v3::ptr v3;
 	if (!this->service_query_t(v3)) { PFC_ASSERT(!"Outdated UI Element host implementation"); return 0; }
 	return v3->notify(source, what, param1, param2, param2size);
+}
+
+
+const ui_element_min_max_info & ui_element_min_max_info::operator|=(const ui_element_min_max_info & p_other) {
+	m_min_width = pfc::max_t(m_min_width,p_other.m_min_width);
+	m_min_height = pfc::max_t(m_min_height,p_other.m_min_height);
+	m_max_width = pfc::min_t(m_max_width,p_other.m_max_width);
+	m_max_height = pfc::min_t(m_max_height,p_other.m_max_height);
+	return *this;
+}
+ui_element_min_max_info ui_element_min_max_info::operator|(const ui_element_min_max_info & p_other) const {
+	ui_element_min_max_info ret(*this);
+	ret |= p_other;
+	return ret;
+}
+
+void ui_element_min_max_info::adjustForWindow(HWND wnd) {
+	RECT client = {0,0,10,10};
+	RECT adjusted = client;
+	BOOL bMenu = FALSE;
+	const DWORD style = (DWORD) GetWindowLong( wnd, GWL_STYLE );
+	if ( style & WS_POPUP ) {
+		bMenu = GetMenu( wnd ) != NULL;
+	}
+	if (AdjustWindowRectEx( &adjusted, style, bMenu, GetWindowLong(wnd, GWL_EXSTYLE) )) {
+		int dx = (adjusted.right - adjusted.left) - (client.right - client.left);
+		int dy = (adjusted.bottom - adjusted.top) - (client.bottom - client.top);
+		if ( dx < 0 ) dx = 0;
+		if ( dy < 0 ) dy = 0;
+		m_min_width += dx;
+		m_min_height += dy;
+		if ( m_max_width != ~0 ) m_max_width += dx;
+		if ( m_max_height != ~0 ) m_max_height += dy;
+	}
+}
+//! Retrieves element's minimum/maximum window size. Default implementation will fall back to WM_GETMINMAXINFO.
+ui_element_min_max_info ui_element_instance::get_min_max_info() {
+	ui_element_min_max_info ret;
+	MINMAXINFO temp = {};
+	temp.ptMaxTrackSize.x = 1024*1024;//arbitrary huge number
+	temp.ptMaxTrackSize.y = 1024*1024;
+	SendMessage(this->get_wnd(),WM_GETMINMAXINFO,0,(LPARAM)&temp);
+	if (temp.ptMinTrackSize.x >= 0) ret.m_min_width = temp.ptMinTrackSize.x;
+	if (temp.ptMaxTrackSize.x > 0) ret.m_max_width = temp.ptMaxTrackSize.x;
+	if (temp.ptMinTrackSize.y >= 0) ret.m_min_height = temp.ptMinTrackSize.y;
+	if (temp.ptMaxTrackSize.y > 0) ret.m_max_height = temp.ptMaxTrackSize.y;
+	return ret;
+}
+
+
+namespace {
+	class ui_element_replace_dialog_notify_impl : public ui_element_replace_dialog_notify {
+	public:
+		void on_cancelled() {
+			reply(pfc::guid_null);
+		}
+		void on_ok(const GUID & guid) {
+			reply(guid);
+		}
+		std::function<void(GUID)> reply;
+	};
+}
+ui_element_replace_dialog_notify::ptr ui_element_replace_dialog_notify::create(std::function<void(GUID)> reply) {
+	auto obj = fb2k::service_new<ui_element_replace_dialog_notify_impl>();
+	obj->reply = reply;
+	return obj;
 }
