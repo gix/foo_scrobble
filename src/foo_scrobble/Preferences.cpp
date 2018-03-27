@@ -109,7 +109,7 @@ BOOL ScrobblerPreferencesDialog::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lIn
                            GetDlgItem(IDB_AUTH), 0, nullptr, nullptr);
         authTooltip_.AddTool(&toolInfo);
 
-        authTooltip_.SetTitle(0, L"last.fm Authorization");
+        authTooltip_.SetTitle(nullptr, L"last.fm Authorization");
         authTooltip_.UpdateTipText(
             L"Scrobbling requires authorization from last.fm."
             L"\n\n"
