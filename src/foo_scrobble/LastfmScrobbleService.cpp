@@ -65,11 +65,11 @@ private:
     void OnWakeUp();
 
     void LogResponse(std::string_view task, outcome<void> const& result);
-    void HandleResponseStatus(lastfm::Status result);
+    void HandleResponseStatus(lastfm::Status status);
 
     void ProcessLocked();
     void PauseProcessing(duration<int, std::milli> delay);
-    void SetSessionKey(pfc::string_base const& newSessionkey);
+    void SetSessionKey(pfc::string_base const& newSessionKey);
 
     static constexpr double ComputeBurstCapacity(double tokensPerSecond)
     {
@@ -141,10 +141,10 @@ void LastfmScrobbleService::SendNowPlayingAsync(Track const& track)
     ProcessLocked();
 }
 
-void LastfmScrobbleService::SetSessionKey(pfc::string_base const& newSessionkey)
+void LastfmScrobbleService::SetSessionKey(pfc::string_base const& newSessionKey)
 {
     ExclusiveLock lock(mutex_);
-    webService_.SetSessionKey({newSessionkey.get_ptr(), newSessionkey.get_length()});
+    webService_.SetSessionKey({newSessionKey.get_ptr(), newSessionKey.get_length()});
 
     if (state_ == State::UnauthenticatedIdle) {
         state_ = State::AuthenticatedIdle;
