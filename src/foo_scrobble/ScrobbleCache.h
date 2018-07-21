@@ -17,7 +17,12 @@ public:
     Track& operator[](size_t index) { return tracks_[index]; }
 
     void Add(Track track) { tracks_.push_back(std::move(track)); }
-    void Evict(size_t count) { tracks_.erase(tracks_.begin(), tracks_.begin() + count); }
+
+    void Evict(size_t count)
+    {
+        count = std::min(count, tracks_.size());
+        tracks_.erase(tracks_.begin(), tracks_.begin() + count);
+    }
 
 private:
     ScrobbleCache(GUID const& guid)
