@@ -145,9 +145,30 @@ void LastfmScrobbleService::SetSessionKey(pfc::string_base const& newSessionKey)
     ExclusiveLock lock(mutex_);
     webService_.SetSessionKey({newSessionKey.get_ptr(), newSessionKey.get_length()});
 
-    if (state_ == State::UnauthenticatedIdle) {
-        state_ = State::AuthenticatedIdle;
-        ProcessLocked();
+    if (newSessionKey.is_empty()) {
+        switch (state_) {
+        case State::ShuttingDown:
+        case State::ShutDown:
+        case State::UnauthenticatedIdle:
+        case State::Suspended:
+            break;
+
+        case State::AwaitingResponse:
+        case State::Sleeping:
+            cts_.cancel();
+            cts_ = {};
+            state_ = State::UnauthenticatedIdle;
+            break;
+
+        case State::AuthenticatedIdle:
+            state_ = State::UnauthenticatedIdle;
+            break;
+        }
+    } else {
+        if (state_ == State::UnauthenticatedIdle) {
+            state_ = State::AuthenticatedIdle;
+            ProcessLocked();
+        }
     }
 }
 
