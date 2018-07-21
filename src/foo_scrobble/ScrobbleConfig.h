@@ -3,15 +3,12 @@
 namespace foo_scrobble
 {
 
-__declspec(selectany) extern char const* const DefaultArtistMapping = "[%artist%]";
-__declspec(selectany) extern char const* const DefaultTitleMapping = "[%title%]";
-__declspec(selectany) extern char const* const DefaultAlbumMapping = "[%album%]";
-__declspec(selectany) extern char const* const DefaultAlbumArtistMapping =
-    "[%album artist%]";
-__declspec(selectany) extern char const* const DefaultTrackNumberMapping =
-    "[%tracknumber%]";
-__declspec(selectany) extern char const* const DefaultMBTrackIdMapping =
-    "[%musicbrainz_trackid%]";
+inline char const* const DefaultArtistMapping = "[%artist%]";
+inline char const* const DefaultTitleMapping = "[%title%]";
+inline char const* const DefaultAlbumMapping = "[%album%]";
+inline char const* const DefaultAlbumArtistMapping = "[%album artist%]";
+inline char const* const DefaultTrackNumberMapping = "[%tracknumber%]";
+inline char const* const DefaultMBTrackIdMapping = "[%musicbrainz_trackid%]";
 
 class ScrobbleConfig : public cfg_var
 {
