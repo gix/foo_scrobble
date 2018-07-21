@@ -1,6 +1,7 @@
-/build
-/src/foo_scrobble/Version.h
+/build/
+/dist/
 /src/foobar2000_sdk.user.props
+/test/
 
 obj/
 Debug/

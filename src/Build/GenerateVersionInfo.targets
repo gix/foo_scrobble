@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GeneratedVersionInfoFile Condition="'$(GeneratedVersionInfoFile)' ==''">$(IntermediateOutputPath)$(MSBuildProjectName).Version.rc</GeneratedVersionInfoFile>
+    <GenerateVersionInfo Condition="'$(GenerateVersionInfo)' == ''">true</GenerateVersionInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Version)' == '' ">
+    <VersionPrefix Condition=" '$(VersionPrefix)' == '' ">1.0.0</VersionPrefix>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</Version>
+    <Version Condition=" '$(Version)' == '' ">$(VersionPrefix)</Version>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors Condition=" '$(Authors)'=='' ">$(TargetName)</Authors>
+    <Company Condition=" '$(Company)'=='' ">$(Authors)</Company>
+    <ModuleTitle Condition=" '$(ModuleTitle)' == '' ">$(TargetName)</ModuleTitle>
+    <InternalName Condition=" '$(InternalName)' == '' ">$(TargetName)</InternalName>
+    <OriginalFilename Condition=" '$(OriginalFilename)' == '' ">$(TargetName)$(TargetExt)</OriginalFilename>
+    <Product Condition=" '$(Product)' == '' ">$(TargetName)</Product>
+    <ProductVersion Condition=" '$(ProductVersion)' == '' ">$(InformationalVersion)</ProductVersion>
+    <ProductVersion Condition=" '$(ProductVersion)' == '' ">$(FileVersion)</ProductVersion>
+    <ProductVersion Condition=" '$(ProductVersion)' == '' ">$(AssemblyVersion)</ProductVersion>
+    <SimpleFileVersion Condition=" '$(SimpleFileVersion)' == '' ">$(FileVersion)</SimpleFileVersion>
+    <SimpleProductVersion Condition=" '$(SimpleProductVersion)' == '' ">$(AssemblyVersion)</SimpleProductVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GenerateVersionInfo)' == 'true'">
+    <GenerateModuleCompanyAttribute Condition="'$(GenerateModuleCompanyAttribute)' == ''">true</GenerateModuleCompanyAttribute>
+    <GenerateModuleConfigurationAttribute Condition="'$(GenerateModuleConfigurationAttribute)' == ''">true</GenerateModuleConfigurationAttribute>
+    <GenerateModuleCopyrightAttribute Condition="'$(GenerateModuleCopyrightAttribute)' == ''">true</GenerateModuleCopyrightAttribute>
+    <GenerateModuleDescriptionAttribute Condition="'$(GenerateModuleDescriptionAttribute)' == ''">true</GenerateModuleDescriptionAttribute>
+    <GenerateModuleFileVersionAttribute Condition="'$(GenerateModuleFileVersionAttribute)' == ''">true</GenerateModuleFileVersionAttribute>
+    <GenerateModuleInformationalVersionAttribute Condition="'$(GenerateModuleInformationalVersionAttribute)' == ''">true</GenerateModuleInformationalVersionAttribute>
+    <GenerateModuleInternalNameAttribute Condition="'$(GenerateModuleInternalNameAttribute)' == ''">true</GenerateModuleInternalNameAttribute>
+    <GenerateModuleOriginalFilenameAttribute Condition="'$(GenerateModuleOriginalFilenameAttribute)' == ''">true</GenerateModuleOriginalFilenameAttribute>
+    <GenerateModuleProductAttribute Condition="'$(GenerateModuleProductAttribute)' == ''">true</GenerateModuleProductAttribute>
+    <GenerateModuleProductVersionAttribute Condition="'$(GenerateModuleProductVersionAttribute)' == ''">true</GenerateModuleProductVersionAttribute>
+    <GenerateModuleTrademarkAttribute Condition="'$(GenerateModuleTrademarkAttribute)' == ''">true></GenerateModuleTrademarkAttribute>
+    <GenerateModuleTitleAttribute Condition="'$(GenerateModuleTitleAttribute)' == ''">true</GenerateModuleTitleAttribute>
+    <GenerateModuleVersionAttribute Condition="'$(GenerateModuleVersionAttribute)' == ''">true</GenerateModuleVersionAttribute>
+  </PropertyGroup>
+
+  <UsingTask TaskName="CreateVersionResource"
+             TaskFactory="CodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <SimpleFileVersion ParameterType="System.String"/>
+      <SimpleProductVersion ParameterType="System.String"/>
+      <ConfigurationType ParameterType="System.String"/>
+      <IsDebugBuild ParameterType="System.Boolean"/>
+      <LangId ParameterType="System.Int32"/>
+      <Attributes ParameterType="Microsoft.Build.Framework.ITaskItem[]"/>
+      <OutputFile ParameterType="Microsoft.Build.Framework.ITaskItem" Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System"/>
+      <Using Namespace="System.Linq"/>
+      <Using Namespace="System.IO"/>
+      <Using Namespace="System.Text"/>
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+    var fileVersion = SimpleFileVersion ?? "0.0.0.0";
+    var productVersion = SimpleProductVersion ?? "0.0.0.0";
+
+    int fileFlags = 0;
+    if (IsDebugBuild)
+        fileFlags |= 0x1;
+    if (Attributes.Any(x => x.ItemSpec == "PrivateBuild"))
+        fileFlags |= 0x8; // VS_FF_PRIVATEBUILD
+    if (Attributes.Any(x => x.ItemSpec == "SpecialBuild"))
+        fileFlags |= 0x20; // VS_FF_SPECIALBUILD
+
+    int fileOS = 0x40004; // VOS_NT_WINDOWS32;
+
+    int fileType;
+    switch (ConfigurationType) {
+    default:               fileType = 0; break; // VFT_UNKNOWN
+    case "Application":    fileType = 1; break; // VFT_APP
+    case "DynamicLibrary": fileType = 2; break; // VFT_DLL
+    case "StaticLibrary":  fileType = 7; break; // VFT_STATIC_LIB
+    }
+
+    if (LangId == 0)
+        LangId = 0x409; // U.S. English
+    int charsetId = 1200; // Unicode
+
+    var buffer = new StringBuilder();
+    buffer.AppendLine("#define APSTUDIO_READONLY_SYMBOLS");
+    buffer.AppendLine("#include \"afxres.h\"");
+    buffer.AppendLine("#undef APSTUDIO_READONLY_SYMBOLS");
+    buffer.AppendLine("LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US");
+    buffer.AppendLine("#pragma code_page(1252)");
+    buffer.AppendLine("VS_VERSION_INFO VERSIONINFO");
+    buffer.AppendFormat("  FILEVERSION {0}", fileVersion.Replace(".", ","));
+    buffer.AppendLine();
+    buffer.AppendFormat("  PRODUCTVERSION {0}", productVersion.Replace(".", ","));
+    buffer.AppendLine();
+    buffer.AppendLine("  FILEFLAGSMASK 0x3FL");
+    buffer.AppendFormat("  FILEFLAGS 0x{0:X}L", fileFlags);
+    buffer.AppendLine();
+    buffer.AppendFormat("  FILEOS 0x{0:X}L", fileOS);
+    buffer.AppendLine();
+    buffer.AppendFormat("  FILETYPE 0x{0:X}L", fileType);
+    buffer.AppendLine();
+    buffer.AppendLine("  FILESUBTYPE 0x0L");
+    buffer.AppendLine("BEGIN");
+    buffer.AppendLine("    BLOCK \"StringFileInfo\"");
+    buffer.AppendLine("    BEGIN");
+    buffer.AppendFormat("        BLOCK \"{0:X4}{1:X4}\"", LangId, charsetId);
+    buffer.AppendLine();
+    buffer.AppendLine("        BEGIN");
+
+    foreach (var attrib in Attributes) {
+        buffer.AppendFormat("            VALUE \"{0}\", \"{1}\"", attrib.ItemSpec, attrib.GetMetadata("Value"));
+        buffer.AppendLine();
+    }
+
+    buffer.AppendLine("        END");
+    buffer.AppendLine("    END");
+    buffer.AppendLine("    BLOCK \"VarFileInfo\"");
+    buffer.AppendLine("    BEGIN");
+    buffer.AppendFormat("        VALUE \"Translation\", {0:D}, {0:D}", LangId, charsetId);
+    buffer.AppendLine();
+    buffer.AppendLine("    END");
+    buffer.AppendLine("END");
+
+    File.WriteAllText(OutputFile.GetMetadata("FullPath"), buffer.ToString());
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="GenerateVersionInfo"
+          BeforeTargets="BeforeResourceCompile"
+          DependsOnTargets="CoreGenerateVersionInfo"
+          Condition="'$(GenerateVersionInfo)' == 'true'" />
+
+  <Target Name="CoreGenerateVersionInfo"
+          Condition="'$(Language)'=='C' or '$(Language)'=='C++'"
+          Inputs="$(MSBuildAllProjects)"
+          Outputs="$(GeneratedVersionInfoFile)">
+    <ItemGroup>
+      <ModuleAttribute Include="Comments" Condition="'$(Description)' != '' and '$(GenerateModuleCommentsAttribute)' == 'true'">
+        <Value>$(Description)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="CompanyName" Condition="'$(Company)' != '' and '$(GenerateModuleCompanyAttribute)' == 'true'">
+        <Value>$(Company)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="FileDescription" Condition="'$(ModuleTitle)' != '' and '$(GenerateModuleTitleAttribute)' == 'true'">
+        <Value>$(ModuleTitle)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="InternalName" Condition="'$(InternalName)' != '' and '$(GenerateModuleInternalNameAttribute)' == 'true'">
+        <Value>$(InternalName)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="LegalCopyright" Condition="'$(Copyright)' != '' and '$(GenerateModuleCopyrightAttribute)' == 'true'">
+        <Value>$(Copyright)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="LegalTrademarks" Condition="'$(Trademark)' != '' and '$(GenerateModuleTrademarkAttribute)' == 'true'">
+        <Value>$(Trademark)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="OriginalFilename" Condition="'$(OriginalFilename)' != '' and '$(GenerateModuleOriginalFilenameAttribute)' == 'true'">
+        <Value>$(OriginalFilename)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="ProductName" Condition="'$(Product)' != '' and '$(GenerateModuleProductAttribute)' == 'true'">
+        <Value>$(Product)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="FileVersion" Condition="'$(FileVersion)' != '' and '$(GenerateModuleFileVersionAttribute)' == 'true'">
+        <Value>$(FileVersion)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="ProductVersion" Condition="'$(ProductVersion)' != '' and '$(GenerateModuleProductVersionAttribute)' == 'true'">
+        <Value>$(ProductVersion)</Value>
+      </ModuleAttribute>
+    </ItemGroup>
+
+    <CreateVersionResource SimpleFileVersion="$(SimpleFileVersion)"
+                           SimpleProductVersion="$(SimpleProductVersion)"
+                           ConfigurationType="$(ConfigurationType)"
+                           IsDebugBuild="$(UseDebugLibraries)"
+                           Attributes="@(ModuleAttribute)"
+                           OutputFile="$(GeneratedVersionInfoFile)">
+      <Output TaskParameter="OutputFile" ItemName="FileWrites"/>
+    </CreateVersionResource>
+
+    <ItemGroup>
+      <ResourceCompile Remove="$(GeneratedVersionInfoFile)"/>
+      <ResourceCompile Include="$(GeneratedVersionInfoFile)">
+        <ResourceOutputFileName>$(GeneratedVersionInfoFile).res</ResourceOutputFileName>
+      </ResourceCompile>
+    </ItemGroup>
+  </Target>
+</Project>

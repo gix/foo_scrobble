@@ -7,7 +7,8 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <PackageDir>$(MSBuildThisFileDirectory)dist\</PackageDir>
-    <CommitInfo>dev</CommitInfo>
+
+    <BuildProperties>Configuration=$(Configuration);Platform=x86;OfficialBuild=true</BuildProperties>
   </PropertyGroup>
 
   <UsingTask TaskName="Zip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
@@ -42,24 +43,24 @@
     </Task>
   </UsingTask>
 
-  <Target Name="GetCommitInfo">
-    <Exec Command="git describe --long --tags --always" ContinueOnError="true" ConsoleToMSBuild="true" UseCommandProcessor="false">
-      <Output TaskParameter="ConsoleOutput" PropertyName="CommitInfo"/>
-    </Exec>
-    <WriteLinesToFile File="src\foo_scrobble\Version.h"
-                      Lines="#define FOO_SCROBBLE_VERSION &quot;$(CommitInfo)&quot;"
-                      Overwrite="true"/>
-  </Target>
-
-  <Target Name="Build" DependsOnTargets="GetCommitInfo">
+  <Target Name="Clean">
     <MSBuild Projects="@(Project)"
-             Properties="Configuration=$(Configuration);Platform=x86"
+             Properties="$(BuildProperties)"
              BuildInParallel="true"
              StopOnFirstFailure="true"
-             Targets="Rebuild"/>
+             Targets="Clean"/>
+    <RemoveDir Directories="build\x86"/>
   </Target>
 
-  <Target Name="Package" DependsOnTargets="Build">
+  <Target Name="Build">
+    <MSBuild Projects="@(Project)"
+             Properties="$(BuildProperties)"
+             BuildInParallel="true"
+             StopOnFirstFailure="true"
+             Targets="Build"/>
+  </Target>
+
+  <Target Name="Package" DependsOnTargets="Clean;Build">
     <Zip Files="build\x86\bin\foo_scrobble.dll"
          OutputFilename="$(PackageDir)foo_scrobble.fb2k-component"/>
     <Zip Files="build\x86\bin\foo_scrobble.dll;build\x86\bin\foo_scrobble.pdb"

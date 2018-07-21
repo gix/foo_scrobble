@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntDir)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)GenerateVersionInfo.targets" />
+
+  <Target Name="VerifyBuildProperties" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(OutputPlatform)' == ''" Text="OutputPlatform property is empty!"/>
+  </Target>
+
+  <Target Name="UpdateTargetFrameworkMonikerAttributeCompile"
+          BeforeTargets="ComputeReferenceCLInput;ClCompile"
+          DependsOnTargets="GenerateTargetFrameworkMonikerAttribute"
+          AfterTargets="GenerateTargetFrameworkMonikerAttribute"
+          Condition="'$(GenerateTargetFrameworkAttribute)' == 'true'">
+    <ItemGroup>
+      <ClCompile Condition="'%(ClCompile.Identity)' == '$(TargetFrameworkMonikerAssemblyAttributesPath)'">
+        <AssemblerListingLocation>$(TargetFrameworkMonikerAssemblyAttributesPath).asm</AssemblerListingLocation>
+        <ObjectFileName>$(TargetFrameworkMonikerAssemblyAttributesPath).obj</ObjectFileName>
+        <AdditionalOptions>-Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
+</Project>

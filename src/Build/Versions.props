@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <Import Project="GitHead.props" />
+
+  <PropertyGroup>
+    <Company></Company>
+    <Copyright></Copyright>
+    <Authors>Nico Rieck</Authors>
+    <Product>foo_scrobble</Product>
+
+    <AssemblyVersionBase Condition="'$(AssemblyVersion)' == ''">1.2.0</AssemblyVersionBase>
+    <FileVersionBase Condition="'$(FileVersionBase)' == ''">1.2.0</FileVersionBase>
+
+    <BuildMoniker Condition="'$(BuildMoniker)' == '' AND '$(OfficialBuild)' == 'true'">rel</BuildMoniker>
+    <BuildMoniker Condition="'$(BuildMoniker)' == ''">dev</BuildMoniker>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BuildNumber Condition="'$(BuildNumber)' == ''">$([System.DateTime]::UtcNow.ToString(`yyyyMMdd.HHmm`))</BuildNumber>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(BuildNumber)' != ''">
+    <!-- When a build number is specified, it needs to be in the format of 'x.y'-->
+    <Error Condition="$(BuildNumber.Split(`.`).Length) != 2">BuildNumber should have two parts (in the form of 'x.y')</Error>
+
+    <!-- Split the build parts out from the BuildNumber which is given to us by MicroBuild in the format of yyyymmdd.nn
+         where BuildNumberFiveDigitDateStamp is mmmdd (such as 60615) and BuildNumberBuildOfTheDay is nn (which represents the nth build
+         started that day). So the first build of the day, 20160615.1, will produce something similar to BuildNumberFiveDigitDateStamp: 60615,
+         BuildNumberBuildOfTheDayPadded: 01; and the 12th build of the day, 20160615.12, will produce BuildNumberFiveDigitDateStamp: 60615, BuildNumberBuildOfTheDay: 12
+         Additionally, in order ensure the value fits in the 16-bit PE header fields, we will only take the last five digits of the BuildNumber, so
+         in the case of 20160615, we will set BuildNumberFiveDigitDateStamp to 60615. Further, if this would result in a number like 71201 or 81201, we
+         decrement the year and add 12 to the month to extend the time. -->
+    <BuildNumberFiveDigitDateStamp>$([MSBuild]::Subtract($([System.Convert]::ToInt32($(BuildNumber.Split('.').GetValue(0)))), 20100000))</BuildNumberFiveDigitDateStamp>
+    <_BuildNumberFiveDigitDateStampYearsToOffset>$([System.Math]::Max($([System.Convert]::ToInt32($([MSBuild]::Subtract($([MSBuild]::Divide($(BuildNumberFiveDigitDateStamp), 10000)), 6)))), 0))</_BuildNumberFiveDigitDateStampYearsToOffset>
+    <BuildNumberFiveDigitDateStamp>$([MSBuild]::Subtract($([System.Convert]::ToInt32($(BuildNumberFiveDigitDateStamp))), $([MSBuild]::Multiply($(_BuildNumberFiveDigitDateStampYearsToOffset), 8800))))</BuildNumberFiveDigitDateStamp>
+    <BuildNumberBuildOfTheDayPadded>$(BuildNumber.Split('.').GetValue(1).PadLeft(2, `0`))</BuildNumberBuildOfTheDayPadded>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ReleaseVersion>$(FileVersionBase)</ReleaseVersion>
+    <PreReleaseVersion>$(FileVersionBase)-$(BuildMoniker)</PreReleaseVersion>
+    <PerBuildPreReleaseVersion>$(PreReleaseVersion)-$(BuildNumberFiveDigitDateStamp)-$(BuildNumberBuildOfTheDayPadded)</PerBuildPreReleaseVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyVersion>$(AssemblyVersionBase).0</AssemblyVersion>
+    <FileVersion>$(FileVersionBase).$(BuildNumberFiveDigitDateStamp)</FileVersion>
+    <InformationalVersion>$(PerBuildPreReleaseVersion) ($(GitHeadSha))</InformationalVersion>
+    <VsixVersion>$(AssemblyVersionBase).$(BuildNumberFiveDigitDateStamp)$(BuildNumberBuildOfTheDayPadded)</VsixVersion>
+    <Version>$(PerBuildPreReleaseVersion)</Version>
+    <Version Condition="'$(PerBuildPreReleaseVersion)' == ''">$(ReleaseVersion)</Version>
+  </PropertyGroup>
+</Project>
