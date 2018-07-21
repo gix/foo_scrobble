@@ -198,7 +198,7 @@ public:
 private:
     unix_clock::time_point lastUpdateTime_;
     bool notifiedNowPlaying_ = false;
-    bool skip_;
+    bool skip_ = false;
 };
 } // namespace
 
@@ -259,8 +259,8 @@ private:
 
     ScrobbleConfig const& config_{Config};
     PendingTrack pendingTrack_;
-    SecondsD accumulatedPlaybackTime_;
-    SecondsD lastPlaybackTime_;
+    SecondsD accumulatedPlaybackTime_{};
+    SecondsD lastPlaybackTime_{};
     bool isActive_ = false;
 
     std::unique_ptr<TitleformatContext> formatContext_;

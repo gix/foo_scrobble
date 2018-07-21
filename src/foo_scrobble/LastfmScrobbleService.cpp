@@ -209,10 +209,10 @@ void LastfmScrobbleService::OnWakeUp()
     case State::ShutDown:
         return;
 
-    case State::UnauthenticatedIdle:
     case State::Suspended:
     case State::AwaitingResponse:
     case State::AuthenticatedIdle:
+    case State::UnauthenticatedIdle:
         assert(false);
         return;
 

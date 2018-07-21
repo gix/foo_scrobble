@@ -2,6 +2,7 @@
 #include "Track.h"
 #include "fb2ksdk.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace foo_scrobble
@@ -14,7 +15,7 @@ public:
 
     bool IsEmpty() const { return tracks_.empty(); }
     size_t Count() const { return tracks_.size(); }
-    Track& operator[](size_t index) { return tracks_[index]; }
+    Track const& operator[](size_t index) const { return tracks_[index]; }
 
     void Add(Track track) { tracks_.push_back(std::move(track)); }
 
