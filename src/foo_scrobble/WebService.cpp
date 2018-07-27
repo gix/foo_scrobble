@@ -171,7 +171,7 @@ bool IsSuccess(web::http::http_response const& response)
 }
 
 #if _DEBUG
-//wchar_t const* const ServiceBaseUrl = L"http://localhost:64660/";
+// wchar_t const* const ServiceBaseUrl = L"http://localhost:64660/";
 wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
 #else
 wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
@@ -374,13 +374,27 @@ static size_t TrimmedLength(char const* str)
     return length;
 }
 
+struct Trimmed
+{
+    char const* String;
+};
+
+static pfc::string_base& operator<<(pfc::string_base& os, Trimmed const& value)
+{
+    os.add_string(value.String, TrimmedLength(value.String));
+    return os;
+}
+
 pfc::string_base& operator<<(pfc::string_base& os, std::exception_ptr const& ptr)
 {
     try {
         std::rethrow_exception(ptr);
+    } catch (web::http::http_exception const& ex) {
+        auto const code = ex.error_code();
+        os << Trimmed{ex.what()} << " [error code: " << code.value() << ", "
+           << Trimmed{code.message().c_str()} << "]";
     } catch (std::exception const& ex) {
-        char const* str = ex.what();
-        os.add_string(str, TrimmedLength(str));
+        os << Trimmed{ex.what()};
     } catch (...) {
         os << "<unknown non-standard exception>";
     }
