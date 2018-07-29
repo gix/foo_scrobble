@@ -1,6 +1,6 @@
 #include "fb2ksdk.h"
 
-DECLARE_COMPONENT_VERSION("Scrobble", "1.2.0",
+DECLARE_COMPONENT_VERSION("Scrobble", "1.3.0",
                           "foo_scrobble - Scrobbling for <http://www.last.fm/>\n"
                           "\n"
                           "Current version at: https://github.com/gix/foo_scrobble")

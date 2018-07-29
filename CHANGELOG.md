@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2018-07-29
+### Fixed
+- Automatic proxy usage on Windows 8.1 and later would fail with
+  "Setting proxy options: 12011: The option value cannot be set"
+
+
 ## [1.2.0] - 2018-07-21
 ### Changed
 - Improved error reporting

@@ -12,8 +12,8 @@
     <Authors>Nico Rieck</Authors>
     <Product>foo_scrobble</Product>
 
-    <AssemblyVersionBase Condition="'$(AssemblyVersion)' == ''">1.2.0</AssemblyVersionBase>
-    <FileVersionBase Condition="'$(FileVersionBase)' == ''">1.2.0</FileVersionBase>
+    <AssemblyVersionBase Condition="'$(AssemblyVersion)' == ''">1.3.0</AssemblyVersionBase>
+    <FileVersionBase Condition="'$(FileVersionBase)' == ''">1.3.0</FileVersionBase>
 
     <BuildMoniker Condition="'$(BuildMoniker)' == '' AND '$(OfficialBuild)' == 'true'">rel</BuildMoniker>
     <BuildMoniker Condition="'$(BuildMoniker)' == ''">dev</BuildMoniker>
