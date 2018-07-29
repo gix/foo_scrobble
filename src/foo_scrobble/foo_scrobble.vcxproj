@@ -14,7 +14,7 @@
     <ProjectGuid>{73C98C20-7A67-44CD-905E-4EEC264400C4}</ProjectGuid>
     <RootNamespace>foo_scrobble</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
-    <VcpkgTriplet>x86-windows-static-md</VcpkgTriplet>
+    <VcpkgTriplet>x86-windows-static-md-noiso</VcpkgTriplet>
     <VcpkgEnabled>true</VcpkgEnabled>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
