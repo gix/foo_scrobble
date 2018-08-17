@@ -236,7 +236,7 @@ public:
     // #pragma endregion ScrobbleConfigNotify
 
 private:
-    bool ShouldScrobble(metadb_handle_ptr const& track) const;
+    bool IsActive() const { return isScrobbling_ || config_.EnableNowPlaying; }
     void FlushCurrentTrack();
 
     ScrobbleService& GetScrobbleService()
@@ -261,7 +261,7 @@ private:
     PendingTrack pendingTrack_;
     SecondsD accumulatedPlaybackTime_{};
     SecondsD lastPlaybackTime_{};
-    bool isActive_ = false;
+    bool isScrobbling_ = false;
 
     std::unique_ptr<TitleformatContext> formatContext_;
     ScrobbleService* scrobbler_ = nullptr;
@@ -278,17 +278,20 @@ void PlaybackScrobbler::on_playback_new_track(metadb_handle_ptr p_track)
 {
     FlushCurrentTrack();
 
-    isActive_ = config_.EnableScrobbling;
-    if (!isActive_)
+    isScrobbling_ = config_.EnableScrobbling;
+    if (!IsActive())
         return;
 
     if (p_track->get_length() <= 0)
         return;
 
-    if (ShouldScrobble(p_track)) {
+    bool const skipTrack = config_.SubmitOnlyInLibrary &&
+                           !library_manager::get()->is_item_in_library(p_track);
+
+    if (!skipTrack) {
         pendingTrack_.Format(*p_track, GetFormatContext());
     } else {
-        isActive_ = false;
+        isScrobbling_ = false;
         FB2K_console_formatter() << "foo_scrobble: Skipping track not in media library.";
     }
 }
@@ -302,7 +305,7 @@ void PlaybackScrobbler::on_playback_stop(play_control::t_stop_reason p_reason)
 
 void PlaybackScrobbler::on_playback_seek(double p_time)
 {
-    if (!isActive_)
+    if (!IsActive())
         return;
 
     lastPlaybackTime_ = SecondsD(p_time);
@@ -312,7 +315,7 @@ void PlaybackScrobbler::on_playback_pause(bool /*p_state*/) {}
 
 void PlaybackScrobbler::on_playback_edited(metadb_handle_ptr p_track)
 {
-    if (!isActive_)
+    if (!IsActive())
         return;
 
     if (!pendingTrack_.IsDynamic)
@@ -325,8 +328,8 @@ void PlaybackScrobbler::on_playback_dynamic_info_track(file_info const& p_info)
 {
     FlushCurrentTrack();
 
-    isActive_ = config_.EnableScrobbling && config_.SubmitDynamicSources;
-    if (!isActive_)
+    isScrobbling_ = config_.EnableScrobbling && config_.SubmitDynamicSources;
+    if (!IsActive())
         return;
 
     pendingTrack_.Format(p_info, GetFormatContext());
@@ -334,13 +337,14 @@ void PlaybackScrobbler::on_playback_dynamic_info_track(file_info const& p_info)
 
 void PlaybackScrobbler::on_playback_time(double p_time)
 {
-    if (!isActive_)
+    if (!IsActive())
         return;
 
     accumulatedPlaybackTime_ += SecondsD(p_time) - lastPlaybackTime_;
     lastPlaybackTime_ = SecondsD(p_time);
 
-    if (pendingTrack_.ShouldSendNowPlaying(accumulatedPlaybackTime_)) {
+    if (config_.EnableNowPlaying &&
+        pendingTrack_.ShouldSendNowPlaying(accumulatedPlaybackTime_)) {
         GetScrobbleService().SendNowPlayingAsync(pendingTrack_);
         pendingTrack_.NowPlayingSent();
     }
@@ -357,20 +361,14 @@ unsigned int PlaybackScrobbler::get_flags()
 
 #pragma endregion play_callback_static
 
-bool PlaybackScrobbler::ShouldScrobble(metadb_handle_ptr const& track) const
-{
-    return !config_.SubmitOnlyInLibrary ||
-           library_manager::get()->is_item_in_library(track);
-}
-
 void PlaybackScrobbler::FlushCurrentTrack()
 {
-    if (isActive_ && pendingTrack_.CanScrobble(accumulatedPlaybackTime_, true))
+    if (isScrobbling_ && pendingTrack_.CanScrobble(accumulatedPlaybackTime_, true))
         GetScrobbleService().ScrobbleAsync(std::move(static_cast<Track&>(pendingTrack_)));
 
     accumulatedPlaybackTime_ = SecondsD::zero();
     lastPlaybackTime_ = SecondsD::zero();
-    isActive_ = false;
+    isScrobbling_ = false;
     pendingTrack_ = PendingTrack();
 }
 
