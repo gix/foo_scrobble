@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2018-08-18
+### Fixed
+- Disabling Now Playing notifications is now correctly honored.
+
+
 ## [1.3.0] - 2018-07-29
 ### Fixed
 - Automatic proxy usage on Windows 8.1 and later would fail with
