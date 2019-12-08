@@ -69,6 +69,8 @@ private:
     void ProcessLocked();
     void PauseProcessing(duration<int, std::milli> delay);
     void SetSessionKey(pfc::string_base const& newSessionKey);
+    void SetSessionKeyLocked(pfc::string_base const& newSessionKey);
+    void ClearSessionKeyLocked();
 
     static constexpr double ComputeBurstCapacity(double tokensPerSecond)
     {
@@ -146,6 +148,11 @@ void LastfmScrobbleService::SendNowPlayingAsync(Track const& track)
 void LastfmScrobbleService::SetSessionKey(pfc::string_base const& newSessionKey)
 {
     ExclusiveLock lock(mutex_);
+    SetSessionKeyLocked(newSessionKey);
+}
+
+void LastfmScrobbleService::SetSessionKeyLocked(pfc::string_base const& newSessionKey)
+{
     webService_.SetSessionKey({newSessionKey.get_ptr(), newSessionKey.get_length()});
 
     if (newSessionKey.is_empty()) {
@@ -173,6 +180,12 @@ void LastfmScrobbleService::SetSessionKey(pfc::string_base const& newSessionKey)
             ProcessLocked();
         }
     }
+}
+
+void LastfmScrobbleService::ClearSessionKeyLocked()
+{
+    SetSessionKeyLocked(pfc::string8());
+    fb2k::inMainThread([]() { Config.SessionKey.reset(); });
 }
 
 void LastfmScrobbleService::Shutdown()
@@ -393,6 +406,7 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
         case lastfm::Status::AuthenticationFailed:
         case lastfm::Status::InvalidSessionKey:
             state_ = State::UnauthenticatedIdle;
+            ClearSessionKeyLocked();
             break;
 
         case lastfm::Status::InvalidAPIKey:

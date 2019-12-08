@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [] - 0000-00-00
+### Fixed
+- If authorization with last.fm is rejected, the unauthorized state is now
+  immediately visible in the settings dialog, and the session key is discarded.
+
 ## [1.3.1] - 2018-08-18
 ### Fixed
 - Disabling Now Playing notifications is now correctly honored.
