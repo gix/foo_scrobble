@@ -9,6 +9,9 @@
   <PropertyGroup Label="UserMacros">
   </PropertyGroup>
   <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Foobar2000SdkPath);$(Foobar2000SdkPath)foobar2000\SDK;$(Foobar2000SdkPath)foobar2000\helpers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(Foobar2000SdkPath)foobar2000\shared\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'=='true'">$(MSBuildThisFileDirectory)Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -17,11 +20,8 @@
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'!='true'">$(Foobar2000SdkPath)foobar2000\SDK\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'=='true'">$(Foobar2000SdkPath)foobar2000\foobar2000_component_client\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'!='true'">$(Foobar2000SdkPath)foobar2000\foobar2000_component_client\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>shared.lib;pfc.lib;foobar2000_SDK.lib;foobar2000_sdk_helpers.lib;foobar2000_ATL_helpers.lib;foobar2000_component_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shared.lib;pfc.lib;libPPUI.lib;foobar2000_SDK.lib;foobar2000_sdk_helpers.lib;foobar2000_component_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(Foobar2000SdkPath)foobar2000\SDK;$(Foobar2000SdkPath)foobar2000\ATLHelpers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

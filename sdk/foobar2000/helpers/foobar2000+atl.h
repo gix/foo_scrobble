@@ -9,8 +9,8 @@
 #include <atlbase.h>
 #include <atltypes.h>
 #include <atlstr.h>
-#include <atlapp.h>
-#include <atlctrls.h>
+#include <wtl/atlapp.h>
+#include <wtl/atlctrls.h>
 #include <atlwin.h>
 #include <atlcom.h>
-#include <atlcrack.h>
+#include <wtl/atlcrack.h>

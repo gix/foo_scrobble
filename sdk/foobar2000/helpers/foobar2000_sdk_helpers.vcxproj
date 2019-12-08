@@ -247,12 +247,12 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets" Condition="Exists('..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets')" />
+    <Import Project="..\..\..\src\packages\foo_scrobble-deps.1.0.0\build\native\foo_scrobble-deps.targets" Condition="Exists('..\..\..\src\packages\foo_scrobble-deps.1.0.0\build\native\foo_scrobble-deps.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets'))" />
+    <Error Condition="!Exists('..\..\..\src\packages\foo_scrobble-deps.1.0.0\build\native\foo_scrobble-deps.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\src\packages\foo_scrobble-deps.1.0.0\build\native\foo_scrobble-deps.targets'))" />
   </Target>
 </Project>

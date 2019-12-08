@@ -5,6 +5,9 @@
 #include "ScrobbleConfig.h"
 #include "fb2ksdk.h"
 
+#include <foobar2000+atl.h>
+
+#include <atl-misc.h>
 #include <pplawait.h>
 
 namespace foo_scrobble

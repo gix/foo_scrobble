@@ -1,6 +1,6 @@
 #pragma once
 #include <chrono>
-#include <experimental/resumable>
+#include <coroutine>
 
 #include <agents.h>
 #include <pplawait.h>
@@ -45,7 +45,7 @@ auto operator co_await(std::chrono::system_clock::duration duration)
             return duration <= std::chrono::system_clock::duration::zero();
         }
 
-        void await_suspend(std::experimental::coroutine_handle<> resume_cb)
+        void await_suspend(std::coroutine_handle<> resume_cb)
         {
             timer = CreateThreadpoolTimer(TimerCallback, resume_cb.address(), nullptr);
             if (!timer)
@@ -60,7 +60,7 @@ auto operator co_await(std::chrono::system_clock::duration duration)
         static void CALLBACK TimerCallback(PTP_CALLBACK_INSTANCE, void* context,
                                            PTP_TIMER)
         {
-            std::experimental::coroutine_handle<>::from_address(context).resume();
+            std::coroutine_handle<>::from_address(context).resume();
         }
 
         PTP_TIMER timer = nullptr;
@@ -91,7 +91,7 @@ auto with_scheduler(concurrency::task<R>&& task,
 
         auto await_resume() { return output.get(); }
 
-        void await_suspend(std::experimental::coroutine_handle<> coro)
+        void await_suspend(std::coroutine_handle<> coro)
         {
             auto callback = [this, coro](concurrency::task<R> t) {
                 this->output = std::move(t);
