@@ -38,6 +38,13 @@ public:
 	t_filetimestamp get_timestamp(abort_callback & p_abort) { return m_file->get_timestamp(p_abort); }
 
 	void reopen(abort_callback & p_abort) {
+#if PFC_DEBUG
+		auto pos = get_position(p_abort);
+		FB2K_console_formatter() << "pretend nonseekable reader reopen @ " << pos;
+		if ( pos > 0 ) {
+			pfc::nop();
+		}
+#endif
 		m_file->reopen(p_abort);
 	}
 

@@ -77,7 +77,7 @@ void string_printf::g_run(string_base & out,const char * fmt,va_list list)
 				}
 				else if (*fmt=='x' || *fmt=='X')
 				{
-					int val = va_arg(list,int);
+					auto val = va_arg(list,unsigned);
 					if (force_sign && val>0) out.add_char('+');
                     pfc::format_uint temp(val, 0, 16);
 					if (*fmt=='X')

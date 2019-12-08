@@ -5,6 +5,10 @@
 #define IDD_PLAYBACK_STATE              101
 #define IDD_DSP                         102
 #define IDD_UI_ELEMENT                  103
+#define IDD_THREADS                     105
+#define IDD_LISTCONTROL_DEMO            107
+#define IDI_ICON1                       109
+#define IDI_SCROLL                      109
 #define IDD_MYPREFERENCES               148
 #define IDC_BOGO1                       1001
 #define IDC_BOGO2                       1002
@@ -26,14 +30,17 @@
 #define IDC_LOCK_MAX_WIDTH              1016
 #define IDC_LOCK_MAX_HEIGHT             1017
 #define IDC_STATIC_SIZE                 1018
+#define IDC_LIST1                       1019
+#define IDC_LIST                        1019
+#define IDC_HEADER                      1020
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        105
+#define _APS_NEXT_RESOURCE_VALUE        110
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

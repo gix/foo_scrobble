@@ -1,3 +1,5 @@
+#pragma once
+
 //! Implementing this interface lets you maintain your own configuration files rather than depending on the cfg_var system. \n
 //! Note that you must not make assumptions about what happens first: config_io_callback::on_read(), initialization of cfg_var values or config_io_callback::on_read() in other components. Order of these things is undefined and will change with each run. \n
 //! Use service_factory_single_t<myclass> to register your implementations. Do not call other people's implementations, core is responsible for doing that when appropriate.
@@ -11,11 +13,6 @@ public:
 	//! @param reset If set to true, our configuration is being reset, so you should wipe your files rather than rewrite them with current configuration.
 	virtual void on_write(bool reset) = 0;
 
-	static void g_read();
-	static void g_write(bool bReset = false);
-	static void g_reset() { g_write(true); }
-	static void g_quicksave();
-
 	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(config_io_callback);
 };
 
@@ -28,6 +25,10 @@ public:
 };
 
 //! \since 1.4
+//! New methods take a filesystem object that should be used for the update, so the whole config update can be performed as one transacted filesystem operation. \n
+//! The core performs necessary checks to ensure that the volume where our profile resides is supports transacted operations. \n
+//! However there are odd cases of people junctioning the profile folder and such. We cannot guarantee that your code won't run into such cases. \n
+//! If you get a exception_io_transactions_unsupported, let the caller deal with it - your call will be retried with a regular filesystem instead of a transacted one.
 class NOVTABLE config_io_callback_v3 : public config_io_callback_v2 {
 	FB2K_MAKE_SERVICE_INTERFACE(config_io_callback_v3, config_io_callback_v2);
 public:

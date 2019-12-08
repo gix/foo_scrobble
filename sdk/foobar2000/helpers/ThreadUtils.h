@@ -16,6 +16,9 @@ namespace ThreadUtils {
 	void SleepAbortable_MsgLoop(abort_callback & abort, DWORD timeout /*must not be INFINITE*/);
 	bool WaitAbortable_MsgLoop(HANDLE ev, abort_callback & abort, DWORD timeout /*must not be INFINITE*/);
 
+	DWORD MultiWait_MsgLoop(const HANDLE* ev, DWORD evCount, DWORD timeout);
+	DWORD MultiWait_MsgLoop(const HANDLE* ev, DWORD evCount);
+
 	template<typename TWhat>
 	class CObjectQueue {
 	public:

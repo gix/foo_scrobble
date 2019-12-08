@@ -28,7 +28,7 @@ namespace pfc {
 
 	class NOVTABLE string_receiver {
 	public:
-		virtual void add_string(const char * p_string,t_size p_string_size = ~0) = 0;
+		virtual void add_string(const char * p_string,t_size p_string_size = SIZE_MAX) = 0;
 		inline void add_string_(const char * str) {add_string(str, _strParamLen(str));}
 
 		void add_char(t_uint32 c);//adds unicode char to the string
@@ -43,9 +43,9 @@ namespace pfc {
 
 	bool is_path_separator(unsigned c);
 	bool is_path_bad_char(unsigned c);
-	bool is_valid_utf8(const char * param,t_size max = ~0);
+	bool is_valid_utf8(const char * param,t_size max = SIZE_MAX);
 	bool is_lower_ascii(const char * param);
-	bool is_multiline(const char * p_string,t_size p_len = ~0);
+	bool is_multiline(const char * p_string,t_size p_len = SIZE_MAX);
 	bool has_path_bad_chars(const char * param);
 	void recover_invalid_utf8(const char * src,char * out,unsigned replace);//out must be enough to hold strlen(char) + 1, or appropiately bigger if replace needs multiple chars
 	void convert_to_lower_ascii(const char * src,t_size max,char * out,char replace = '?');//out should be at least strlen(src)+1 long
@@ -54,14 +54,14 @@ namespace pfc {
 	template<typename char_t> inline char_t ascii_toupper(char_t c) {if (c >= 'a' && c <= 'z') c += 'A' - 'a'; return c;}
 
 	t_size string_find_first(const char * p_string,char p_tofind,t_size p_start = 0);	//returns infinite if not found
-	t_size string_find_last(const char * p_string,char p_tofind,t_size p_start = ~0);	//returns infinite if not found
+	t_size string_find_last(const char * p_string,char p_tofind,t_size p_start = SIZE_MAX);	//returns infinite if not found
 	t_size string_find_first(const char * p_string,const char * p_tofind,t_size p_start = 0);	//returns infinite if not found
-	t_size string_find_last(const char * p_string,const char * p_tofind,t_size p_start = ~0);	//returns infinite if not found
+	t_size string_find_last(const char * p_string,const char * p_tofind,t_size p_start = SIZE_MAX);	//returns infinite if not found
 
 	t_size string_find_first_ex(const char * p_string,t_size p_string_length,char p_tofind,t_size p_start = 0);	//returns infinite if not found
-	t_size string_find_last_ex(const char * p_string,t_size p_string_length,char p_tofind,t_size p_start = ~0);	//returns infinite if not found
+	t_size string_find_last_ex(const char * p_string,t_size p_string_length,char p_tofind,t_size p_start = SIZE_MAX);	//returns infinite if not found
 	t_size string_find_first_ex(const char * p_string,t_size p_string_length,const char * p_tofind,t_size p_tofind_length,t_size p_start = 0);	//returns infinite if not found
-	t_size string_find_last_ex(const char * p_string,t_size p_string_length,const char * p_tofind,t_size p_tofind_length,t_size p_start = ~0);	//returns infinite if not found
+	t_size string_find_last_ex(const char * p_string,t_size p_string_length,const char * p_tofind,t_size p_tofind_length,t_size p_start = SIZE_MAX);	//returns infinite if not found
 
 
 	t_size string_find_first_nc(const char * p_string,t_size p_string_length,char c,t_size p_start = 0); // lengths MUST be valid, no checks are performed (faster than the other flavour)
@@ -88,7 +88,7 @@ namespace pfc {
 	inline t_size tcslen_max(const TCHAR * ptr,t_size max) {return strlen_max_t(ptr,max);}
 #endif
 	
-	bool string_is_numeric(const char * p_string,t_size p_length = ~0) throw();
+	bool string_is_numeric(const char * p_string,t_size p_length = SIZE_MAX) throw();
 	template<typename char_t> inline bool char_is_numeric(char_t p_char) throw() {return p_char >= '0' && p_char <= '9';}
 	inline bool char_is_hexnumeric(char p_char) throw() {return char_is_numeric(p_char) || (p_char >= 'a' && p_char <= 'f') || (p_char >= 'A' && p_char <= 'F');}
 	inline bool char_is_ascii_alpha_upper(char p_char) throw() {return p_char >= 'A' && p_char <= 'Z';}
@@ -124,8 +124,8 @@ namespace pfc {
 		return ret;
 	}
 
-	t_size strlen_utf8(const char * s,t_size num = ~0) throw();//returns number of characters in utf8 string; num - no. of bytes (optional)
-	t_size utf8_char_len(const char * s,t_size max = ~0) throw();//returns size of utf8 character pointed by s, in bytes, 0 on error
+	t_size strlen_utf8(const char * s,t_size num = SIZE_MAX) throw();//returns number of characters in utf8 string; num - no. of bytes (optional)
+	t_size utf8_char_len(const char * s,t_size max = SIZE_MAX) throw();//returns size of utf8 character pointed by s, in bytes, 0 on error
 	t_size utf8_char_len_from_header(char c) throw();
 	t_size utf8_chars_to_bytes(const char * string,t_size count) throw();
 
@@ -141,15 +141,15 @@ namespace pfc {
 	t_size utf8_encode_char(unsigned c,char * out) throw();//returns used length in bytes, max 6
 
 
-	t_size utf16_decode_char(const char16_t * p_source,unsigned * p_out,t_size p_source_length = ~0) throw();
+	t_size utf16_decode_char(const char16_t * p_source,unsigned * p_out,t_size p_source_length = SIZE_MAX) throw();
 	t_size utf16_encode_char(unsigned c,char16_t * out) throw();
     
 #ifdef _MSC_VER
-	t_size utf16_decode_char(const wchar_t * p_source,unsigned * p_out,t_size p_source_length = ~0) throw();
+	t_size utf16_decode_char(const wchar_t * p_source,unsigned * p_out,t_size p_source_length = SIZE_MAX) throw();
 	t_size utf16_encode_char(unsigned c,wchar_t * out) throw();
 #endif
 
-	t_size wide_decode_char(const wchar_t * p_source,unsigned * p_out,t_size p_source_length = ~0) throw();
+	t_size wide_decode_char(const wchar_t * p_source,unsigned * p_out,t_size p_source_length = SIZE_MAX) throw();
 	t_size wide_encode_char(unsigned c,wchar_t * out) throw();
 
 
@@ -188,8 +188,8 @@ namespace pfc {
 	public:
 		virtual const char * get_ptr() const = 0;
 		const char * c_str() const { return get_ptr(); }
-		virtual void add_string(const char * p_string,t_size p_length = ~0) = 0;//same as string_receiver method
-		virtual void set_string(const char * p_string,t_size p_length = ~0) {reset();add_string(p_string,p_length);}
+		virtual void add_string(const char * p_string,t_size p_length = SIZE_MAX) = 0;//same as string_receiver method
+		virtual void set_string(const char * p_string,t_size p_length = SIZE_MAX) {reset();add_string(p_string,p_length);}
 		virtual void truncate(t_size len)=0;
 		virtual t_size get_length() const {return strlen(get_ptr());}
 		virtual char * lock_buffer(t_size p_requested_length) = 0;
@@ -203,9 +203,11 @@ namespace pfc {
 		inline t_size length() const {return get_length();}
 		
 		inline void reset() {truncate(0);}
-		
+		inline void clear() {truncate(0);}
+
 		inline bool is_empty() const {return *get_ptr()==0;}
 		
+		void skip_trailing_chars( const char * lstChars );
 		void skip_trailing_char(unsigned c = ' ');
 
 		bool is_valid_utf8() const {return pfc::is_valid_utf8(get_ptr());}
@@ -229,9 +231,9 @@ namespace pfc {
 		t_size scan_filename() const {return pfc::scan_filename(get_ptr());}
 
 		t_size find_first(char p_char,t_size p_start = 0) const {return pfc::string_find_first(get_ptr(),p_char,p_start);}
-		t_size find_last(char p_char,t_size p_start = ~0) const {return pfc::string_find_last(get_ptr(),p_char,p_start);}
+		t_size find_last(char p_char,t_size p_start = SIZE_MAX) const {return pfc::string_find_last(get_ptr(),p_char,p_start);}
 		t_size find_first(const char * p_string,t_size p_start = 0) const {return pfc::string_find_first(get_ptr(),p_string,p_start);}
-		t_size find_last(const char * p_string,t_size p_start = ~0) const {return pfc::string_find_last(get_ptr(),p_string,p_start);}
+		t_size find_last(const char * p_string,t_size p_start = SIZE_MAX) const {return pfc::string_find_last(get_ptr(),p_string,p_start);}
 
 		void fix_dir_separator(char c = '\\'); // Backwards compat function, "do what I mean" applied on non Windows
 		void end_with(char c);
@@ -250,7 +252,12 @@ namespace pfc {
 		void truncate_to_parent_path();
 		void add_filename( const char * fn ) {end_with_slash(); *this += fn; }
 
-        t_size replace_string ( const char * replace, const char * replaceWith, t_size start = 0);
+		//! Replaces one string with another. Returns the number of occurances - zero if the string was not altered.
+        size_t replace_string ( const char * replace, const char * replaceWith, t_size start = 0);
+		//! Replaces one string with another, writing the output to another string object. \n
+		//! Returns the number of occurances replaced. \n
+		//! Special: returns zero if no occurances were found - and the target string is NOT modified if so. Use with care!
+		size_t replace_string_ex( pfc::string_base & target, const char * replace, const char * replaceWith, t_size start = 0) const;
 
         string_base & _formatter() const {return const_cast<string_base&>(*this);}
         
@@ -377,8 +384,8 @@ namespace pfc {
 
 		const char * get_ptr() const throw() {return _get_ptr();}
 
-		void add_string(const char * p_string,t_size p_length = ~0);
-		void set_string(const char * p_string,t_size p_length = ~0);
+		void add_string(const char * p_string,t_size p_length = SIZE_MAX);
+		void set_string(const char * p_string,t_size p_length = SIZE_MAX);
 		
 		void set_string(string_part_ref ref) {set_string_nc(ref.m_ptr, ref.m_len);}
 		void add_string(string_part_ref ref) {add_string_nc(ref.m_ptr, ref.m_len);}
@@ -515,6 +522,8 @@ namespace pfc {
 		explicit string_extension(const char * src);
 	};
 
+	size_t find_extension_offset( const char * path );
+
 	const char * filename_ext_v2(const char * fn, char slash = 0);
 
 	class string_replace_extension
@@ -536,7 +545,7 @@ namespace pfc {
 	};
 
 	void float_to_string(char * out,t_size out_max,double val,unsigned precision,bool force_sign = false);//doesnt add E+X etc, has internal range limits, useful for storing float numbers as strings without having to bother with international coma/dot settings BS
-	double string_to_float(const char * src,t_size len = ~0);
+	double string_to_float(const char * src,t_size len = SIZE_MAX);
 
 	template<>
 	inline void swap_t(string8 & p_item1,string8 & p_item2)
@@ -661,7 +670,7 @@ namespace pfc {
 	template<typename t_stringbuffer = pfc::string8_fastalloc>
 	class format_pad_left {
 	public:
-		format_pad_left(t_size p_chars,t_uint32 p_padding /* = ' ' */,const char * p_string,t_size p_string_length = ~0) {
+		format_pad_left(t_size p_chars,t_uint32 p_padding /* = ' ' */,const char * p_string,t_size p_string_length = SIZE_MAX) {
 			t_size source_len = 0, source_walk = 0;
 			
 			while(source_walk < p_string_length && source_len < p_chars) {
@@ -685,7 +694,7 @@ namespace pfc {
 	template<typename t_stringbuffer = pfc::string8_fastalloc>
 	class format_pad_right {
 	public:
-		format_pad_right(t_size p_chars,t_uint32 p_padding /* = ' ' */,const char * p_string,t_size p_string_length = ~0) {
+		format_pad_right(t_size p_chars,t_uint32 p_padding /* = ' ' */,const char * p_string,t_size p_string_length = SIZE_MAX) {
 			t_size source_len = 0, source_walk = 0;
 			
 			while(source_walk < p_string_length && source_len < p_chars) {
@@ -710,9 +719,11 @@ namespace pfc {
 
 	class format_file_size_short : public string_formatter {
 	public:
-		format_file_size_short(t_uint64 size);
+		format_file_size_short(t_uint64 size) { format(size); }
+		format_file_size_short(t_uint64 size, uint64_t * usedScale) { format(size); *usedScale = m_scale; }
 		t_uint64 get_used_scale() const {return m_scale;}
 	private:
+		void format(uint64_t size);
 		t_uint64 m_scale;
 	};
 
@@ -833,13 +844,13 @@ namespace pfc {
 		inline static int compare(const wchar_t * item1, const wchar_t * item2) {return wcscmp(item1, item2);}
 		
 		static int compare(const char * p_item1, string_part_ref p_item2) {
-			return strcmp_ex(p_item1, ~0, p_item2.m_ptr, p_item2.m_len);
+			return strcmp_ex(p_item1, SIZE_MAX, p_item2.m_ptr, p_item2.m_len);
 		}
 		static int compare(string_part_ref p_item1, string_part_ref p_item2) {
 			return strcmp_ex(p_item1.m_ptr, p_item1.m_len, p_item2.m_ptr, p_item2.m_len);
 		}
 		static int compare(string_part_ref p_item1, const char * p_item2) {
-			return strcmp_ex(p_item1.m_ptr, p_item1.m_len, p_item2, ~0);
+			return strcmp_ex(p_item1.m_ptr, p_item1.m_len, p_item2, SIZE_MAX);
 		}
 	};
 
@@ -866,7 +877,7 @@ namespace pfc {
 	}
 
 	template<typename t_output, typename t_splitCheck>
-	void splitStringEx(t_output & p_output, const t_splitCheck & p_check, const char * p_string, t_size p_stringLen = ~0) {
+	void splitStringEx(t_output & p_output, const t_splitCheck & p_check, const char * p_string, t_size p_stringLen = SIZE_MAX) {
 		t_size walk = 0, splitBase = 0;
 		const t_size max = strlen_max(p_string,p_stringLen);
 		for(;walk < max;) {
@@ -949,7 +960,7 @@ namespace pfc {
 	};
 
 	template<typename t_array, typename t_split>
-	void splitStringSimple_toArray(t_array & p_output, t_split p_split, const char * p_string, t_size p_stringLen = ~0) {
+	void splitStringSimple_toArray(t_array & p_output, t_split p_split, const char * p_string, t_size p_stringLen = SIZE_MAX) {
 		_splitStringSimple_check<t_split> strCheck(p_split);
 
 		{
@@ -964,7 +975,7 @@ namespace pfc {
 		}
 	}
 	template<typename t_list, typename t_split>
-	void splitStringSimple_toList(t_list & p_output, t_split p_split, const char * p_string, t_size p_stringLen = ~0) {
+	void splitStringSimple_toList(t_list & p_output, t_split p_split, const char * p_string, t_size p_stringLen = SIZE_MAX) {
 		_splitStringSimple_check<t_split> strCheck(p_split);
 
 		__splitStringSimple_listWrapper<t_list> wrapper(p_output);
@@ -1030,10 +1041,10 @@ namespace pfc {
 		const char * get_ptr() const {return m_ptr;}
 		t_size get_length() const {return m_len;}
 	private:
-		void add_string(const char * p_string,t_size p_length = ~0) {throw pfc::exception_not_implemented();}
-		void set_string(const char * p_string,t_size p_length = ~0) {throw pfc::exception_not_implemented();}
-		void truncate(t_size len) {throw pfc::exception_not_implemented();}
-		char * lock_buffer(t_size p_requested_length) {throw pfc::exception_not_implemented();}
+		void add_string(const char *,t_size) {throw pfc::exception_not_implemented();}
+		void set_string(const char *,t_size) {throw pfc::exception_not_implemented();}
+		void truncate(t_size) {throw pfc::exception_not_implemented();}
+		char * lock_buffer(t_size) {throw pfc::exception_not_implemented();}
 		void unlock_buffer() {throw pfc::exception_not_implemented();}
 	private:
 		const char * const m_ptr;
@@ -1080,9 +1091,9 @@ namespace pfc {
 	}
 
 	template<typename t_char>
-	int strcmp_partial_t(const t_char * p_string,const t_char * p_substring) throw() {return strcmp_partial_ex_t(p_string,~0,p_substring,~0);}
+	int strcmp_partial_t(const t_char * p_string,const t_char * p_substring) throw() {return strcmp_partial_ex_t(p_string,SIZE_MAX,p_substring,SIZE_MAX);}
 
-	inline int strcmp_partial_ex(const char * str, t_size strLen, const char * substr, t_size substrLen) throw() {return strcmp_partial_ex(str, strLen, substr, substrLen); }
+	inline int strcmp_partial_ex(const char * str, t_size strLen, const char * substr, t_size substrLen) throw() {return strcmp_partial_ex_t(str, strLen, substr, substrLen); }
 	inline int strcmp_partial(const char * str, const char * substr) throw() {return strcmp_partial_t(str, substr); }
 
     int stricmp_ascii_partial( const char * str, const char * substr) throw();
@@ -1093,4 +1104,6 @@ namespace pfc {
 
 
 	char * strDup(const char * src); // POSIX strdup() clone, prevent MSVC complaining
+
+	string8 lineEndingsToWin( const char * str );
 }

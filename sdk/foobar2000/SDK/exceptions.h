@@ -11,5 +11,3 @@ PFC_DECLARE_EXCEPTION(exception_osfailure, exception_messagebox, "Internal error
 PFC_DECLARE_EXCEPTION(exception_out_of_resources, exception_messagebox, "Not enough system resources available.");
 
 PFC_DECLARE_EXCEPTION(exception_configdamaged, exception_messagebox, "Internal error - configuration files are unreadable.");
-
-PFC_DECLARE_EXCEPTION(exception_profileaccess, exception_messagebox, "Internal error - cannot access configuration folder.");

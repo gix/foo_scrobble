@@ -40,8 +40,17 @@ public:
 	//! Sleeps p_timeout_seconds or less when aborted, returns true when execution should continue, false when not.
 	bool sleep_ex(double p_timeout_seconds) const;
     
-    bool waitForEvent( pfc::eventHandle_t evtHandle, double timeOut );
-    bool waitForEvent( pfc::event & evt, double timeOut ) {return waitForEvent( evt.get_handle(), timeOut ); }
+	//! Waits for an event. Returns true if event is now signaled, false if the specified period has elapsed and the event did not become signaled. \n
+	//! Throws exception_aborted if aborted.
+	bool waitForEvent( pfc::eventHandle_t evtHandle, double timeOut );
+	//! Waits for an event. Returns true if event is now signaled, false if the specified period has elapsed and the event did not become signaled. \n
+	//! Throws exception_aborted if aborted.
+	bool waitForEvent(pfc::event& evt, double timeOut);
+
+	//! Waits for an event. Returns once the event became signaled; throw exception_aborted if abort occurred first.
+	void waitForEvent(pfc::eventHandle_t evtHandle);
+	//! Waits for an event. Returns once the event became signaled; throw exception_aborted if abort occurred first.
+	void waitForEvent(pfc::event& evt);
 protected:
 	abort_callback() {}
 	~abort_callback() {}
@@ -64,8 +73,8 @@ public:
 	abort_callback_event get_abort_event() const {return m_event.get_handle();}
 
 private:
-	abort_callback_impl(const abort_callback_impl &);
-	const abort_callback_impl & operator=(const abort_callback_impl&);
+	abort_callback_impl(const abort_callback_impl &) = delete;
+	const abort_callback_impl & operator=(const abort_callback_impl&) = delete;
 	
 	volatile bool m_aborting;
 	pfc::event m_event;
@@ -100,5 +109,11 @@ using namespace foobar2000_io;
     PP::waitableReadRef_t aborterRef = {(abortObj).get_abort_event()}; \
     PP::aborter aborter_pfcv2( aborterRef );    \
     PP::aborterScope l_aborterScope( aborter_pfcv2 );
+
+
+namespace fb2k {
+	// A shared abort_callback_dummy instance
+	extern abort_callback_dummy noAbort;
+}
 
 #endif //_foobar2000_sdk_abort_callback_h_

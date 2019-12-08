@@ -67,7 +67,7 @@ private:
 	t_inttype m_val;
 protected:
 	void get_data_raw(stream_writer * p_stream,abort_callback & p_abort) {p_stream->write_lendian_t(m_val,p_abort);}
-	void set_data_raw(stream_reader * p_stream,t_size p_sizehint,abort_callback & p_abort) {
+	void set_data_raw(stream_reader * p_stream,t_size,abort_callback & p_abort) {
 		t_inttype temp;
 		p_stream->read_lendian_t(temp,p_abort);//alter member data only on success, this will throw an exception when something isn't right
 		m_val = temp;
@@ -88,9 +88,11 @@ public:
 
 typedef cfg_int_t<t_int32> cfg_int;
 typedef cfg_int_t<t_uint32> cfg_uint;
-//! Since relevant byteswapping functions also understand GUIDs, this can be abused to declare a cfg_guid.
+//! Since relevant byteswapping functions also understand GUIDs, this can be used to declare a cfg_guid.
 typedef cfg_int_t<GUID> cfg_guid;
 typedef cfg_int_t<bool> cfg_bool;
+typedef cfg_int_t<float> cfg_float;
+typedef cfg_int_t<double> cfg_double;
 
 //! String config variable. Stored in the stream with int32 header containing size in bytes, followed by non-null-terminated UTF-8 data.\n
 //! Note that cfg_var class and its derivatives may be only instantiated statically (as static objects or members of other static objects), NEVER dynamically (operator new, local variables, members of objects instantiated as such).
@@ -118,7 +120,7 @@ protected:
 		get(temp);
 		p_stream->write_object(temp.get_ptr(), temp.length(),p_abort);
 	}
-	void set_data_raw(stream_reader * p_stream,t_size p_sizehint,abort_callback & p_abort) {
+	void set_data_raw(stream_reader * p_stream,t_size,abort_callback & p_abort) {
 		pfc::string8_fastalloc temp;
 		p_stream->read_string_raw(temp,p_abort);
 		set(temp);

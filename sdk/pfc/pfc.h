@@ -17,13 +17,8 @@
 #endif
 
 
-#define PFC_DLL_EXPORT
-
-// Suppress this line when using PFC outside classic foobar2000
-// When enabled, certain shared.dll methods are referenced
-#define PFC_FOOBAR2000_CLASSIC
-
 #ifdef _WINDOWS
+#include "targetver.h"
 
 #ifndef STRICT
 #define STRICT
@@ -67,7 +62,7 @@ inline bool operator!=(REFGUID guidOne, REFGUID guidOther) {return !__InlineIsEq
 
 #include <tchar.h>
 
-#else
+#else // not Windows
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -89,7 +84,7 @@ inline bool operator!=(const GUID & p_item1,const GUID & p_item2) {
 	return memcmp(&p_item1,&p_item2,sizeof(GUID)) != 0;
 }
 
-#endif
+#endif // Windows vs not Windows
 
 
 
@@ -114,6 +109,11 @@ inline bool operator!=(const GUID & p_item1,const GUID & p_item2) {
 #endif
 
 #if ! PFC_DEBUG
+
+#ifndef NDEBUG
+#pragma message("WARNING: release build without NDEBUG")
+#endif
+
 #define PFC_ASSERT(_Expression)     ((void)0)
 #define PFC_ASSERT_SUCCESS(_Expression) (void)( (_Expression), 0)
 #define PFC_ASSERT_NO_EXCEPTION(_Expression) { _Expression; }
@@ -187,7 +187,7 @@ namespace pfc {
 #include "bit_array_impl_part2.h"
 #include "timers.h"
 #include "guid.h"
-#include "byte_order_helper.h"
+#include "byte_order.h"
 #include "other.h"
 #include "chain_list_v2.h"
 #include "rcptr.h"
@@ -223,5 +223,9 @@ namespace pfc {
 #include "filehandle.h"
 
 #define PFC_INCLUDED 1
+
+#ifndef PFC_SET_THREAD_DESCRIPTION
+#define PFC_SET_THREAD_DESCRIPTION(X)
+#endif
 
 #endif //___PFC_H___

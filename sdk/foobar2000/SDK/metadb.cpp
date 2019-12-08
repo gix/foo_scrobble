@@ -1,5 +1,5 @@
 #include "foobar2000.h"
-
+#include "file_info_filter_impl.h"
 
 void metadb::handle_create_replace_path_canonical(metadb_handle_ptr & p_out,const metadb_handle_ptr & p_source,const char * p_new_path) {
 	handle_create(p_out,make_playable_location(p_new_path,p_source->get_subsong_index()));
@@ -92,4 +92,21 @@ void metadb_io_v2::on_files_rechaptered( metadb_handle_list_cref newHandles ) {
 	} );
 
 	load_info_async( newHandles, metadb_io::load_info_force, core_api::get_main_window(), metadb_io_v3::op_flag_delay_ui, notify );
+}
+
+
+metadb_hint_list::ptr metadb_hint_list::create() {
+	return metadb_io_v2::get()->create_hint_list();
+}
+
+metadb_hint_list_v2::ptr metadb_hint_list_v2::create() {
+	metadb_hint_list_v2::ptr ret;
+	ret ^= metadb_hint_list::create();
+	return ret;
+}
+
+metadb_hint_list_v3::ptr metadb_hint_list_v3::create() {
+	metadb_hint_list_v3::ptr ret;
+	ret ^= metadb_hint_list::create();
+	return ret;
 }

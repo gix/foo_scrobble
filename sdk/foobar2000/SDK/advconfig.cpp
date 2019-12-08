@@ -1,5 +1,13 @@
 #include "foobar2000.h"
 
+bool advconfig_entry::is_branch() {
+	advconfig_branch::ptr branch;
+	return branch &= this;
+}
+
+bool advconfig_entry::g_find(service_ptr_t<advconfig_entry>& out, const GUID & id) {
+	service_enum_t<advconfig_entry> e; service_ptr_t<advconfig_entry> ptr; while(e.next(ptr)) { if (ptr->get_guid() == id) {out = ptr; return true;} } return false;
+}
 
 t_uint32 advconfig_entry::get_preferences_flags_() {
 	{

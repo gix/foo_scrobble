@@ -24,23 +24,12 @@ t_size service_factory_base::enum_get_count(service_class_ref p_class)
 service_factory_base * service_factory_base::__internal__list = NULL;
 
 
-
-
-
-namespace {
-	class main_thread_callback_release_object : public main_thread_callback {
-	public:
-		main_thread_callback_release_object(service_ptr obj) : m_object(obj) {}
-		void callback_run() {
-			try { m_object.release(); } catch(...) {}
-		}
-	private:
-		service_ptr m_object;
-	};
-}
 namespace service_impl_helper {
-	void release_object_delayed(service_ptr obj) {
-		main_thread_callback_manager::get()->add_callback(new service_impl_t<main_thread_callback_release_object>(obj));
+	void release_object_delayed(service_base * ptr) {
+		ptr->service_add_ref();
+        fb2k::inMainThread( [ptr] {
+            try { ptr->service_release(); } catch(...) {}
+        } );
 	}
 };
 
@@ -49,6 +38,11 @@ void _standard_api_create_internal(service_ptr & out, const GUID & classID) {
 	service_class_ref c = service_factory_base::enum_find_class(classID);
 	switch(service_factory_base::enum_get_count(c)) {
 		case 0:
+#if PFC_DEBUG
+            if ( core_api::are_services_available() ) {
+                FB2K_DebugLog() << "Service not found of type: " << pfc::print_guid(classID);
+            }
+#endif
 			throw exception_service_not_found();
 		case 1:
 			PFC_ASSERT_SUCCESS( service_factory_base::enum_create(out, c, 0) );

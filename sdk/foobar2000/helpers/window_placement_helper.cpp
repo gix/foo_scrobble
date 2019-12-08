@@ -53,6 +53,8 @@ bool cfg_window_placement::read_from_window(HWND window)
 			/*if (wp.showCmd == SW_SHOWNORMAL) {
 				GetWindowRect(window, &wp.rcNormalPosition);
 			}*/
+
+			if ( !IsWindowVisible( window ) ) wp.showCmd = SW_HIDE;
 		}
 		/*else
 		{
@@ -67,7 +69,7 @@ void cfg_window_placement::on_window_creation_silent(HWND window) {
 	PFC_ASSERT(!m_windows.have_item(window));
 	m_windows.add_item(window);
 }
-bool cfg_window_placement::on_window_creation(HWND window)
+bool cfg_window_placement::on_window_creation(HWND window, bool allowHidden)
 {
 	bool ret = false;
 	PFC_ASSERT(!m_windows.have_item(window));
@@ -77,9 +79,20 @@ bool cfg_window_placement::on_window_creation(HWND window)
 	{
 		if (m_data.length==sizeof(m_data) && test_rect(&m_data.rcNormalPosition))
 		{
-			if (SetWindowPlacement(window,&m_data))
-			{
-				ret = true;
+			if ( allowHidden || m_data.showCmd != SW_HIDE ) {
+				if ( m_data.showCmd == SW_HIDE && (m_data.flags & WPF_RESTORETOMAXIMIZED) ) {
+					// Special case of hidden-from-maximized
+					auto fix = m_data;
+					fix.showCmd = SW_SHOWMINIMIZED;
+					if (SetWindowPlacement(window,&fix)) {
+						ShowWindow(window, SW_HIDE);
+						ret = true;
+					}
+				} else {
+					if (SetWindowPlacement(window,&m_data)) {
+						ret = true;
+					}
+				}
 			}
 		}
 	}

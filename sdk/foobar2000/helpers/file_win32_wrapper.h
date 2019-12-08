@@ -1,5 +1,7 @@
 #pragma once
 
+#include <libPPUI/win32_op.h>
+
 #ifdef _WIN32
 namespace file_win32_helpers {
 	t_filesize get_size(HANDLE p_handle);
@@ -12,10 +14,11 @@ namespace file_win32_helpers {
 	size_t readOverlapped(HANDLE handle, HANDLE myEvent, t_filesize & position, void * out, size_t outBytes, abort_callback & abort);
 	size_t readStreamOverlapped(HANDLE handle, HANDLE myEvent, void * out, size_t outBytes, abort_callback & abort);
 	HANDLE createFile(LPCTSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile, abort_callback & abort);
+	size_t lowLevelIO(HANDLE hFile, const GUID & guid, size_t arg1, void * arg2, size_t arg2size, bool canWrite, abort_callback & abort);
 };
 
 template<bool p_seekable,bool p_writeable>
-class file_win32_wrapper_t : public file {
+class file_win32_wrapper_t : public service_multi_inherit<file, file_lowLevelIO> {
 public:
 	file_win32_wrapper_t(HANDLE p_handle) : m_handle(p_handle), m_position(0)
 	{
@@ -139,7 +142,7 @@ public:
 	
 	t_filetimestamp get_timestamp(abort_callback & p_abort) {
 		p_abort.check_e();
-		FlushFileBuffers(m_handle);
+		if (p_writeable) FlushFileBuffers(m_handle);
 		SetLastError(ERROR_SUCCESS);
 		t_filetimestamp temp;
 		if (!GetFileTime(m_handle,0,0,(FILETIME*)&temp)) exception_io_from_win32(GetLastError());
@@ -148,13 +151,17 @@ public:
 
 	bool is_remote() {return false;}
 	~file_win32_wrapper_t() {CloseHandle(m_handle);}
+
+	size_t lowLevelIO(const GUID & guid, size_t arg1, void * arg2, size_t arg2size, abort_callback & abort) override {
+		return file_win32_helpers::lowLevelIO(m_handle, guid, arg1, arg2, arg2size, p_writeable, abort);
+	}
 protected:
 	HANDLE m_handle;
 	t_filesize m_position;
 };
 
 template<bool p_writeable>
-class file_win32_wrapper_overlapped_t : public file {
+class file_win32_wrapper_overlapped_t : public service_multi_inherit< file, file_lowLevelIO > {
 public:
 	file_win32_wrapper_overlapped_t(HANDLE file) : m_handle(file), m_position() {
 		WIN32_OP( (m_event = CreateEvent(NULL, TRUE, FALSE, NULL)) != NULL );
@@ -208,7 +215,7 @@ public:
 	
 	t_filetimestamp get_timestamp(abort_callback & p_abort) {
 		p_abort.check_e();
-		FlushFileBuffers(m_handle);
+		if (p_writeable) FlushFileBuffers(m_handle);
 		SetLastError(ERROR_SUCCESS);
 		t_filetimestamp temp;
 		if (!GetFileTime(m_handle,0,0,(FILETIME*)&temp)) exception_io_from_win32(GetLastError());
@@ -234,6 +241,10 @@ public:
 
 	static file::ptr g_create_from_handle(HANDLE p_handle) {
 		return new service_impl_t<file_win32_wrapper_overlapped_t<p_writeable> >(p_handle);
+	}
+
+	size_t lowLevelIO(const GUID & guid, size_t arg1, void * arg2, size_t arg2size, abort_callback & abort) override {
+		return file_win32_helpers::lowLevelIO(m_handle, guid, arg1, arg2, arg2size, p_writeable, abort);
 	}
 
 protected:

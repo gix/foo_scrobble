@@ -87,6 +87,9 @@ public:
 
 	virtual bool get_description(t_uint32 p_id,pfc::string_base & p_out) = 0;
 
+	//! Safely prevent destruction from worker threads (some components attempt that).
+	static bool serviceRequiresMainThreadDestructor() { return true; }
+
 	FB2K_MAKE_SERVICE_COREAPI(mainmenu_manager);
 };
 

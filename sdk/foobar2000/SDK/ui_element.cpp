@@ -1,5 +1,28 @@
 #include "foobar2000.h"
 
+namespace {
+	struct sysColorMapping_t {
+		GUID guid; int idx;
+	};
+	static const sysColorMapping_t sysColorMapping[] = {
+		{ ui_color_text, COLOR_WINDOWTEXT },
+		{ ui_color_background, COLOR_WINDOW },
+		{ ui_color_highlight, COLOR_HOTLIGHT },
+		{ui_color_selection, COLOR_HIGHLIGHT},
+	};
+}
+int ui_color_to_sys_color_index(const GUID & p_guid) {
+	for( unsigned i = 0; i < PFC_TABSIZE( sysColorMapping ); ++ i ) {
+		if ( p_guid == sysColorMapping[i].guid ) return sysColorMapping[i].idx;
+	}
+	return -1;
+}
+GUID ui_color_from_sys_color_index(int idx) {
+	for (unsigned i = 0; i < PFC_TABSIZE(sysColorMapping); ++i) {
+		if (idx == sysColorMapping[i].idx) return sysColorMapping[i].guid;
+	}
+	return pfc::guid_null;
+}
 
 namespace {
 	class ui_element_config_impl : public ui_element_config {
@@ -35,7 +58,8 @@ service_ptr_t<ui_element_config> ui_element_config::g_create(const GUID & id, st
 
 service_ptr_t<ui_element_config> ui_element_config::g_create(stream_reader * in, t_size bytes, abort_callback & abort) {
 	if (bytes < sizeof(GUID)) throw exception_io_data_truncation();
-	GUID id; stream_reader_formatter<>(*in,abort) >> id;
+	GUID id; 
+	{ stream_reader_formatter<> in(*in,abort); in >> id;}
 	return g_create(id,in,bytes - sizeof(GUID),abort);
 }
 
@@ -48,7 +72,7 @@ ui_element_config::ptr ui_element_config_parser::subelement(const GUID & id, t_s
 
 service_ptr_t<ui_element_config> ui_element_config::g_create(const void * data, t_size size) {
 	stream_reader_memblock_ref stream(data,size);
-	return g_create(&stream,size,abort_callback_dummy());
+	return g_create(&stream,size,fb2k::noAbort);
 }
 
 bool ui_element_subclass_description(const GUID & id, pfc::string_base & p_out) {
@@ -88,6 +112,13 @@ t_ui_color ui_element_instance_callback::query_std_color(const GUID & p_what) {
 #error portme
 #endif
 }
+#ifdef _WIN32
+t_ui_color ui_element_instance_callback::getSysColor(int sysColorIndex) {
+	GUID guid = ui_color_from_sys_color_index( sysColorIndex );
+	if ( guid != pfc::guid_null ) return query_std_color(guid);
+	return GetSysColor(sysColorIndex);
+}
+#endif
 
 bool ui_element::g_find(service_ptr_t<ui_element> & out, const GUID & id) {
 	return service_by_guid(out, id);

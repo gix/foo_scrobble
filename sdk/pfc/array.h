@@ -72,6 +72,7 @@ namespace pfc {
 
 		
 		t_size get_size() const {return m_size;}
+		t_size size() const {return m_size;} // std compat
 		const t_item * get_ptr() const {return m_array;}
 		t_item * get_ptr() {return m_array;}
 
@@ -131,6 +132,7 @@ namespace pfc {
 		const t_self & operator=(t_self && p_source) {move_from(p_source); return *this;}
 		
 		void set_size(t_size p_size) {m_alloc.set_size(p_size);}
+		void resize( size_t s ) { set_size(s); } // std compat
 		
 		template<typename fill_t>
 		void set_size_fill(size_t p_size, fill_t const & filler) {
@@ -157,6 +159,7 @@ namespace pfc {
 		void set_size_discard(t_size p_size) {m_alloc.set_size(p_size);}
 		void set_count(t_size p_count) {m_alloc.set_size(p_count);}
 		t_size get_size() const {return m_alloc.get_size();}
+		size_t size() const {return m_alloc.get_size();} // std compat
 		t_size get_count() const {return m_alloc.get_size();}
 		void force_reset() {m_alloc.force_reset();}
 		
@@ -206,11 +209,17 @@ namespace pfc {
 			set_size(new_size);
 		}
 
-		template<typename t_append>
-		void append_single_val( t_append item ) {
+        template<typename item_t>
+        void add_item( item_t && item ) {
+            const t_size base = get_size();
+            increase_size(1);
+            m_alloc[base] = std::forward<item_t>( item );
+        }
+		template<typename item_t>
+		void append_single_val( item_t && item ) {
 			const t_size base = get_size();
 			increase_size(1);
-			m_alloc[base] = item;
+            m_alloc[base] = std::forward<item_t>( item );
 		}
 
 		template<typename t_append>

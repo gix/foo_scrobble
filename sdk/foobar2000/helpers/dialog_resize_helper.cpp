@@ -3,13 +3,13 @@
 #ifdef FOOBAR2000_DESKTOP_WINDOWS
 #include "dialog_resize_helper.h"
 
-BOOL GetChildWindowRect(HWND wnd,UINT id,RECT* child)
+static BOOL GetChildWindowRect(HWND wnd, UINT id, RECT* child)
 {
 	RECT temp;
 	HWND wndChild = GetDlgItem(wnd, id);
 	if (wndChild == NULL) return FALSE;
-	if (!GetWindowRect(wndChild,&temp)) return FALSE;
-	if (!MapWindowPoints(0,wnd,(POINT*)&temp,2)) return FALSE;
+	if (!GetWindowRect(wndChild, &temp)) return FALSE;
+	if (!MapWindowPoints(0, wnd, (POINT*)&temp, 2)) return FALSE;
 	*child = temp;
 	return TRUE;
 }

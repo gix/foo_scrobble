@@ -36,6 +36,9 @@ public:
 	bool is_valid() const;
 
 
+	enum {case_sensitive = true};
+    typedef pfc::comparator_strcmp path_comparator;
+
 	class comparator {
 	public:
 		static int compare(const playable_location & v1, const playable_location & v2) {return g_compare(v1,v2);}

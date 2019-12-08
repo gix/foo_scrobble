@@ -25,15 +25,19 @@ static bool is_meta_same_everywhere(const cue_creator::t_entry_list & p_list,con
 {
 	pfc::string8_fastalloc reference,temp;
 
-	cue_creator::t_entry_list::const_iterator iter;
-	iter = p_list.first();
-	if (!iter.is_valid()) return false;
-	if (!iter->m_infos.meta_format(p_meta,reference)) return false;
-	for(;iter.is_valid();++iter)
-	{
-		if (!iter->m_infos.meta_format(p_meta,temp)) return false;
-		if (strcmp(temp,reference)!=0) return false;
+	bool first = true;
+	for(auto iter = p_list.first(); iter.is_valid(); ++ iter ) {
+		if ( ! iter->isTrackAudio() ) continue;
+
+		if ( first ) {
+			first = false;
+			if (!iter->m_infos.meta_format(p_meta,reference)) return false;
+		} else {
+			if (!iter->m_infos.meta_format(p_meta,temp)) return false;
+			if (strcmp(temp,reference)!=0) return false;
+		}
 	}
+
 	return true;
 }
 
@@ -54,46 +58,53 @@ namespace cue_creator
 			catalog_global =		is_meta_same_everywhere(p_data,"catalog"),
 			songwriter_global =		is_meta_same_everywhere(p_data,"songwriter");
 
-		if (genre_global) {
-			p_out << "REM GENRE " << format_meta(p_data.first()->m_infos,"genre") << g_eol;
-		}
-		if (date_global) {
-			p_out << "REM DATE " << format_meta(p_data.first()->m_infos,"date") << g_eol;
-		}
-		if (discid_global) {
-			p_out << "REM DISCID " << format_meta(p_data.first()->m_infos,"discid") << g_eol;
-		}
-		if (comment_global) {
-			p_out << "REM COMMENT " << format_meta(p_data.first()->m_infos,"comment") << g_eol;
-		}
-		if (catalog_global) {
-			p_out << "CATALOG " << format_meta(p_data.first()->m_infos,"catalog") << g_eol;
-		}
-		if (songwriter_global) {
-			p_out << "SONGWRITER \"" << format_meta(p_data.first()->m_infos,"songwriter") << "\"" << g_eol;
-		}
+		{
+			auto firstTrack = p_data.first();
+			while( firstTrack.is_valid() && ! firstTrack->isTrackAudio() ) ++ firstTrack;
+			if ( firstTrack.is_valid() ) {
+				if (genre_global) {
+					p_out << "REM GENRE " << format_meta(firstTrack->m_infos,"genre") << g_eol;
+				}
+				if (date_global) {
+					p_out << "REM DATE " << format_meta(firstTrack->m_infos,"date") << g_eol;
+				}
+				if (discid_global) {
+					p_out << "REM DISCID " << format_meta(firstTrack->m_infos,"discid") << g_eol;
+				}
+				if (comment_global) {
+					p_out << "REM COMMENT " << format_meta(firstTrack->m_infos,"comment") << g_eol;
+				}
+				if (catalog_global) {
+					p_out << "CATALOG " << format_meta(firstTrack->m_infos,"catalog") << g_eol;
+				}
+				if (songwriter_global) {
+					p_out << "SONGWRITER \"" << format_meta(firstTrack->m_infos,"songwriter") << "\"" << g_eol;
+				}
 
-		if (album_artist_global)
-		{
-			p_out << "PERFORMER \"" << format_meta(p_data.first()->m_infos,"album artist") << "\"" << g_eol;
-			artist_global = false;
-		}
-		else if (artist_global)
-		{
-			p_out << "PERFORMER \"" << format_meta(p_data.first()->m_infos,"artist") << "\"" << g_eol;
-		}
-		if (album_global)
-		{
-			p_out << "TITLE \"" << format_meta(p_data.first()->m_infos,"album") << "\"" << g_eol;
-		}
+				if (album_artist_global)
+				{
+					p_out << "PERFORMER \"" << format_meta(firstTrack->m_infos,"album artist") << "\"" << g_eol;
+					artist_global = false;
+				}
+				else if (artist_global)
+				{
+					p_out << "PERFORMER \"" << format_meta(firstTrack->m_infos,"artist") << "\"" << g_eol;
+				}
+				if (album_global)
+				{
+					p_out << "TITLE \"" << format_meta(firstTrack->m_infos,"album") << "\"" << g_eol;
+				}
 
-		{
-			replaygain_info::t_text_buffer rgbuffer;
-			replaygain_info rg = p_data.first()->m_infos.get_replaygain();
-			if (rg.format_album_gain(rgbuffer))
-				p_out << "REM REPLAYGAIN_ALBUM_GAIN " << rgbuffer << g_eol;
-			if (rg.format_album_peak(rgbuffer))
-				p_out << "REM REPLAYGAIN_ALBUM_PEAK " << rgbuffer << g_eol;			
+				{
+					replaygain_info::t_text_buffer rgbuffer;
+					replaygain_info rg = firstTrack->m_infos.get_replaygain();
+					if (rg.format_album_gain(rgbuffer))
+						p_out << "REM REPLAYGAIN_ALBUM_GAIN " << rgbuffer << g_eol;
+					if (rg.format_album_peak(rgbuffer))
+						p_out << "REM REPLAYGAIN_ALBUM_PEAK " << rgbuffer << g_eol;			
+				}
+
+			}
 		}
 
 		pfc::string8 last_file;
@@ -102,11 +113,19 @@ namespace cue_creator
 		{
 			if (strcmp(last_file,iter->m_file) != 0)
 			{
-				p_out << "FILE \"" << iter->m_file << "\" WAVE" << g_eol;
+				auto fileType = iter->m_fileType;
+				if ( fileType.length() == 0 ) fileType = "WAVE";
+				p_out << "FILE \"" << iter->m_file << "\" " << fileType << g_eol;
 				last_file = iter->m_file;
 			}
 
-			p_out << "  TRACK " << pfc::format_int(iter->m_track_number,2) << " AUDIO" << g_eol;
+			{
+				auto trackType = iter->m_trackType;
+				if (trackType.length() == 0) trackType = "AUDIO";
+				p_out << "  TRACK " << pfc::format_int(iter->m_track_number,2) << " " << trackType << g_eol;
+			}
+
+			
 
 			if (iter->m_infos.meta_find("title") != pfc_infinite)
 				p_out << "    TITLE \"" << format_meta(iter->m_infos,"title") << "\"" << g_eol;
@@ -173,5 +192,11 @@ namespace cue_creator
 		m_index_list.m_positions[1] = index1;
 	}
 
+	bool t_entry::isTrackAudio() const { 
+		PFC_ASSERT( m_trackType.length() > 0 );
+		return pfc::stringEqualsI_ascii( m_trackType, "AUDIO" ); 
+	}
 }
+
+
 

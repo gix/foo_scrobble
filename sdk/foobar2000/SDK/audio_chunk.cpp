@@ -101,7 +101,7 @@ template<bool byteSwap, bool isSigned> static void _import32any(const void * in,
 	for(size_t walk = 0; walk < count; ++walk) {
 		uint32_t v = *inPtr++;
 		if (byteSwap) v = pfc::byteswap_t(v);
-		if (!isSigned) v ^= 0x80000000; // to signed
+		if (!isSigned) v ^= 0x80000000u; // to signed
 		*out++ = (audio_sample) (int32_t) v * factor;
 	}
 }
@@ -325,8 +325,14 @@ void audio_chunk::set_data_floatingpoint_ex(const void * ptr,t_size size,unsigne
 	set_channels(nch,p_channel_config);
 }
 
+pfc::string8 audio_chunk::formatChunkSpec() const {
+	pfc::string8 msg;
+	msg << get_sample_rate() << " Hz, " << get_channels() << ":0x" << pfc::format_hex(get_channel_config(), 2) << " channels, " << get_sample_count() << " samples";
+	return msg;
+}
+
 void audio_chunk::debugChunkSpec() const {
-	FB2K_DebugLog() << "Chunk: " << get_sample_rate() << " Hz, " << get_channels() << ":0x" << pfc::format_hex(get_channel_config(),2) << " channels, " << get_sample_count() << " samples";
+	FB2K_DebugLog() << "Chunk: " << this->formatChunkSpec();
 }
 
 #if PFC_DEBUG

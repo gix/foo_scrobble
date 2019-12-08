@@ -22,6 +22,13 @@ bool replaygain_info::g_format_gain(float p_value,char p_buffer[text_buffer_size
 	}
 }
 
+bool replaygain_info::g_format_peak_db(float p_value, char p_buffer[text_buffer_size]) {
+	const float lo = 1.0 / (float)(1 << 24);
+	if ( p_value == peak_invalid || p_value < lo ) return false;
+	return g_format_gain((float)audio_math::scale_to_gain(p_value), p_buffer);
+
+}
+
 bool replaygain_info::g_format_peak(float p_value,char p_buffer[text_buffer_size])
 {
 	RG_FPU();
@@ -108,22 +115,21 @@ float replaygain_info::anyGain(bool bPreferAlbum) const {
 	}
 }
 
-void replaygain_info::set_album_gain_text(const char * p_text,t_size p_text_len)
-{
+float replaygain_info::g_parse_gain_text(const char * p_text, t_size p_text_len) {
 	RG_FPU();
 	if (p_text != 0 && p_text_len > 0 && *p_text != 0)
-		m_album_gain = (float)pfc::string_to_float(p_text,p_text_len);
+		return (float)pfc::string_to_float(p_text, p_text_len);
 	else
-		remove_album_gain();
+		return gain_invalid;
+}
+
+void replaygain_info::set_album_gain_text(const char * p_text,t_size p_text_len) {
+	m_album_gain = g_parse_gain_text(p_text, p_text_len);
 }
 
 void replaygain_info::set_track_gain_text(const char * p_text,t_size p_text_len)
 {
-	RG_FPU();
-	if (p_text != 0 && p_text_len > 0 && *p_text != 0)
-		m_track_gain = (float)pfc::string_to_float(p_text,p_text_len);
-	else
-		remove_track_gain();
+	m_track_gain = g_parse_gain_text(p_text, p_text_len);
 }
 
 void replaygain_info::set_album_peak_text(const char * p_text,t_size p_text_len)

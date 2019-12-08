@@ -101,6 +101,25 @@ BEGIN
     CONTROL         "Lock max height @ 400 units",IDC_LOCK_MAX_HEIGHT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,60,108,10
 END
 
+IDD_THREADS DIALOGEX 0, 0, 364, 232
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "UI and Threads Demo"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Start",IDOK,252,200,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,306,200,50,14
+    LISTBOX         IDC_LIST,4,20,356,176,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Header",IDC_HEADER,8,4,348,8
+END
+
+IDD_LISTCONTROL_DEMO DIALOGEX 0, 0, 311, 177
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,12,12,288,156
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -141,6 +160,22 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 106
     END
+
+    IDD_THREADS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 357
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 225
+    END
+
+    IDD_LISTCONTROL_DEMO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 304
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 170
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -154,6 +189,26 @@ IDD_UI_ELEMENT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
+
+IDD_THREADS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_LISTCONTROL_DEMO AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_SCROLL              ICON                    "..\\..\\libPPUI\\IDI_SCROLL.ico"
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

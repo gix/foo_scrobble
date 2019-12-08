@@ -4,10 +4,9 @@
 class foobar2000_component_globals {
 public:
 	foobar2000_component_globals() {
-#ifdef _MSC_VER
-#ifndef _DEBUG
+#if defined(_MSC_VER) && !defined(_DEBUG) && !defined(_DLL)
+		// only with MSVC, non release build, static runtime
 		::OverrideCrtAbort();
-#endif
 #endif
 	}
 };

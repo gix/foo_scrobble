@@ -5,6 +5,7 @@
 #include "file_list_helper.h"
 #include "fileReadAhead.h"
 
+
 input_helper::ioFilter_t input_helper::ioFilter_full_buffer(t_filesize val ) {
 	if (val == 0) return nullptr;
     return [val] ( file_ptr & f, const char * path, abort_callback & aborter) {
@@ -18,34 +19,42 @@ input_helper::ioFilter_t input_helper::ioFilter_full_buffer(t_filesize val ) {
 }
 
 input_helper::ioFilter_t input_helper::ioFilter_block_buffer(size_t arg) {
-    if ( arg == 0 ) return nullptr;
-    
-    return [arg] ( file_ptr & p_file, const char * p_path, abort_callback & p_abort ) {
-        if ( !filesystem::g_is_remote_or_unrecognized(p_path)) {
-            if (p_file.is_empty()) filesystem::g_open_read( p_file, p_path, p_abort );
-            if (!p_file->is_in_memory() && !p_file->is_remote() && p_file->can_seek()) {
-                file_cached::g_create( p_file, p_file, p_abort, (size_t) arg );
-                return true;
-            }
-        }
-        return false;
-    };
+	if (arg == 0) return nullptr;
+
+	return [arg](file_ptr & p_file, const char * p_path, abort_callback & p_abort) {
+		if (!filesystem::g_is_remote_or_unrecognized(p_path)) {
+			if (p_file.is_empty()) filesystem::g_open_read(p_file, p_path, p_abort);
+			if (!p_file->is_in_memory() && !p_file->is_remote() && p_file->can_seek()) {
+				file_cached::g_create(p_file, p_file, p_abort, (size_t)arg);
+				return true;
+			}
+		}
+		return false;
+	};
 }
 
-input_helper::ioFilter_t input_helper::ioFilter_remote_read_ahead( size_t arg ) {
-    if ( arg == 0 ) return nullptr;
-    
-    return [arg] ( file_ptr & p_file, const char * p_path, abort_callback & p_abort ) {
-        if ( p_file.is_empty() ) {
-            filesystem::ptr fs;
-            if (!filesystem::g_get_interface( fs, p_path )) return false;
-            if (! fs->is_remote( p_path ) ) return false;
-            fs->open( p_file, p_path, filesystem::open_mode_read, p_abort );
-        } else if ( ! p_file->is_remote() ) return false;
-        if ( p_file->is_in_memory() ) return false;
-        p_file = fileCreateReadAhead( p_file, (size_t) arg, p_abort );
-        return true;
-    };
+static input_helper::ioFilter_t makeReadAhead(size_t arg, bool bRemote) {
+	if (arg == 0) return nullptr;
+
+	return [arg, bRemote](file_ptr & p_file, const char * p_path, abort_callback & p_abort) {
+		if (p_file.is_empty()) {
+			filesystem::ptr fs;
+			if (!filesystem::g_get_interface(fs, p_path)) return false;
+			if (bRemote != fs->is_remote(p_path)) return false;
+			fs->open(p_file, p_path, filesystem::open_mode_read, p_abort);
+		} else if (bRemote != p_file->is_remote()) return false;
+		if (p_file->is_in_memory()) return false;
+		p_file = fileCreateReadAhead(p_file, (size_t)arg, p_abort);
+		return true;
+	};
+}
+
+input_helper::ioFilter_t input_helper::ioFilter_remote_read_ahead(size_t arg) {
+	return makeReadAhead(arg, true);
+}
+
+input_helper::ioFilter_t input_helper::ioFilter_local_read_ahead(size_t arg) {
+	return makeReadAhead(arg, false);
 }
 
 void input_helper::open(service_ptr_t<file> p_filehint,metadb_handle_ptr p_location,unsigned p_flags,abort_callback & p_abort,bool p_from_redirect,bool p_skip_hints)
@@ -69,34 +78,44 @@ bool input_helper::need_file_reopen(const char * newPath) const {
 bool input_helper::open_path(const char * path, abort_callback & abort, decodeOpen_t const & other) {
 	abort.check();
 
-	if (!need_file_reopen(path)) return false;
+	m_logger = other.m_logger;
+
+	if (!need_file_reopen(path)) {
+		if ( other.m_logger.is_valid() ) {
+			input_decoder_v2::ptr v2;
+			if (m_input->service_query_t(v2)) v2->set_logger(other.m_logger);
+		}
+		return false;
+	}
 	m_input.release();
 
-service_ptr_t<file> l_file = other.m_hint;
-fileOpenTools(l_file, path, other.m_ioFilters, abort);
+	service_ptr_t<file> l_file = other.m_hint;
+	fileOpenTools(l_file, path, other.m_ioFilters, abort);
 
-TRACK_CODE("input_entry::g_open_for_decoding",
-	input_entry::g_open_for_decoding(m_input, l_file, path, abort, other.m_from_redirect)
-);
+	TRACK_CODE("input_entry::g_open_for_decoding",
+		m_input ^= input_entry::g_open(input_decoder::class_guid, l_file, path, m_logger, abort, other.m_from_redirect );
+	);
 
 #ifndef FOOBAR2000_MODERN
-if (!other.m_skip_hints) {
-	try {
-		metadb_io::get()->hint_reader(m_input.get_ptr(), path, abort);
+	if (!other.m_skip_hints) {
+		try {
+			metadb_io::get()->hint_reader(m_input.get_ptr(), path, abort);
+		}
+		catch (exception_io_data) {
+			//Don't fail to decode when this barfs, might be barfing when reading info from another subsong than the one we're trying to decode etc.
+			m_input.release();
+			if (l_file.is_valid()) l_file->reopen(abort);
+			TRACK_CODE("input_entry::g_open_for_decoding",
+				m_input ^= input_entry::g_open(input_decoder::class_guid, l_file, path, m_logger, abort, other.m_from_redirect);
+			);
+		}
 	}
-	catch (exception_io_data) {
-		//Don't fail to decode when this barfs, might be barfing when reading info from another subsong than the one we're trying to decode etc.
-		m_input.release();
-		if (l_file.is_valid()) l_file->reopen(abort);
-		TRACK_CODE("input_entry::g_open_for_decoding",
-			input_entry::g_open_for_decoding(m_input, l_file, path, abort, other.m_from_redirect)
-		);
-	}
-}
 #endif
 
-m_path = path;
-return true;
+	if (other.m_shim) m_input = other.m_shim(m_input, path, abort);
+
+	m_path = path;
+	return true;
 }
 
 void input_helper::open_decoding(t_uint32 subsong, t_uint32 flags, abort_callback & p_abort) {
@@ -106,9 +125,16 @@ void input_helper::open_decoding(t_uint32 subsong, t_uint32 flags, abort_callbac
 void input_helper::open(const playable_location & location, abort_callback & abort, decodeOpen_t const & other) {
 	open_path(location.get_path(), abort, other);
 
-	set_logger(other.m_logger);
+	if (other.m_setSampleRate != 0) {
+		this->extended_param(input_params::set_preferred_sample_rate, other.m_setSampleRate, nullptr, 0);
+	}
 
 	open_decoding(location.get_subsong(), other.m_flags, abort);
+}
+
+void input_helper::attach(input_decoder::ptr dec, const char * path) {
+	m_input = dec;
+	m_path = path;
 }
 
 void input_helper::open(service_ptr_t<file> p_filehint, const playable_location & p_location, unsigned p_flags, abort_callback & p_abort, bool p_from_redirect, bool p_skip_hints) {
@@ -141,6 +167,7 @@ bool input_helper::flush_on_pause() {
 
 
 void input_helper::set_logger(event_logger::ptr ptr) {
+	m_logger = ptr;
 	input_decoder_v2::ptr v2;
 	if (m_input->service_query_t(v2)) v2->set_logger(ptr);
 }
@@ -162,7 +189,11 @@ void input_helper::seek(double seconds, abort_callback & p_abort) {
 bool input_helper::can_seek() {
 	return m_input->can_seek();
 }
-#ifdef FOOBAR2000_MODERN
+
+bool input_helper::query_position( double & val ) {
+	return extended_param(input_params::query_position, 0, &val, sizeof(val) ) != 0;
+}
+
 size_t input_helper::extended_param(const GUID & type, size_t arg1, void * arg2, size_t arg2size) {
 	input_decoder_v4::ptr v4;
 	if (v4 &= m_input) {
@@ -170,17 +201,14 @@ size_t input_helper::extended_param(const GUID & type, size_t arg1, void * arg2,
 	}
 	return 0;
 }
-#endif
 input_helper::decodeInfo_t input_helper::decode_info() {
 	decodeInfo_t ret = {};
 	if (m_input.is_valid()) {
 		ret.m_can_seek = can_seek();
 		ret.m_flush_on_pause = flush_on_pause();
-#ifdef FOOBAR2000_MODERN
 		if (ret.m_can_seek) {
 			ret.m_seeking_expensive = extended_param(input_params::seeking_expensive, 0, nullptr, 0) != 0;
 		}
-#endif
 	}
 	return ret;
 }
@@ -264,7 +292,7 @@ bool dead_item_filter::run(const pfc::list_base_const_t<metadb_handle_ptr> & p_l
 	valid_handles.sort_by_pointer();
 	for(t_size listidx=0;listidx<p_list.get_count();listidx++) {
 		bool dead = valid_handles.bsearch_by_pointer(p_list[listidx]) == ~0;
-		if (dead) console::formatter() << "Dead item: " << p_list[listidx];
+		if (dead) FB2K_console_formatter() << "Dead item: " << p_list[listidx];
 		p_mask.set(listidx,dead);
 	}
 	return !is_aborting();
@@ -292,7 +320,7 @@ bool input_helper::g_mark_dead(const pfc::list_base_const_t<metadb_handle_ptr> &
 }
 
 void input_info_read_helper::open(const char * p_path,abort_callback & p_abort) {
-	if (m_input.is_empty() || metadb::path_compare(m_path,p_path) != 0)
+	if (m_input.is_empty() || playable_location::path_compare(m_path,p_path) != 0)
 	{
 		TRACK_CODE("input_entry::g_open_for_info_read",input_entry::g_open_for_info_read(m_input,0,p_path,p_abort));
 
@@ -324,142 +352,6 @@ void input_info_read_helper::get_info_check(const playable_location & p_location
 
 
 
-
-
-void input_helper_cue::open(service_ptr_t<file> p_filehint,const playable_location & p_location,unsigned p_flags,abort_callback & p_abort,double p_start,double p_length) {
-	p_abort.check();
-
-	m_start = p_start;
-	m_position = 0;
-	m_dynamic_info_trigger = false;
-	m_dynamic_info_track_trigger = false;
-	
-	m_input.open(p_filehint,p_location,p_flags,p_abort,true,true);
-	
-	if (!m_input.can_seek()) throw exception_io_object_not_seekable();
-
-	if (m_start > 0) {
-		m_input.seek(m_start,p_abort);
-	}
-
-	if (p_length > 0) {
-		m_length = p_length;
-	} else {
-		file_info_impl temp;
-		m_input.get_info(0,temp,p_abort);
-		double ref_length = temp.get_length();
-		if (ref_length <= 0) throw exception_io_data();
-		m_length = ref_length - m_start + p_length /* negative or zero */;
-		if (m_length <= 0) throw exception_io_data();
-	}
-}
-
-void input_helper_cue::close() {m_input.close();}
-bool input_helper_cue::is_open() {return m_input.is_open();}
-
-bool input_helper_cue::_m_input_run(audio_chunk & p_chunk, mem_block_container * p_raw, abort_callback & p_abort) {
-	if (p_raw == NULL) {
-		return m_input.run(p_chunk, p_abort);
-	} else {
-		return m_input.run_raw(p_chunk, *p_raw, p_abort);
-	}
-}
-bool input_helper_cue::_run(audio_chunk & p_chunk, mem_block_container * p_raw, abort_callback & p_abort) {
-	p_abort.check();
-	
-	if (m_length > 0) {
-		if (m_position >= m_length) return false;
-
-if (!_m_input_run(p_chunk, p_raw, p_abort)) return false;
-
-m_dynamic_info_trigger = true;
-m_dynamic_info_track_trigger = true;
-
-t_uint64 max = (t_uint64)audio_math::time_to_samples(m_length - m_position, p_chunk.get_sample_rate());
-if (max == 0)
-{//handle rounding accidents, this normally shouldn't trigger
-	m_position = m_length;
-	return false;
-}
-
-t_size samples = p_chunk.get_sample_count();
-if ((t_uint64)samples > max)
-{
-	p_chunk.set_sample_count((unsigned)max);
-	if (p_raw != NULL) {
-		const t_size rawSize = p_raw->get_size();
-		PFC_ASSERT(rawSize % samples == 0);
-		p_raw->set_size((t_size)((t_uint64)rawSize * max / samples));
-	}
-	m_position = m_length;
-}
-else
-{
-	m_position += p_chunk.get_duration();
-}
-return true;
-	}
-	else
-	{
-		if (!_m_input_run(p_chunk, p_raw, p_abort)) return false;
-		m_position += p_chunk.get_duration();
-		return true;
-	}
-}
-bool input_helper_cue::run_raw(audio_chunk & p_chunk, mem_block_container & p_raw, abort_callback & p_abort) {
-	return _run(p_chunk, &p_raw, p_abort);
-}
-
-bool input_helper_cue::run(audio_chunk & p_chunk, abort_callback & p_abort) {
-	return _run(p_chunk, NULL, p_abort);
-}
-
-void input_helper_cue::seek(double p_seconds, abort_callback & p_abort)
-{
-	m_dynamic_info_trigger = false;
-	m_dynamic_info_track_trigger = false;
-	if (m_length <= 0 || p_seconds < m_length) {
-		m_input.seek(p_seconds + m_start, p_abort);
-		m_position = p_seconds;
-	}
-	else {
-		m_position = m_length;
-	}
-}
-
-bool input_helper_cue::can_seek() { return true; }
-
-void input_helper_cue::on_idle(abort_callback & p_abort) { m_input.on_idle(p_abort); }
-
-bool input_helper_cue::get_dynamic_info(file_info & p_out, double & p_timestamp_delta) {
-	if (m_dynamic_info_trigger) {
-		m_dynamic_info_trigger = false;
-		return m_input.get_dynamic_info(p_out, p_timestamp_delta);
-	}
-	else {
-		return false;
-	}
-}
-
-bool input_helper_cue::get_dynamic_info_track(file_info & p_out, double & p_timestamp_delta) {
-	if (m_dynamic_info_track_trigger) {
-		m_dynamic_info_track_trigger = false;
-		return m_input.get_dynamic_info_track(p_out, p_timestamp_delta);
-	}
-	else {
-		return false;
-	}
-}
-
-const char * input_helper_cue::get_path() const { return m_input.get_path(); }
-
-void input_helper_cue::get_info(t_uint32 p_subsong, file_info & p_info, abort_callback & p_abort) { m_input.get_info(p_subsong, p_info, p_abort); }
-
-
-
-
-
-
 // openAudioData code
 
 namespace {
@@ -469,11 +361,7 @@ namespace {
 		void init(const playable_location & loc, input_helper::decodeOpen_t const & arg, abort_callback & aborter) {
 			m_length = -1; m_lengthKnown = false;
 			m_subsong = loc.get_subsong();
-			input_entry::g_open_for_decoding(m_decoder, arg.m_hint, loc.get_path(), aborter, arg.m_from_redirect);
-			if (arg.m_logger.is_valid()) {
-				input_decoder_v2::ptr v2;
-				if ( v2 &= m_decoder ) v2->set_logger(arg.m_logger);
-			}
+			m_decoder ^= input_entry::g_open( input_decoder::class_guid, arg.m_hint, loc.get_path(), arg.m_logger, aborter, arg.m_from_redirect);
 			m_seekable = ( arg.m_flags & input_flag_no_seeking ) == 0 && m_decoder->can_seek();
 			reopenDecoder(aborter);
 			readChunk(aborter, true);

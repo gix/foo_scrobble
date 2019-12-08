@@ -1,3 +1,7 @@
+#pragma once
+
+#include "titleformat.h"
+
 //! This interface allows filtering of playlist modification operations.\n
 //! Implemented by components "locking" playlists; use playlist_manager::playlist_lock_install() etc to takeover specific playlist with your instance of playlist_lock.
 class NOVTABLE playlist_lock : public service_base {
@@ -437,7 +441,8 @@ public:
 	//! \param p_data array that contains the data that will be associated with the property
 	template<typename t_array> void playlist_set_property(t_size p_playlist,const GUID & p_property,const t_array & p_data) {
 		PFC_STATIC_ASSERT( sizeof(p_data[0]) == 1 );
-		playlist_set_property(p_playlist,p_property,&stream_reader_memblock_ref(p_data),p_data.get_size(),abort_callback_dummy());
+		stream_reader_memblock_ref reader(p_data);
+		playlist_set_property(p_playlist,p_property,&reader,p_data.get_size(),fb2k::noAbort);
 	}
 	//! Read a persistent playlist property.
 	//! \param p_playlist Index of the playlist
@@ -448,7 +453,10 @@ public:
 		PFC_STATIC_ASSERT( sizeof(p_data[0]) == 1 );
 		typedef pfc::array_t<t_uint8,pfc::alloc_fast_aggressive> t_temp;
 		t_temp temp;
-		if (!playlist_get_property(p_playlist,p_property,&stream_writer_buffer_append_ref_t<t_temp>(temp),abort_callback_dummy())) return false;
+		{
+			stream_writer_buffer_append_ref_t<t_temp> reader(temp);
+			if (!playlist_get_property(p_playlist,p_property,&reader,fb2k::noAbort)) return false;
+		}
 		p_data = temp;
 		return true;
 	}
@@ -728,9 +736,10 @@ class NOVTABLE playlist_incoming_item_filter : public service_base {
 	FB2K_MAKE_SERVICE_COREAPI(playlist_incoming_item_filter);
 public:
 	//! Pre-sorts incoming items according to user-configured settings, removes duplicates. \n
+	//! As of 1.4, this is the same as sort_by_pointer_remove_duplicates() + sort_by_format( get_incoming_item_sorter() ), see playlist_incoming_item_filter_v4 \n
+	//! This method is valid in main thread only. However, using playlist_incoming_item_filter_v4::get_incoming_item_sorter() lets you do the same off main thread.
 	//! @param in Items to process.
 	//! @param out Receives processed item list. \n
-	//! NOTE: because of an implementation bug in pre-0.9.5, the output list should be emptied before calling filter_items(), otherwise the results will be inconsistent/unpredictable.
 	//! @returns True when there's one or more item in the output list, false when the output list is empty.
 	virtual bool filter_items(metadb_handle_list_cref in,metadb_handle_list_ref out) = 0;
 	
@@ -818,6 +827,19 @@ class playlist_incoming_item_filter_v3 : public playlist_incoming_item_filter_v2
 	FB2K_MAKE_SERVICE_COREAPI_EXTENSION(playlist_incoming_item_filter_v3, playlist_incoming_item_filter_v2)
 public:
 	virtual bool auto_playlist_name(metadb_handle_list_cref data,pfc::string_base & out) = 0;
+};
+
+//! \since 1.4
+class playlist_incoming_item_filter_v4 : public playlist_incoming_item_filter_v3 {
+	FB2K_MAKE_SERVICE_COREAPI_EXTENSION(playlist_incoming_item_filter_v4, playlist_incoming_item_filter_v3);
+public:
+	//! Retrieves title formatting pattern for sorting incoming files. \n
+	//! Valid from main thread only - however you can use the value for off-main-thread operations.
+	virtual void get_incoming_item_sort_pattern( pfc::string_base & out ) = 0;
+	//! Retrieves shared title formatting object for sorting incoming files. \n
+	//! This is the same as compiling the string returned from get_incoming_item_sort_pattern, except the returned object is shared with others using this API. \n
+	//! Valid from main thread only - however you can use the returned object for off-main-thread operations.
+	virtual titleformat_object::ptr get_incoming_item_sorter() = 0;
 };
 
 //! Implementation of dropped_files_data.

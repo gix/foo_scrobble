@@ -115,6 +115,8 @@ public:
 
 	bool get_description_by_id(unsigned id,pfc::string_base & out);
 
+	//! Safely prevent destruction from worker threads (some components attempt that).
+	static bool serviceRequiresMainThreadDestructor() { return true; }
 
 	FB2K_MAKE_SERVICE_COREAPI(contextmenu_manager);
 };

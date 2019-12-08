@@ -1,3 +1,5 @@
+#pragma once
+
 #include <functional>
 
 //! Generic service for receiving notifications about async operation completion. Used by various other services.
@@ -20,7 +22,7 @@ public:
 //! Implementation helper.
 class completion_notify_dummy : public completion_notify {
 public:
-	void on_completion(unsigned p_code) {}
+	void on_completion(unsigned) {}
 };
 
 //! Implementation helper.
@@ -68,7 +70,7 @@ public:
     ~completion_notify_receiver();
     void orphan_all_tasks();
 
-	virtual void on_task_completion(unsigned p_id,unsigned p_status) {}
+	virtual void on_task_completion(unsigned p_id,unsigned p_status) {(void)p_id;(void)p_status;}
 private:
 	static void orphanfunc(unsigned,completion_notify_orphanable_nnptr p_item) {p_item->orphan();}
 	pfc::map_t<unsigned,completion_notify_orphanable_nnptr> m_tasks;

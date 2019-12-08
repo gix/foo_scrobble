@@ -12,8 +12,8 @@ public:
 
 	inline t_size get_size() const {return get_count();}
 
-	inline T get_item(t_size n) const {T temp; get_item_ex(temp,n); return std::move(temp);}
-	inline T operator[](t_size n) const {T temp; get_item_ex(temp,n); return std::move(temp);}
+	inline T get_item(t_size n) const {T temp; get_item_ex(temp,n); return temp;}
+	inline T operator[](t_size n) const {T temp; get_item_ex(temp,n); return temp;}
 
 	template<typename t_compare>
 	t_size find_duplicates_sorted_t(t_compare p_compare,bit_array_var & p_out) const
@@ -232,9 +232,9 @@ public:
 		int compare(const T& p_item1,const T& p_item2) {return ::pfc::compare_t(p_item1,p_item2);}
 	};
 
-	void sort() {sort(sort_callback_auto());}
-	template<typename t_compare> void sort_t(t_compare p_compare) {sort(sort_callback_impl_t<t_compare>(p_compare));}
-	template<typename t_compare> void sort_stable_t(t_compare p_compare) {sort_stable(sort_callback_impl_t<t_compare>(p_compare));}
+	void sort() {sort_callback_auto cb;sort(cb);}
+	template<typename t_compare> void sort_t(t_compare p_compare) {sort_callback_impl_t<t_compare> cb(p_compare);sort(cb);}
+	template<typename t_compare> void sort_stable_t(t_compare p_compare) {sort_callback_impl_t<t_compare> cb(p_compare); sort_stable(cb);}
 
 	template<typename t_compare> void sort_remove_duplicates_t(t_compare p_compare)
 	{

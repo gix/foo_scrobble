@@ -2,6 +2,11 @@
 
 #include "resource.h"
 
+#include <libPPUI/win32_utility.h>
+#include <libPPUI/win32_op.h> // WIN32_OP()
+#include <libPPUI/wtl-pp.h> // CCheckBox
+#include <helpers/atl-misc.h> // ui_element_impl
+
 namespace {
 	// Anonymous namespace : standard practice in fb2k components
 	// Nothing outside should have any reason to see these symbols, and we don't want funny results if another cpp has similarly named classes.

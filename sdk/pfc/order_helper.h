@@ -13,6 +13,7 @@ namespace pfc {
 	void create_move_items_permutation(t_size * p_output,t_size p_count,const class bit_array & p_selection,int p_delta);
     
     void create_move_item_permutation( size_t * p_output, size_t p_count, size_t from, size_t to );
+    bool create_drop_permutation(size_t * out, size_t itemCount, pfc::bit_array const & maskSelected, size_t insertMark );
 }
 
 class order_helper

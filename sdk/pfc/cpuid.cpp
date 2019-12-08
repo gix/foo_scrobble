@@ -4,7 +4,14 @@
 #if PFC_HAVE_CPUID
 
 namespace pfc {
+
 	bool query_cpu_feature_set(unsigned p_value) {
+#if _M_IX86_FP >= 2
+		// don't bother checking for SSE/SSE2 if compiled to use them
+		p_value &= ~(CPU_HAVE_SSE | CPU_HAVE_SSE2);
+		if (p_value == 0) return true;
+#endif
+
 #ifdef _MSC_VER
 		__try {
 #endif

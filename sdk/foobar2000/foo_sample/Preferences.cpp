@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "resource.h"
+#include <helpers/atl-misc.h>
 
 // Sample preferences interface: two meaningless configuration settings accessible through a preferences page and one accessible through advanced preferences.
 
@@ -42,7 +43,7 @@ public:
 	void reset();
 
 	//WTL message map
-	BEGIN_MSG_MAP(CMyPreferences)
+	BEGIN_MSG_MAP_EX(CMyPreferences)
 		MSG_WM_INITDIALOG(OnInitDialog)
 		COMMAND_HANDLER_EX(IDC_BOGO1, EN_CHANGE, OnEditChange)
 		COMMAND_HANDLER_EX(IDC_BOGO2, EN_CHANGE, OnEditChange)

@@ -13,21 +13,21 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{EE47764E-A202-4F85-A767-ABDAB4AFF35F}</ProjectGuid>
     <RootNamespace>foobar2000_sdk_helpers</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -45,7 +45,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MinSpace</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -56,12 +55,12 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>../..</AdditionalIncludeDirectories>
       <AdditionalOptions>/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <OmitFramePointers>true</OmitFramePointers>
+      <PreprocessorDefinitions>NDEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -74,7 +73,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_WIN32_WINNT=0x501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
@@ -85,7 +83,6 @@
       <AdditionalIncludeDirectories>../..</AdditionalIncludeDirectories>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -96,12 +93,12 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="clipboard.cpp" />
-    <ClCompile Include="CPowerRequest.cpp" />
+    <ClCompile Include="AutoComplete.cpp" />
     <ClCompile Include="create_directory_helper.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
+    <ClCompile Include="CTableEditHelper-Legacy.cpp" />
     <ClCompile Include="cue_creator.cpp" />
     <ClCompile Include="cue_parser.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -132,18 +129,14 @@
     <ClCompile Include="file_move_helper.cpp" />
     <ClCompile Include="filetimetools.cpp" />
     <ClCompile Include="file_win32_wrapper.cpp" />
-    <ClCompile Include="IDataObjectUtils.cpp" />
+    <ClCompile Include="inplace_edit.cpp" />
     <ClCompile Include="input_helpers.cpp" />
-    <ClCompile Include="listview_helper.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-    </ClCompile>
+    <ClCompile Include="input_helper_cue.cpp" />
     <ClCompile Include="mp3_utils.cpp" />
     <ClCompile Include="packet_decoder_aac_common.cpp" />
     <ClCompile Include="packet_decoder_mp3_common.cpp" />
     <ClCompile Include="readers.cpp" />
     <ClCompile Include="seekabilizer.cpp" />
-    <ClCompile Include="SmartStrStr.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
@@ -158,8 +151,12 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
+    <ClCompile Include="text_file_loader_v2.cpp" />
     <ClCompile Include="ThreadUtils.cpp" />
+    <ClCompile Include="track_property_callback_impl.cpp" />
+    <ClCompile Include="ui_element_helpers.cpp" />
     <ClCompile Include="VisUtils.cpp" />
+    <ClCompile Include="VolumeMap.cpp" />
     <ClCompile Include="win32_dialog.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
@@ -172,21 +169,27 @@
     <ClCompile Include="writer_wav.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="advconfig_impl.h" />
     <ClInclude Include="advconfig_runtime.h" />
     <ClInclude Include="album_art_helpers.h" />
+    <ClInclude Include="atl-misc.h" />
+    <ClInclude Include="AutoComplete.h" />
+    <ClInclude Include="BumpableElem.h" />
+    <ClInclude Include="CDialogResizeHelper.h" />
     <ClInclude Include="CmdThread.h" />
-    <ClInclude Include="CPowerRequest.h" />
     <ClInclude Include="CPropVariant.h" />
     <ClInclude Include="CSingleThreadWrapper.h" />
+    <ClInclude Include="CTableEditHelper-Legacy.h" />
     <ClInclude Include="duration_counter.h" />
     <ClInclude Include="fb2k_threads.h" />
     <ClInclude Include="fb2k_wfx.h" />
     <ClInclude Include="fileReadAhead.h" />
+    <ClInclude Include="file_readonly.h" />
+    <ClInclude Include="foobar2000+atl.h" />
     <ClInclude Include="fullFileBuffer.h" />
     <ClInclude Include="bitreader_helper.h" />
     <ClInclude Include="CallForwarder.h" />
     <ClInclude Include="cfg_guidlist.h" />
-    <ClInclude Include="clipboard.h" />
     <ClInclude Include="COM_utils.h" />
     <ClInclude Include="create_directory_helper.h" />
     <ClInclude Include="cue_creator.h" />
@@ -201,14 +204,15 @@
     <ClInclude Include="file_move_helper.h" />
     <ClInclude Include="file_win32_wrapper.h" />
     <ClInclude Include="filetimetools.h" />
-    <ClInclude Include="gdiplus_helpers.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="icon_remapping_wildcard.h" />
-    <ClInclude Include="IDataObjectUtils.h" />
+    <ClInclude Include="inplace_edit.h" />
     <ClInclude Include="input_fix_seeking.h" />
     <ClInclude Include="input_helpers.h" />
+    <ClInclude Include="input_helper_cue.h" />
+    <ClInclude Include="input_logging.h" />
     <ClInclude Include="input_stream_info_reader.h" />
-    <ClInclude Include="listview_helper.h" />
+    <ClInclude Include="metadb_handle_set.h" />
     <ClInclude Include="meta_table_builder.h" />
     <ClInclude Include="metadb_io_hintlist.h" />
     <ClInclude Include="mp3_utils.h" />
@@ -221,21 +225,34 @@
     <ClInclude Include="reader_pretend_nonseekable.h" />
     <ClInclude Include="rethrow.h" />
     <ClInclude Include="seekabilizer.h" />
-    <ClInclude Include="SmartStrStr.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="stream_buffer_helper.h" />
     <ClInclude Include="tag_write_callback_impl.h" />
     <ClInclude Include="text_file_loader.h" />
+    <ClInclude Include="text_file_loader_v2.h" />
     <ClInclude Include="ThreadUtils.h" />
+    <ClInclude Include="track_property_callback_impl.h" />
     <ClInclude Include="TypeFind.h" />
+    <ClInclude Include="ui_element_helpers.h" />
     <ClInclude Include="VisUtils.h" />
+    <ClInclude Include="VolumeMap.h" />
     <ClInclude Include="win32_dialog.h" />
     <ClInclude Include="win32_misc.h" />
-    <ClInclude Include="win32_op.h" />
+    <ClInclude Include="WindowPositionUtils.h" />
     <ClInclude Include="window_placement_helper.h" />
     <ClInclude Include="writer_wav.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets" Condition="Exists('..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\src\packages\foo_scrobble-deps.2.0.0\build\native\foo_scrobble-deps.targets'))" />
+  </Target>
 </Project>

@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include "resource.h"
+#include <helpers/WindowPositionUtils.h>
+#include <helpers/atl-misc.h>
 
 class CPlaybackStateDemo : public CDialogImpl<CPlaybackStateDemo>, private play_callback_impl_base {
 public:
 	enum {IDD = IDD_PLAYBACK_STATE};
 
-	BEGIN_MSG_MAP(CPlaybackStateDemo)
+	BEGIN_MSG_MAP_EX(CPlaybackStateDemo)
 		MSG_WM_INITDIALOG(OnInitDialog)
 		COMMAND_HANDLER_EX(IDC_PATTERN, EN_CHANGE, OnPatternChange)
 		COMMAND_HANDLER_EX(IDCANCEL, BN_CLICKED, OnCancel)

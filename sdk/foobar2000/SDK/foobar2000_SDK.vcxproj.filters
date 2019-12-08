@@ -269,13 +269,37 @@
     <ClInclude Include="service_by_guid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="service_factory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="foobar2000-pfc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="filesystem_transacted.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="foosort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_lock_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="archive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ui_element_typable_window_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="service_compat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tracks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_info_filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_info_filter_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imageLoaderLite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -449,6 +473,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="config_io_callback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="foosort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="track_property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

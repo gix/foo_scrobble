@@ -43,20 +43,23 @@ namespace text_file_loader
 			t_size done;
 			enum { delta = 1024 * 64, max = 1024 * 512 };
 
-			if ( forceUTF8 ) {
-				is_utf8 = true;
-			} else {
-				is_utf8 = false;
-				char temp[3];
-				done = p_file->read(temp, 3, p_abort);
-				if (done != 3)
-				{
-					if (done > 0) p_out = pfc::stringcvt::string_utf8_from_ansi(temp, done);
-					return;
+			is_utf8 = forceUTF8;
+			char temp[3];
+			done = p_file->read(temp, 3, p_abort);
+			if (done != 3)
+			{
+				if (done > 0) {
+					if ( is_utf8 ) {
+						p_out.set_string( temp, done );
+					} else {
+						p_out = pfc::stringcvt::string_utf8_from_ansi(temp, done);
+					}
+					
 				}
-				if (!memcmp(utf8_header, temp, 3)) is_utf8 = true;
-				else ansitemp.add_string(temp, 3);
+				return;
 			}
+			if (!memcmp(utf8_header, temp, 3)) is_utf8 = true;
+			else ansitemp.add_string(temp, 3);
 
 			mem.set_size(delta);
 			
@@ -86,12 +89,12 @@ namespace text_file_loader
 			char * asdf = mem.get_ptr();
 			p_file->read_object(asdf,size,p_abort);
 			asdf[size]=0;
-			if ( forceUTF8 ) {
-				is_utf8 = true;
-				p_out = asdf;
-			} else if (size>3 && !memcmp(utf8_header,asdf,3)) {
+			if (size>=3 && !memcmp(utf8_header,asdf,3)) {
 				is_utf8 = true; 
 				p_out.add_string(asdf+3); 
+			} else if (forceUTF8) {
+				is_utf8 = true;
+				p_out = asdf;
 			} else {
 				is_utf8 = false;
 				p_out = pfc::stringcvt::string_utf8_from_ansi(asdf);

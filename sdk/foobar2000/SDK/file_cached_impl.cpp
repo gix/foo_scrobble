@@ -3,7 +3,7 @@ namespace {
 
 #define FILE_CACHED_DEBUG_LOG 0
 
-class file_cached_impl_v2 : public file_cached {
+class file_cached_impl_v2 : public service_multi_inherit< file_cached, file_lowLevelIO > {
 public:
 	enum {minBlockSize = 4096};
 	enum {maxSkipSize = 128*1024};
@@ -19,6 +19,15 @@ public:
 		m_base = p_base;
 		m_can_seek = m_base->can_seek();
 		_reinit(p_abort);
+	}
+	size_t lowLevelIO(const GUID & guid, size_t arg1, void * arg2, size_t arg2size, abort_callback & abort) override {
+		abort.check();
+		file_lowLevelIO::ptr ll;
+		if ( ll &= m_base ) {
+			flush_buffer();
+			return ll->lowLevelIO(guid, arg1, arg2, arg2size, abort );
+		}
+		return 0;
 	}
 private:
 	void _reinit(abort_callback & p_abort) {
@@ -213,7 +222,7 @@ private:
 	size_t m_readSize;
 };
 
-class file_cached_impl : public file_cached {
+class file_cached_impl : public service_multi_inherit< file_cached, file_lowLevelIO > {
 public:
 	file_cached_impl(t_size blocksize) {
 		m_buffer.set_size(blocksize);
@@ -240,7 +249,15 @@ private:
 		flush_buffer();
 	}
 public:
-
+	size_t lowLevelIO(const GUID & guid, size_t arg1, void * arg2, size_t arg2size, abort_callback & abort) override {
+		abort.check();
+		file_lowLevelIO::ptr ll;
+		if ( ll &= m_base ) {
+			flush_buffer();
+			return ll->lowLevelIO(guid, arg1, arg2, arg2size, abort);
+		}
+		return 0;
+	}
 	t_size read(void * p_buffer,t_size p_bytes,abort_callback & p_abort) {
 		t_uint8 * outptr = (t_uint8*)p_buffer;
 		t_size done = 0;

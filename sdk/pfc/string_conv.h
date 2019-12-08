@@ -436,7 +436,7 @@ namespace pfc {
 			void convert(unsigned p_codepage,const char * p_source,t_size p_source_size = ~0) {
 				string_wide_from_utf8 temp;
 				temp.convert(p_source,p_source_size);
-				t_size size = estimate_wide_to_codepage(p_codepage,temp,~0);
+				t_size size = estimate_wide_to_codepage(p_codepage,temp,SIZE_MAX);
 				m_buffer.set_size(size);
 				convert_wide_to_codepage(p_codepage,m_buffer.get_ptr_var(),size,temp,~0);
 			}
@@ -459,9 +459,9 @@ namespace pfc {
 			void convert(unsigned p_codepage,const char * p_source,t_size p_source_size = ~0) {
 				string_wide_from_codepage temp;
 				temp.convert(p_codepage,p_source,p_source_size);
-				t_size size = estimate_wide_to_utf8(temp,~0);
+				t_size size = estimate_wide_to_utf8(temp,SIZE_MAX);
 				m_buffer.set_size(size);
-				convert_wide_to_utf8( m_buffer.get_ptr_var(),size,temp,~0);
+				convert_wide_to_utf8( m_buffer.get_ptr_var(),size,temp,SIZE_MAX);
 			}
 
 			operator const char * () const {return get_ptr();}

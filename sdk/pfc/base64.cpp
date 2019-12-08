@@ -55,7 +55,6 @@ namespace pfc {
 	void base64_decode(const char * text, void * out) {
 		
 		size_t outWritePtr = 0;
-		size_t textWalk = 0;
 		size_t inTemp = 0;
 		uint8_t temp[3];
 		for ( size_t textWalk = 0 ; ; ++ textWalk ) {

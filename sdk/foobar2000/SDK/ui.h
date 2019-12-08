@@ -88,7 +88,8 @@ public:
 	//! Loads main GUI icon, version with specified width/height. Returned handle needs to be freed with DestroyIcon when you are done using it.
 	virtual HICON load_main_icon(unsigned width,unsigned height) = 0;
 
-	//! Activates preferences dialog and navigates to specified page. See also: preference_page API.
+	//! Activates preferences dialog and navigates to specified page. See also: preference_page API. \n
+	//! Since foobar2000 1.5, this can be used to show advanced preferences branches or settings, just pass GUID of the advconfig_entry you wish to show.
 	virtual void show_preferences(const GUID & p_page) = 0;
 
 	//! Instantiates ui_status_text_override service, that can be used to display status messages.
@@ -96,6 +97,18 @@ public:
 	//! @returns true on success, false on failure (out of memory / no GUI loaded / etc)
 	virtual bool override_status_text_create(service_ptr_t<ui_status_text_override> & p_out) = 0;
 };
+
+typedef ui_status_text_override ui_status_host;
+
+#if FOOBAR2000_TARGET_VERSION >= 80
+//! \since 1.5
+class NOVTABLE ui_control_v2 : public ui_control {
+	FB2K_MAKE_SERVICE_COREAPI_EXTENSION(ui_control_v2, ui_control)
+public:
+	virtual void register_status_host(HWND wndFor, ui_status_host::ptr obj) = 0;
+	virtual void unregister_status_host(HWND wndFor) = 0;
+};
+#endif // if FOOBAR2000_TARGET_VERSION >= 80
 
 //! Service called from the UI when some object is dropped into the UI. Usable for modifying drag&drop behaviors such as adding custom handlers for object types other than supported media files.\n
 //! Implement where needed; use ui_drop_item_callback_factory_t<> template to register, e.g. static ui_drop_item_callback_factory_t<myclass> g_myclass_factory.

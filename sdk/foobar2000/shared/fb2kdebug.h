@@ -1,3 +1,20 @@
+#pragma once
+
+// since fb2k 1.5
+namespace fb2k {
+	class panicHandler {
+	public:
+		virtual void onPanic() = 0;
+	};
+}
+
+// since fb2k 1.5
+extern "C" 
+{
+	void SHARED_EXPORT uAddPanicHandler(fb2k::panicHandler*);
+	void SHARED_EXPORT uRemovePanicHandler(fb2k::panicHandler*);
+}
+
 extern "C"
 {
 	LPCSTR SHARED_EXPORT uGetCallStackPath();
@@ -64,6 +81,7 @@ static void fb2kWaitForCompletion(HANDLE hEvent) {
 }
 
 static void fb2kWaitForThreadCompletion(HANDLE hWaitFor, DWORD threadID) {
+	(void) threadID;
 	switch(WaitForSingleObject(hWaitFor, INFINITE)) {
 	case WAIT_OBJECT_0:
 		return;
@@ -73,6 +91,7 @@ static void fb2kWaitForThreadCompletion(HANDLE hWaitFor, DWORD threadID) {
 }
 
 static void fb2kWaitForThreadCompletion2(HANDLE hWaitFor, HANDLE hThread, DWORD threadID) {
+	(void) threadID;
 	switch(WaitForSingleObject(hWaitFor, INFINITE)) {
 	case WAIT_OBJECT_0:
 		return;
@@ -98,13 +117,14 @@ static void _InvalidParameter(
    unsigned int line,
    uintptr_t pReserved
 ) {
+	(void)pReserved; (void) line; (void) file; (void) function; (void) expression;
 	RaiseException(0xd142b808 /* random GUID */, EXCEPTION_NONCONTINUABLE, 0, 0);
 }
 
 static void OverrideCrtAbort() {
 	const int signals[] = {SIGINT, SIGTERM, SIGBREAK, SIGABRT};
 	for(size_t i=0; i<_countof(signals); i++) signal(signals[i], _OverrideCrtAbort_handler);
-	_set_abort_behavior(0, ~0);
+	_set_abort_behavior(0, UINT_MAX);
 
 	_set_purecall_handler(_PureCallHandler);
 	_set_invalid_parameter_handler(_InvalidParameter);

@@ -76,8 +76,7 @@ public:
 	virtual void run_v2(dsp_chunk_list * p_chunk_list,const metadb_handle_ptr & p_cur_file,int p_flags,abort_callback & p_abort) = 0;
 private:
 	void run(dsp_chunk_list * p_chunk_list,const metadb_handle_ptr & p_cur_file,int p_flags) {
-		abort_callback_dummy dummy;
-		run_v2(p_chunk_list,p_cur_file,p_flags,dummy);
+		run_v2(p_chunk_list,p_cur_file,p_flags,fb2k::noAbort);
 	}
 
 	FB2K_MAKE_SERVICE_INTERFACE(dsp_v2,dsp);
@@ -100,7 +99,7 @@ private:
 	dsp_chunk_list * m_list;
 	t_size m_chunk_ptr;
 	metadb_handle* m_cur_file;
-	void run_v2(dsp_chunk_list * p_list,const metadb_handle_ptr & p_cur_file,int p_flags,abort_callback & p_abort);
+	void run_v2(dsp_chunk_list * p_list,const metadb_handle_ptr & p_cur_file,int p_flags,abort_callback & p_abort) override;
 protected:
 	//! Call only from on_chunk / on_endoftrack (on_endoftrack will give info on track being finished).\n
 	//! May return false when there's no known track and the metadb_handle ptr will be empty/null.
@@ -155,8 +154,8 @@ public:
 	//! Signaling this may interfere with gapless playback in certain scenarios (forces flush of DSPs placed before you) so don't use it unless you have reasons to.
 	virtual bool need_track_change_mark() = 0;
 private:
-	dsp_impl_base_t(const t_self&);
-	const t_self & operator=(const t_self &);
+	dsp_impl_base_t(const t_self&) = delete;
+	const t_self & operator=(const t_self &) = delete;
 };
 
 template<class t_baseclass>
@@ -206,6 +205,10 @@ public:
 	bool operator!=(const dsp_preset & p_other) const {
 		return !(*this == p_other);
 	}
+
+	pfc::string8 get_owner_name() const;
+	pfc::string8 get_owner_name_debug() const;
+	pfc::string8 debug() const;
 protected:
 	dsp_preset() {}
 	~dsp_preset() {}
@@ -273,8 +276,8 @@ class NOVTABLE dsp_preset_edit_callback {
 public:
 	virtual void on_preset_changed(const dsp_preset &) = 0;
 private:
-	dsp_preset_edit_callback(const dsp_preset_edit_callback&) {throw pfc::exception_not_implemented();}
-	const dsp_preset_edit_callback & operator=(const dsp_preset_edit_callback &) {throw pfc::exception_not_implemented();}
+	dsp_preset_edit_callback(const dsp_preset_edit_callback&) = delete;
+	const dsp_preset_edit_callback & operator=(const dsp_preset_edit_callback &) = delete;
 protected:
 	dsp_preset_edit_callback() {}
 	~dsp_preset_edit_callback() {}
@@ -448,6 +451,9 @@ public:
 	void get_name_list(pfc::string_base & p_out) const;
 
 	static bool equals(dsp_chain_config const & v1, dsp_chain_config const & v2);
+	static bool equals_debug(dsp_chain_config const& v1, dsp_chain_config const& v2);
+
+	pfc::string8 debug() const;
 
 	bool operator==(const dsp_chain_config & other) const {return equals(*this, other);}
 	bool operator!=(const dsp_chain_config & other) const {return !equals(*this, other);}
@@ -519,7 +525,7 @@ private:
 //! Helper.
 class dsp_preset_parser : public stream_reader_formatter<> {
 public:
-	dsp_preset_parser(const dsp_preset & in) : m_data(in), _m_stream(in.get_data(),in.get_data_size()), stream_reader_formatter(_m_stream,_m_abort) {}
+	dsp_preset_parser(const dsp_preset & in) : m_data(in), _m_stream(in.get_data(),in.get_data_size()), stream_reader_formatter(_m_stream,fb2k::noAbort) {}
 
 	void reset() {_m_stream.reset();}
 	t_size get_remaining() const {return _m_stream.get_remaining();}
@@ -531,14 +537,13 @@ public:
 	GUID get_owner() const {return m_data.get_owner();}
 private:
 	const dsp_preset & m_data;
-	abort_callback_dummy _m_abort;
 	stream_reader_memblock_ref _m_stream;
 };
 
 //! Helper.
 class dsp_preset_builder : public stream_writer_formatter<> {
 public:
-	dsp_preset_builder() : stream_writer_formatter(_m_stream,_m_abort) {}
+	dsp_preset_builder() : stream_writer_formatter(_m_stream,fb2k::noAbort) {}
 	void finish(const GUID & id, dsp_preset & out) {
 		out.set_owner(id);
 		out.set_data(_m_stream.m_buffer.get_ptr(), _m_stream.m_buffer.get_size());
@@ -547,7 +552,6 @@ public:
 		_m_stream.m_buffer.set_size(0);
 	}
 private:
-	abort_callback_dummy _m_abort;
 	stream_writer_buffer_simple _m_stream;
 };
 

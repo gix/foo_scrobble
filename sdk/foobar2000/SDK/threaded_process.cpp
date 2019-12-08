@@ -107,12 +107,12 @@ service_ptr_t<threaded_process_callback_lambda> threaded_process_callback_lambda
 service_ptr_t<threaded_process_callback_lambda> threaded_process_callback_lambda::create(run_t f) {
 	auto obj = create();
 	obj->m_run = f;
-	return std::move(obj);
+	return obj;
 }
 service_ptr_t<threaded_process_callback_lambda> threaded_process_callback_lambda::create(on_init_t f1, run_t f2, on_done_t f3) {
 	auto obj = create();
 	obj->m_on_init = f1;
 	obj->m_run = f2;
 	obj->m_on_done = f3;
-	return std::move(obj);
+	return obj;
 }

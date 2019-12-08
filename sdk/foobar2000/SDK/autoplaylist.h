@@ -28,7 +28,10 @@ public:
 	template<typename t_array> void get_configuration(t_array & p_out) {
 		PFC_STATIC_ASSERT( sizeof(p_out[0]) == 1 );
 		typedef pfc::array_t<t_uint8,pfc::alloc_fast_aggressive> t_temp; t_temp temp;
-		get_configuration(&stream_writer_buffer_append_ref_t<t_temp>(temp),abort_callback_dummy());
+		{ 
+			stream_writer_buffer_append_ref_t<t_temp> writer(temp);
+			get_configuration(&writer,fb2k::noAbort);
+		}
 		p_out = temp;
 	}
 };

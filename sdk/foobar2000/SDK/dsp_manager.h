@@ -5,7 +5,7 @@
 //! Helper class for running audio data through a DSP chain.
 class dsp_manager {
 public:
-	dsp_manager() : m_config_changed(false) {}
+	dsp_manager() {}
 
 	//! Alters the DSP chain configuration. Should be called before the first run() to set the configuration but can be also called anytime later between run() calls.
 	void set_config( const dsp_chain_config & p_data );
@@ -32,7 +32,7 @@ private:
 
 	t_dsp_chain m_chain;
 	dsp_chain_config_impl m_config;
-	bool m_config_changed;
+	bool m_config_changed = false;
 	
 	void dsp_run(t_dsp_chain::const_iterator p_iter,dsp_chunk_list * list,const metadb_handle_ptr & cur_file,unsigned flags,double & latency,abort_callback&);
 

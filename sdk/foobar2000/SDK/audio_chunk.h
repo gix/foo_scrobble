@@ -11,7 +11,7 @@ class NOVTABLE audio_chunk {
 public:
 
 	enum {
-		sample_rate_min = 1000, sample_rate_max = 2822400
+		sample_rate_min = 1000, sample_rate_max = 20000000
 	};
 	static bool g_is_valid_sample_rate(t_uint32 p_val) {return p_val >= sample_rate_min && p_val <= sample_rate_max;}
 	
@@ -39,9 +39,14 @@ public:
 
 		channel_config_mono = channel_front_center,
 		channel_config_stereo = channel_front_left | channel_front_right,
+		channel_config_4point0 = channel_front_left | channel_front_right | channel_back_left | channel_back_right,
+		channel_config_5point0 = channel_front_left | channel_front_right | channel_front_center | channel_back_left | channel_back_right,
 		channel_config_5point1 = channel_front_left | channel_front_right | channel_front_center | channel_lfe | channel_back_left | channel_back_right,
 		channel_config_5point1_side = channel_front_left | channel_front_right | channel_front_center | channel_lfe | channel_side_left | channel_side_right,
 		channel_config_7point1 = channel_config_5point1 | channel_side_left | channel_side_right,
+
+		channels_back_left_right = channel_back_left | channel_back_right,
+		channels_side_left_right = channel_side_left | channel_side_right,
 
 		defined_channel_count = 18,
 	};
@@ -67,6 +72,7 @@ public:
 	static const char * g_channel_name_byidx(unsigned p_index);
 	static unsigned g_find_channel_idx(unsigned p_flag);
 	static void g_formatChannelMaskDesc(unsigned flags, pfc::string_base & out);
+	static pfc::string8 g_formatChannelMaskDesc(unsigned flags);
 
 	
 
@@ -133,6 +139,7 @@ public:
 	bool is_valid() const;
 
 	void debugChunkSpec() const;
+	pfc::string8 formatChunkSpec() const;
 #if PFC_DEBUG
 	void assert_valid(const char * ctx) const;
 #else
@@ -344,17 +351,17 @@ public:
 	audio_sample * get_data() {throw pfc::exception_not_implemented();}
 	const audio_sample * get_data() const {return m_data;}
 	t_size get_data_size() const {return m_samples * m_channels;}
-	void set_data_size(t_size p_new_size) {throw pfc::exception_not_implemented();}
+	void set_data_size(t_size) {throw pfc::exception_not_implemented();}
 	
 	unsigned get_srate() const {return m_sample_rate;}
-	void set_srate(unsigned val) {throw pfc::exception_not_implemented();}
+	void set_srate(unsigned) {throw pfc::exception_not_implemented();}
 	unsigned get_channels() const {return m_channels;}
 	unsigned get_channel_config() const {return m_channel_config;}
-	void set_channels(unsigned p_count,unsigned p_config) {throw pfc::exception_not_implemented();}
+	void set_channels(unsigned,unsigned) {throw pfc::exception_not_implemented();}
 
 	t_size get_sample_count() const {return m_samples;}
 	
-	void set_sample_count(t_size val) {throw pfc::exception_not_implemented();}
+	void set_sample_count(t_size) {throw pfc::exception_not_implemented();}
 
 private:
 	t_size m_samples;

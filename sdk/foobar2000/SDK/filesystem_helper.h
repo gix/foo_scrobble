@@ -6,10 +6,20 @@ namespace foobar2000_io {
     typedef std::function< void (const char *, t_filestats const & , bool ) > listDirectoryFunc_t;
     void listDirectory( const char * path, abort_callback & aborter, listDirectoryFunc_t func);
 
+#ifdef _WIN32
 	pfc::string8 stripParentFolders( const char * inPath );
+#endif
 
 	void retryOnSharingViolation( std::function<void () > f, double timeout, abort_callback & a);
 	void retryOnSharingViolation( double timeout, abort_callback & a, std::function<void() > f);
+
+	// **** WINDOWS SUCKS ****
+	// Special version of retryOnSharingViolation with workarounds for known MoveFile() bugs.
+	void retryFileMove( double timeout, abort_callback & a, std::function<void()> f);
+
+	// **** WINDOWS SUCKS ****
+	// Special version of retryOnSharingViolation with workarounds for known idiotic problems with folder removal.
+	void retryFileDelete( double timeout, abort_callback & a, std::function<void()> f);
 
 	class listDirectoryCallbackImpl : public directory_callback {
 	public:
@@ -22,6 +32,10 @@ namespace foobar2000_io {
 		listDirectoryFunc_t m_func;
 	};
 
+#ifdef _WIN32
+	pfc::string8 winGetVolumePath(const char * fb2kPath );
+	DWORD winVolumeFlags( const char * fb2kPath );
+#endif
 }
 
 
@@ -456,21 +470,20 @@ FB2K_STREAM_READER_OVERLOAD(bool) {
 template<bool BE = false>
 class stream_writer_formatter_simple : public stream_writer_formatter<BE> {
 public:
-	stream_writer_formatter_simple() : stream_writer_formatter<BE>(_m_stream,_m_abort), m_buffer(_m_stream.m_buffer) {}
+	stream_writer_formatter_simple() : stream_writer_formatter<BE>(_m_stream,fb2k::noAbort), m_buffer(_m_stream.m_buffer) {}
 
 	typedef stream_writer_buffer_simple::t_buffer t_buffer;
 	t_buffer & m_buffer;
 private:
 	stream_writer_buffer_simple _m_stream;
-	abort_callback_dummy _m_abort;
 };
 
 template<bool BE = false>
 class stream_reader_formatter_simple_ref : public stream_reader_formatter<BE> {
 public:
-	stream_reader_formatter_simple_ref(const void * source, t_size sourceSize) : stream_reader_formatter<BE>(_m_stream,_m_abort), _m_stream(source,sourceSize) {}
-	template<typename TSource> stream_reader_formatter_simple_ref(const TSource& source) : stream_reader_formatter<BE>(_m_stream,_m_abort), _m_stream(source) {}
-	stream_reader_formatter_simple_ref() : stream_reader_formatter<BE>(_m_stream,_m_abort) {}
+	stream_reader_formatter_simple_ref(const void * source, t_size sourceSize) : stream_reader_formatter<BE>(_m_stream,fb2k::noAbort), _m_stream(source,sourceSize) {}
+	template<typename TSource> stream_reader_formatter_simple_ref(const TSource& source) : stream_reader_formatter<BE>(_m_stream,fb2k::noAbort), _m_stream(source) {}
+	stream_reader_formatter_simple_ref() : stream_reader_formatter<BE>(_m_stream,fb2k::noAbort) {}
 
 	void set_data(const void * source, t_size sourceSize) {_m_stream.set_data(source,sourceSize);}
 	template<typename TSource> void set_data(const TSource & source) {_m_stream.set_data(source);}
@@ -481,7 +494,6 @@ public:
 	const void * get_ptr_() const {return _m_stream.get_ptr_();}
 private:
 	stream_reader_memblock_ref _m_stream;
-	abort_callback_dummy _m_abort;
 };
 
 template<bool BE = false>
@@ -579,7 +591,7 @@ private:
 #define FB2K_RETRY_ON_SHARING_VIOLATION(OP, ABORT, TIMEOUT) FB2K_RETRY_ON_EXCEPTION(OP, ABORT, TIMEOUT, exception_io_sharing_violation)
 
 // **** WINDOWS SUCKS ****
-// File move ops must be retried on all these because you get access-denied when some idiot is holding open handles to something you're trying to move, or already-exists on something you just told Windows to move away
+// File move ops must be retried on all these because you get access-denied when someone is holding open handles to something you're trying to move, or already-exists on something you just told Windows to move away
 #define FB2K_RETRY_FILE_MOVE(OP, ABORT, TIMEOUT) FB2K_RETRY_ON_EXCEPTION3(OP, ABORT, TIMEOUT, exception_io_sharing_violation, exception_io_denied, exception_io_already_exists)
 	
 class fileRestorePositionScope {

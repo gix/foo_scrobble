@@ -4,6 +4,8 @@
 
 //! Object cannot be opened in transacted mode.
 PFC_DECLARE_EXCEPTION(exception_io_transactions_unsupported, exception_io, "Transactions unsupported on this volume");
+PFC_DECLARE_EXCEPTION(exception_io_transactional_conflict, exception_io, "Transactional conflict");
+PFC_DECLARE_EXCEPTION(exception_io_transaction_aborted, exception_io, "Transaction aborted");
 
 //! An instance of a filesystem transaction. Inherits from filesystem API and provides all the methods. \n
 //! To perform a transacted filesystem update, you must call methods on this object specifically - not static methods of filesystem class, not methods of a filesystem instance obtained from someplace else. \n
@@ -15,7 +17,7 @@ PFC_DECLARE_EXCEPTION(exception_io_transactions_unsupported, exception_io, "Tran
 //! Functionality disabled by user - obtaining a filesystem_transacted instance will fail. \n
 //! The volume you're trying to work with does not support transacted updates - network share, non-NTFS USB stick, etc - create() will succeed but operations will fail with exception_io_transactions_unsupported. \n
 class filesystem_transacted : public filesystem_v2 {
-	FB2K_MAKE_SERVICE_INTERFACE(filesystem_transacted, filesystem);
+	FB2K_MAKE_SERVICE_INTERFACE(filesystem_transacted, filesystem_v2);
 public:
 	//! Commits the transaction. You should release this filesystem_transacted object when done. \n
 	//! If you don't call commit, all operations made with this filesystem_transacted instance will be rolled back.
@@ -30,8 +32,13 @@ public:
 class filesystem_transacted_entry : public service_base {
 	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(filesystem_transacted_entry);
 public:
-	//! May return null if transacted ops are unsupported on this operating system or disabled by user.
-	virtual filesystem_transacted::ptr create( ) = 0;
+	//! May return null if transacted ops are not available in this location for one reason or another.
+	virtual filesystem_transacted::ptr create( const char * pathFor ) = 0;
 
 	virtual bool is_our_path( const char * path ) = 0;
 };
+
+// Since 1.5, transacted filesystem is no longer supported 
+// as it adds extra complexity without actually solving any problems.
+// Even Microsoft recommends not to use this API.
+#define FB2K_SUPPORT_TRANSACTED_FILESYSTEM 0

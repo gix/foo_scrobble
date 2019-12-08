@@ -12,6 +12,17 @@ namespace pfc {
 		~vartoggle_t() {var = oldval;}
 	};
 
+	template<class T>
+	class vartoggle_volatile_t {
+		T oldval; volatile T & var;
+	public:
+		vartoggle_volatile_t(volatile T & p_var,const T & val) : var(p_var) {
+			oldval = var;
+			var = val;
+		}
+		~vartoggle_volatile_t() {var = oldval;}
+	};
+
 	typedef vartoggle_t<bool> booltoggle;
 };
 

@@ -49,6 +49,9 @@ class replaygain_scanner_entry : public service_base {
 public:
 	//! Instantiates a replaygain_scanner object.
 	virtual replaygain_scanner::ptr instantiate() = 0;
+
+	//! Helper; uses replaygain_scanner_entry_v2 if available; see replaygain_scanner_entry_v2.
+	replaygain_scanner::ptr instantiate( uint32_t flags );
 };
 
 //! \since 1.4
@@ -68,6 +71,14 @@ public:
 	//! For an example, if you don't care about the peak, specify only flagScanGain -
 	//! as peak scan while normally cheap may be very expensive with extreme oversampling specified by user.
 	virtual replaygain_scanner::ptr instantiate(uint32_t flags) = 0;
+};
+
+//! Internal service introduced in 1.5. No guarantees about compatibility. May be changed or removed at any time.
+class replaygain_scanner_config : public service_base {
+	FB2K_MAKE_SERVICE_COREAPI(replaygain_scanner_config);
+public:
+	virtual void get_album_pattern( pfc::string_base & out ) = 0;
+	virtual uint64_t get_read_size_bytes() = 0;
 };
 
 #ifdef FOOBAR2000_DESKTOP

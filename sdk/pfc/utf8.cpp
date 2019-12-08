@@ -60,7 +60,7 @@ unsigned strcpy_utf8_truncate(const char * src,char * out,unsigned maxbytes)
 		maxbytes--;//for null
 		while(!check_end_of_string(src) && maxbytes>0)
 		{
-            t_size delta = utf8_char_len(src);
+            unsigned delta = (unsigned)utf8_char_len(src);
             if (delta>maxbytes || delta==0) break;
 			maxbytes -= delta;
             do 

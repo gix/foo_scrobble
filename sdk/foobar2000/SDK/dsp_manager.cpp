@@ -64,7 +64,7 @@ double dsp_manager::run(dsp_chunk_list * p_list,const metadb_handle_ptr & p_cur_
 			}
 
 
-			//HACK: recycle existing DSPs in a special case when user has apparently only altered settings of one of DSPs.
+			// Recycle existing DSPs in a special case when user has apparently only altered settings of one of DSPs.
 			if (newchain.get_count() == m_chain.get_count()) {
 				t_size data_mismatch_count = 0;
 				t_size owner_mismatch_count = 0;

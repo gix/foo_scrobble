@@ -4,12 +4,9 @@
 
 #ifdef _WIN32
 
+#include "pfc-fb2k-hooks.h"
 
 namespace pfc {
-#ifdef PFC_FOOBAR2000_CLASSIC
-	BOOL winFormatSystemErrorMessageHook(pfc::string_base & p_out, DWORD p_code);
-#endif
-
 
 BOOL winFormatSystemErrorMessageImpl(pfc::string_base & p_out,DWORD p_code) {
 	switch(p_code) {
@@ -77,17 +74,13 @@ void winPrefixPath(pfc::string_base & out, const char * p_path) {
 };
 
 BOOL winFormatSystemErrorMessage(pfc::string_base & p_out, DWORD p_code) {
-#ifdef PFC_FOOBAR2000_CLASSIC
 	return winFormatSystemErrorMessageHook( p_out, p_code );
-#else
-	return winFormatSystemErrorMessageImpl( p_out, p_code );
-#endif
 }
 void winUnPrefixPath(pfc::string_base & out, const char * p_path) {
 	const char * prepend_header = "\\\\?\\";
 	const char * prepend_header_net = "\\\\?\\UNC\\";
 	if (pfc::strcmp_partial(p_path, prepend_header_net) == 0) {
-		out = pfc::string_formatter() << "\\\\" << (p_path + strlen(prepend_header_net) );
+		out = PFC_string_formatter() << "\\\\" << (p_path + strlen(prepend_header_net) );
 		return;
 	}
 	if (pfc::strcmp_partial(p_path, prepend_header) == 0) {
@@ -95,6 +88,13 @@ void winUnPrefixPath(pfc::string_base & out, const char * p_path) {
 		return;
 	}
 	out = p_path;
+}
+
+string8 winPrefixPath(const char * in) {
+	string8 temp; winPrefixPath(temp, in); return temp;
+}
+string8 winUnPrefixPath(const char * in) {
+	string8 temp; winUnPrefixPath(temp, in); return temp;
 }
 
 } // namespace pfc
@@ -119,6 +119,43 @@ void format_hresult::stamp_hex(HRESULT p_code) {
 }
 
 #ifdef PFC_WINDOWS_DESKTOP_APP
+
+namespace pfc {
+	HWND findOwningPopup(HWND p_wnd)
+	{
+		HWND walk = p_wnd;
+		while (walk != 0 && (GetWindowLong(walk, GWL_STYLE) & WS_CHILD) != 0)
+			walk = GetParent(walk);
+		return walk ? walk : p_wnd;
+	}
+	string8 getWindowClassName(HWND wnd) {
+		TCHAR temp[1024] = {};
+		if (GetClassName(wnd, temp, PFC_TABSIZE(temp)) == 0) {
+			PFC_ASSERT(!"Should not get here");
+			return "";
+		}
+		return pfc::stringcvt::string_utf8_from_os(temp).get_ptr();
+	}
+	void setWindowText(HWND wnd, const char * txt) {
+		SetWindowText(wnd, stringcvt::string_os_from_utf8(txt));
+	}
+	string8 getWindowText(HWND wnd) {
+		PFC_ASSERT(wnd != NULL);
+		int len = GetWindowTextLength(wnd);
+		if (len >= 0)
+		{
+			len++;
+			pfc::array_t<TCHAR> temp;
+			temp.set_size(len);
+			temp[0] = 0;
+			if (GetWindowText(wnd, temp.get_ptr(), len) > 0)
+			{
+				return stringcvt::string_utf8_from_os(temp.get_ptr(), len).get_ptr();
+			}
+		}
+		return "";
+	}
+}
 
 void uAddWindowStyle(HWND p_wnd,LONG p_style) {
 	SetWindowLong(p_wnd,GWL_STYLE, GetWindowLong(p_wnd,GWL_STYLE) | p_style);
@@ -192,7 +229,13 @@ bool IsPointInsideControl(const POINT& pt, HWND wnd) {
 		walk = GetParent(walk);
 	}
 }
-
+bool IsPopupWindowChildOf(HWND child, HWND parent) {
+	HWND walk = child;
+	while (walk != parent && walk != NULL) {
+		walk = GetParent(walk);
+	}
+	return walk == parent;
+}
 bool IsWindowChildOf(HWND child, HWND parent) {
 	HWND walk = child;
 	while(walk != parent && walk != NULL && (GetWindowLong(walk,GWL_STYLE) & WS_CHILD) != 0) {
@@ -200,7 +243,12 @@ bool IsWindowChildOf(HWND child, HWND parent) {
 	}
 	return walk == parent;
 }
-
+void ResignActiveWindow(HWND wnd) {
+	if (IsPopupWindowChildOf(GetActiveWindow(), wnd)) {
+		HWND parent = GetParent(wnd);
+		if ( parent != NULL ) SetActiveWindow(parent);
+	}
+}
 void win32_menu::release() {
 	if (m_menu != NULL) {
 		DestroyMenu(m_menu);
@@ -330,6 +378,19 @@ namespace pfc {
     bool isAltKeyPressed() {
         return IsKeyPressed(VK_MENU);
     }
+
+	void winSetThreadDescription(HANDLE hThread, const wchar_t * desc) {
+#if _WIN32_WINNT >= 0xA00 
+		SetThreadDescription(hThread, desc);
+#else
+		auto proc = GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetThreadDescription");
+		if (proc != nullptr) {
+			typedef HRESULT(__stdcall * pSetThreadDescription_t)(HANDLE hThread, PCWSTR lpThreadDescription);
+			auto proc2 = reinterpret_cast<pSetThreadDescription_t>(proc);
+			proc2(hThread, desc);
+		}
+#endif
+	}
 }
 
 #else

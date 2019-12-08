@@ -85,6 +85,9 @@ void dsp_chunk_list::remove_bad_chunks()
 		audio_chunk * chunk = get_item(idx);
 		if (!chunk->is_valid())
 		{
+#if PFC_DEBUG
+			uDebugLog() << "Removing bad chunk: " << chunk->formatChunkSpec();
+#endif
 			chunk->reset();
 			remove_by_idx(idx);
 			blah = true;
@@ -282,6 +285,42 @@ dsp_chain_config_impl::~dsp_chain_config_impl()
 	m_data.delete_all();
 }
 
+pfc::string8 dsp_preset::get_owner_name() const {
+	pfc::string8 ret;
+	dsp_entry::ptr obj;
+	if (dsp_entry::g_get_interface(obj, this->get_owner())) {
+		obj->get_name(ret);
+	}
+	return ret;
+}
+
+pfc::string8 dsp_preset::get_owner_name_debug() const {
+	pfc::string8 ret;
+	dsp_entry::ptr obj;
+	if (dsp_entry::g_get_interface(obj, this->get_owner())) {
+		obj->get_name(ret);
+	} else {
+		ret = "[unknown]";
+	}
+	return ret;
+}
+
+pfc::string8 dsp_preset::debug() const {
+	pfc::string8 ret;
+	ret << this->get_owner_name_debug() << " :: " << pfc::print_guid(this->get_owner()) << " :: " << pfc::format_hexdump(this->get_data(), this->get_data_size());
+	return ret;
+}
+
+pfc::string8 dsp_chain_config::debug() const {
+	const size_t count = get_count();
+	pfc::string8 ret;
+	ret << "dsp_chain_config: " << count << " items";
+	for (size_t walk = 0; walk < count; ++walk) {
+		ret << "\n" << get_item(walk).debug();
+	}
+	return ret;	
+}
+
 void dsp_preset::contents_to_stream(stream_writer * p_stream,abort_callback & p_abort) const {
     t_uint32 size = pfc::downcast_guarded<t_uint32>(get_data_size());
 	p_stream->write_lendian_t(get_owner(),p_abort);
@@ -429,6 +468,24 @@ bool dsp_chain_config::equals(dsp_chain_config const & v1, dsp_chain_config cons
 	for(t_size walk = 0; walk < count; ++walk) {
 		if (v1.get_item(walk) != v2.get_item(walk)) return false;
 	}
+	return true;
+}
+bool dsp_chain_config::equals_debug(dsp_chain_config const& v1, dsp_chain_config const& v2) {
+	FB2K_DebugLog() << "Comparing DSP chains";
+	const t_size count = v1.get_count();
+	if (count != v2.get_count()) {
+		FB2K_DebugLog() << "Count mismatch, " << count << " vs " << v2.get_count();
+		return false;
+	}
+	for (t_size walk = 0; walk < count; ++walk) {
+		if (v1.get_item(walk) != v2.get_item(walk)) {
+			FB2K_DebugLog() << "Item " << (walk+1) << " mismatch";
+			FB2K_DebugLog() << "Item 1: " << v1.get_item(walk).debug();
+			FB2K_DebugLog() << "Item 2: " << v2.get_item(walk).debug();
+			return false;
+		}
+	}
+	FB2K_DebugLog() << "DSP chains are identical";
 	return true;
 }
 void dsp_chain_config::get_name_list(pfc::string_base & p_out) const

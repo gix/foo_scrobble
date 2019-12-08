@@ -4,6 +4,8 @@
 
 PFC_DECLARE_EXCEPTION(exception_output_device_not_found, pfc::exception, "Audio device not found")
 PFC_DECLARE_EXCEPTION(exception_output_module_not_found, exception_output_device_not_found, "Output module not found")
+PFC_DECLARE_EXCEPTION(exception_output_invalidated, pfc::exception, "Audio device invalidated")
+PFC_DECLARE_EXCEPTION(exception_output_device_in_use, pfc::exception, "Audio device in use")
 
 
 // =======================================================
@@ -17,17 +19,15 @@ PFC_DECLARE_EXCEPTION(exception_output_module_not_found, exception_output_device
 //! Structure describing PCM audio data format, with basic helper functions.
 struct t_pcmspec
 {
-	inline t_pcmspec() {reset();}
-	inline t_pcmspec(const t_pcmspec & p_source) {*this = p_source;}
-	unsigned m_sample_rate;
-	unsigned m_bits_per_sample;
-	unsigned m_channels,m_channel_config;
-	bool m_float;
+	unsigned m_sample_rate = 0;
+	unsigned m_bits_per_sample = 0;
+	unsigned m_channels = 0,m_channel_config = 0;
+	bool m_float = false;
 
 	inline unsigned align() const {return (m_bits_per_sample / 8) * m_channels;}
 
-	t_size time_to_bytes(double p_time) const {return (t_size)audio_math::time_to_samples(p_time,m_sample_rate) * (m_bits_per_sample / 8) * m_channels;}
-	double bytes_to_time(t_size p_bytes) const {return (double) (p_bytes / ((m_bits_per_sample / 8) * m_channels)) / (double) m_sample_rate;}
+	uint64_t time_to_bytes(double p_time) const {return audio_math::time_to_samples(p_time,m_sample_rate) * (m_bits_per_sample / 8) * m_channels;}
+	double bytes_to_time(uint64_t p_bytes) const {return (double) (p_bytes / ((m_bits_per_sample / 8) * m_channels)) / (double) m_sample_rate;}
 
 	inline bool operator==(/*const t_pcmspec & p_spec1,*/const t_pcmspec & p_spec2) const
 	{
@@ -43,7 +43,7 @@ struct t_pcmspec
 		return !(*this == p_spec2);
 	}
 
-	inline void reset() {m_sample_rate = 0; m_bits_per_sample = 0; m_channels = 0; m_channel_config = 0; m_float = false;}
+	inline void reset() { *this = t_pcmspec(); }
 	inline bool is_valid() const
 	{
 		return m_sample_rate >= 1000 && m_sample_rate <= 1000000 &&
@@ -113,26 +113,65 @@ public:
 	//! Sets playback volume.
 	//! @p_val Volume level in dB. Value of 0 indicates full ("100%") volume, negative values indciate different attenuation levels.
 	virtual void volume_set(double p_val) = 0;
+    
+    //! Helper, see output_v4::is_progressing().
+    bool is_progressing_();
+    //! Helper, see output_v4::update_v2()
+    size_t update_v2_();
+    //! Helper, see output_v4::get_event_trigger()
+    pfc::eventHandle_t get_trigger_event_();
+
+    //! Helper for output_entry implementation.
+    static uint32_t g_extra_flags() { return 0; }
 
 };
 
 class NOVTABLE output_v2 : public output {
 	FB2K_MAKE_SERVICE_INTERFACE(output_v2, output);
 public:
+	//! Obsolete, do not use.
 	virtual bool want_track_marks() {return false;}
+	//! Obsolete, do not use.
 	virtual void on_track_mark() {}
+	//! Obsolete, do not use.
 	virtual void enable_fading(bool state) {}
+	//! Called when flushing due to manual track change rather than seek-within-track
 	virtual void flush_changing_track() {flush();}
 };
 
 class dsp_chain_config;
 
+//! \since 1.4
 class NOVTABLE output_v3 : public output_v2 {
 	FB2K_MAKE_SERVICE_INTERFACE(output_v3, output_v2);
 public:
+	//! Does this output require a specific sample rate? If yes, return the value, otherwise return zero. \n
+	//! Returning a nonzero will cause a resampler DSP to be injected.
 	virtual unsigned get_forced_sample_rate() { return 0; } 
+	//! Allows the output to inject specific DSPs at the end of the used chain. \n
+	//! Default implementation queries get_forced_sample_rate() and injects a resampler.
 	virtual void get_injected_dsps( dsp_chain_config & );
 };
+
+//! \since 1.6
+class NOVTABLE output_v4 : public output_v3 {
+	FB2K_MAKE_SERVICE_INTERFACE(output_v4, output_v3);
+public:
+	//! Returns an event handle that becomes signaled once the output wants an update() call and possibly process_samples(). \n
+	//! Optional; may return pfc::eventInvalid if not available at this time or not supported. \n
+    //! If implemented, calling update() should clear the event each time.
+	virtual pfc::eventHandle_t get_trigger_event() {return pfc::eventInvalid;}
+	//! Returns whether the audio stream is currently being played or not. \n
+	//! Typically, for a short period of time, initially send data is not played until a sufficient amount is queued to initiate playback without glitches. \n
+    //! For old outputs that do not implement this, the value can be assumed to be true.
+    virtual bool is_progressing() {return true;}
+    
+    //! Improved version of update(); returns 0 if the output isn't ready to receive any new data, otherwise an advisory number of samples - at the current stream format - that the output expects to take now. \n
+    //! If the caller changes the stream format, the value is irrelevant. \n
+    //! The output may return SIZE_MAX to indicate that it can take data but does not currently have any hints to tell how much.
+    virtual size_t update_v2();
+};
+
 
 class NOVTABLE output_entry : public service_base {
 	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(output_entry);
@@ -146,19 +185,33 @@ public:
 	//! For internal use by backend. Retrieves human-readable name of this output_entry implementation.
 	virtual const char * get_name() = 0;
 
-	//! Pops up advanced settings dialog. This method is optional and not supported if get_config_flag() return value does not have flag_needs_advanced_config set.
-	//! @param p_parent Parent window for the dialog.
-	//! @param p_menupoint Point in screen coordinates - can be used to display a simple popup menu with options to be checked instead of a full dialog.
+	//! Obsolete, do not use.
 	virtual void advanced_settings_popup(HWND p_parent,POINT p_menupoint) = 0;
 
 	enum {
 		flag_needs_bitdepth_config = 1 << 0,
 		flag_needs_dither_config = 1 << 1,
+		//! Obsolete, do not use.
 		flag_needs_advanced_config = 1 << 2,
 		flag_needs_device_list_prefixes = 1 << 3,
+
+		//! Supports playing multiple simultaneous audio streams thru one device?
+		flag_supports_multiple_streams = 1 << 4,
+
+		//! High latency operation (such as remote network playback), mutually exclusive with flag_low_latency
+		flag_high_latency = 1 << 5,
+		//! Low latency operation (local playback), mutually exclusive with flag_high_latency
+		flag_low_latency = 1 << 6,
+        //! When set, the output will be used in special compatibility mode: guaranteed regular update() calls, injected padding (silence) at the end of stream.
+        flag_needs_shims = 1 << 7,
 	};
 
 	virtual t_uint32 get_config_flags() = 0;
+
+	uint32_t get_config_flags_compat();
+
+	bool is_high_latency();
+	bool is_low_latency();
 
 	pfc::string8 get_device_name( const GUID & deviceID);
 	bool get_device_name( const GUID & deviceID, pfc::string_base & out );
@@ -185,7 +238,11 @@ public:
 		if (T::g_advanced_settings_query()) flags |= output_entry::flag_needs_advanced_config;
 		if (T::g_needs_bitdepth_config()) flags |= output_entry::flag_needs_bitdepth_config;
 		if (T::g_needs_dither_config()) flags |= output_entry::flag_needs_dither_config;
-		if (T::g_needs_device_list_prefixes()) flags |= output_entry::flag_needs_device_list_prefixes ;
+		if (T::g_needs_device_list_prefixes()) flags |= output_entry::flag_needs_device_list_prefixes;
+		if (T::g_supports_multiple_streams()) flags |= output_entry::flag_supports_multiple_streams;
+		if (T::g_is_high_latency()) flags |= output_entry::flag_high_latency;
+		else flags |= output_entry::flag_low_latency;
+        flags |= T::g_extra_flags();
 		return flags;
 	}
 };
@@ -195,7 +252,7 @@ public:
 template<class T>
 class output_factory_t : public service_factory_single_t<output_entry_impl_t<T> > {};
 
-class output_impl : public output_v3 {
+class output_impl : public output_v4 {
 protected:
 	output_impl() : m_incoming_ptr(0) {}
 	virtual void on_update() = 0;
@@ -216,6 +273,7 @@ private:
 	void flush();
 	void flush_changing_track();
 	void update(bool & p_ready);
+    size_t update_v2();
 	double get_latency();
 	void process_samples(const audio_chunk & p_chunk);
 
@@ -227,8 +285,8 @@ private:
 
 class NOVTABLE volume_callback {
 public:
-	virtual void on_volume_scale(float v) = 0;
-	virtual void on_volume_arbitrary(int v) = 0;
+    virtual void on_volume_scale(float v) = 0;
+    virtual void on_volume_arbitrary(int v) = 0;
 };
 
 class NOVTABLE volume_control : public service_base {
@@ -261,6 +319,31 @@ class NOVTABLE output_entry_v2 : public output_entry {
 public:
 	virtual bool get_volume_control(const GUID & id, volume_control::ptr & out) = 0;
 	virtual bool hasVisualisation() = 0;
+};
+
+//! \since 1.5
+class NOVTABLE output_devices_notify {
+public:
+    virtual void output_devices_changed() = 0;
+protected:
+    output_devices_notify() {}
+private:
+	output_devices_notify(const output_devices_notify &) = delete;
+	void operator=(const output_devices_notify &) = delete;
+};
+
+//! \since 1.5
+class NOVTABLE output_entry_v3 : public output_entry_v2 {
+	FB2K_MAKE_SERVICE_INTERFACE(output_entry_v3, output_entry_v2)
+public:
+
+	//! Main thread only!
+	virtual void add_notify(output_devices_notify *) = 0;
+	//! Main thread only!
+	virtual void remove_notify(output_devices_notify *) = 0;
+
+	//! Main thread only!
+	virtual void set_pinned_device(const GUID & guid) = 0;
 };
 
 #pragma pack(push, 1)

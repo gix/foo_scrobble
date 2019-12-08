@@ -8,7 +8,7 @@ public:
 	virtual bool is_associatable(unsigned idx) = 0;
 
 #if FOOBAR2000_TARGET_VERSION >= 76
-	static void build_openfile_mask(pfc::string_base & out,bool b_include_playlists=true);
+	static void build_openfile_mask(pfc::string_base & out,bool b_include_playlists=true, bool b_include_archives = false);
 	static void make_extension_support_fingerprint(pfc::string_base & str);
 	static void make_filetype_support_fingerprint(pfc::string_base & str);
 #endif

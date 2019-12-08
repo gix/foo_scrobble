@@ -13,6 +13,8 @@
 
 #include <math.h>
 
+#include "pfc-fb2k-hooks.h"
+
 namespace pfc {
 	bool permutation_is_valid(t_size const * order, t_size count) {
 		bit_array_bittable found(count);
@@ -92,6 +94,49 @@ namespace pfc {
 			}
 		}
 	}
+    bool create_drop_permutation(size_t * out, size_t itemCount, pfc::bit_array const & maskSelected, size_t insertMark ) {
+        const t_size count = itemCount;
+        if (insertMark > count) insertMark = count;
+        {
+            t_size selBefore = 0;
+            for(t_size walk = 0; walk < insertMark; ++walk) {
+                if (maskSelected[walk]) selBefore++;
+            }
+            insertMark -= selBefore;
+        }
+        {
+            pfc::array_t<t_size> permutation, selected, nonselected;
+            
+            const t_size selcount = maskSelected.calc_count( true, 0, count );
+            selected.set_size(selcount); nonselected.set_size(count - selcount);
+            permutation.set_size(count);
+            if (insertMark > nonselected.get_size()) insertMark = nonselected.get_size();
+            for(t_size walk = 0, swalk = 0, nwalk = 0; walk < count; ++walk) {
+                if (maskSelected[walk]) {
+                    selected[swalk++] = walk;
+                } else {
+                    nonselected[nwalk++] = walk;
+                }
+            }
+            for(t_size walk = 0; walk < insertMark; ++walk) {
+                permutation[walk] = nonselected[walk];
+            }
+            for(t_size walk = 0; walk < selected.get_size(); ++walk) {
+                permutation[insertMark + walk] = selected[walk];
+            }
+            for(t_size walk = insertMark; walk < nonselected.get_size(); ++walk) {
+                permutation[selected.get_size() + walk] = nonselected[walk];
+            }
+            for(t_size walk = 0; walk < permutation.get_size(); ++walk) {
+                if (permutation[walk] != walk) {
+                    memcpy(out, permutation.get_ptr(), count * sizeof(size_t));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
 }
 
 void order_helper::g_swap(t_size * data,t_size ptr1,t_size ptr2)
@@ -125,10 +170,7 @@ void order_helper::g_reverse(t_size * order,t_size base,t_size count)
 
 
 namespace pfc {
-#ifdef PFC_FOOBAR2000_CLASSIC
-	void crashHook();
-#endif
-
+	
 	void crashImpl() {
 #if defined(_MSC_VER)
 		__debugbreak();
@@ -141,11 +183,7 @@ namespace pfc {
 	}
 
 	void crash() {
-#ifdef PFC_FOOBAR2000_CLASSIC
 		crashHook();
-#else
-		crashImpl();
-#endif
 	}
 } // namespace pfc
 

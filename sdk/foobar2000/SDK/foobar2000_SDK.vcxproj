@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E8091321-D79D-4575-86EF-064EA1A4A20D}</ProjectGuid>
     <RootNamespace>foobar2000_SDK</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -21,13 +21,13 @@
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -45,7 +45,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_WIN32_WINNT=0x501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>foobar2000.h</PrecompiledHeaderFile>
@@ -55,7 +54,6 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -68,7 +66,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MinSpace</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -79,11 +76,12 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
       <AdditionalOptions>/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <OmitFramePointers>true</OmitFramePointers>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -99,6 +97,7 @@
     <ClInclude Include="album_art.h" />
     <ClInclude Include="album_art_helpers.h" />
     <ClInclude Include="app_close_blocker.h" />
+    <ClInclude Include="archive.h" />
     <ClInclude Include="audio_chunk.h" />
     <ClInclude Include="audio_chunk_impl.h" />
     <ClInclude Include="audio_postprocessor.h" />
@@ -126,7 +125,10 @@
     <ClInclude Include="filesystem_transacted.h" />
     <ClInclude Include="file_format_sanitizer.h" />
     <ClInclude Include="file_info.h" />
+    <ClInclude Include="file_info_filter.h" />
+    <ClInclude Include="file_info_filter_impl.h" />
     <ClInclude Include="file_info_impl.h" />
+    <ClInclude Include="file_lock_manager.h" />
     <ClInclude Include="file_operation_callback.h" />
     <ClInclude Include="filesystem.h" />
     <ClInclude Include="filesystem_helper.h" />
@@ -134,10 +136,12 @@
     <ClInclude Include="foobar2000-pfc.h" />
     <ClInclude Include="foobar2000-winver.h" />
     <ClInclude Include="foobar2000.h" />
+    <ClInclude Include="foosort.h" />
     <ClInclude Include="genrand.h" />
     <ClInclude Include="hasher_md5.h" />
     <ClInclude Include="http_client.h" />
     <ClInclude Include="icon_remap.h" />
+    <ClInclude Include="imageLoaderLite.h" />
     <ClInclude Include="info_lookup_handler.h" />
     <ClInclude Include="initquit.h" />
     <ClInclude Include="input.h" />
@@ -171,16 +175,18 @@
     <ClInclude Include="search_tools.h" />
     <ClInclude Include="service.h" />
     <ClInclude Include="service_by_guid.h" />
-    <ClInclude Include="service_factory.h" />
+    <ClInclude Include="service_compat.h" />
     <ClInclude Include="service_impl.h" />
     <ClInclude Include="system_time_keeper.h" />
     <ClInclude Include="tag_processor.h" />
     <ClInclude Include="threaded_process.h" />
     <ClInclude Include="titleformat.h" />
+    <ClInclude Include="tracks.h" />
     <ClInclude Include="track_property.h" />
     <ClInclude Include="ui.h" />
     <ClInclude Include="ui_edit_context.h" />
     <ClInclude Include="ui_element.h" />
+    <ClInclude Include="ui_element_typable_window_manager.h" />
     <ClInclude Include="unpack.h" />
     <ClInclude Include="vis.h" />
   </ItemGroup>
@@ -217,6 +223,7 @@
     </ClCompile>
     <ClCompile Include="filesystem_helper.cpp">
     </ClCompile>
+    <ClCompile Include="foosort.cpp" />
     <ClCompile Include="guids.cpp">
     </ClCompile>
     <ClCompile Include="hasher_md5.cpp">
@@ -273,6 +280,7 @@
     </ClCompile>
     <ClCompile Include="titleformat.cpp">
     </ClCompile>
+    <ClCompile Include="track_property.cpp" />
     <ClCompile Include="ui.cpp">
     </ClCompile>
     <ClCompile Include="ui_element.cpp" />

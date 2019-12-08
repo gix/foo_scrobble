@@ -234,9 +234,10 @@ void SHARED_EXPORT uPrintCrashInfo_SetComponentList(const char * p_info);//calle
 void SHARED_EXPORT uPrintCrashInfo_AddEnvironmentInfo(const char * p_info);//called only by the exe on startup
 void SHARED_EXPORT uPrintCrashInfo_SetDumpPath(const char * name);//called only by the exe on startup
 
-void SHARED_EXPORT uDumpCrashInfo(LPEXCEPTION_POINTERS param);
 
 #endif // FB2K_SUPPORT_CRASH_LOGS
+
+void SHARED_EXPORT uDumpCrashInfo(LPEXCEPTION_POINTERS param);
 
 void SHARED_EXPORT uPrintCrashInfo_OnEvent(const char * message, t_size length);
 
@@ -276,7 +277,6 @@ HMODULE SHARED_EXPORT LoadSystemLibrary(const TCHAR * name);
 }//extern "C"
 
 static inline void uAddDebugEvent(const char * msg) {uPrintCrashInfo_OnEvent(msg, strlen(msg));}
-static inline void uAddDebugEvent(pfc::string_formatter const & msg) {uPrintCrashInfo_OnEvent(msg, msg.length());}
 
 inline char * uCharNext(char * src) {return src+uCharLength(src);}
 inline const char * uCharNext(const char * src) {return src+uCharLength(src);}

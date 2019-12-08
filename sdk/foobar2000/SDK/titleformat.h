@@ -1,3 +1,5 @@
+#pragma once
+
 namespace titleformat_inputtypes {
 	extern const GUID meta, unknown;
 };

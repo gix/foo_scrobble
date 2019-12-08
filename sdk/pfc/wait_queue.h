@@ -26,7 +26,9 @@ namespace pfc {
 			m_eof = true;
 			m_canRead.set_state(true);
 		}
-        
+        bool wait_read( double timeout ) {
+            return m_canRead.wait_for( timeout );
+        }
         eventHandle_t get_event_handle() {
             return m_canRead.get_handle();
         }

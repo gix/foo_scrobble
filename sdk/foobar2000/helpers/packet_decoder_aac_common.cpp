@@ -67,8 +67,8 @@ namespace {
 
 void packet_decoder_aac_common::make_ESDS( pfc::array_t<uint8_t> & outESDS, const void * inCodecPrivate, size_t inCodecPrivateSize ) {
     if (inCodecPrivateSize > 1024*1024) throw exception_io_data(); // sanity
-    abort_callback_dummy p_abort;
-    
+	auto & p_abort = fb2k::noAbort;
+
     esds_maker esds4;
     
     const uint8_t crap[] = {0x40, 0x15, 0x00, 0x00, 0x00, 0x00, 0x05, 0x34, 0x08, 0x00, 0x02, 0x3D, 0x55};

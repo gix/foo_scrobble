@@ -198,6 +198,9 @@ const char * audio_chunk::g_channel_name_byidx(unsigned p_index) {
 	else return "?";
 }
 
+pfc::string8 audio_chunk::g_formatChannelMaskDesc(unsigned flags) {
+	pfc::string8 temp; g_formatChannelMaskDesc(flags, temp); return temp;
+}
 void audio_chunk::g_formatChannelMaskDesc(unsigned flags, pfc::string_base & out) {
 	out.reset();
 	unsigned idx = 0;

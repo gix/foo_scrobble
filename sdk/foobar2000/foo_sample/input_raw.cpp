@@ -31,6 +31,11 @@ public:
 		p_info.info_set_int("samplerate",raw_sample_rate);
 		p_info.info_set_int("channels",raw_channels);
 		p_info.info_set_int("bitspersample",raw_bits_per_sample);
+
+		// Indicate whether this is a fixedpoint or floatingpoint stream, when using bps >= 32
+		// As 32bit fixedpoint can't be decoded losslessly by fb2k, does not fit in float32 audio_sample.
+		if ( raw_bits_per_sample >= 32 ) p_info.info_set("bitspersample_extra", "fixed-point");
+
 		p_info.info_set("encoding","lossless");
 		p_info.info_set_bitrate((raw_bits_per_sample * raw_channels * raw_sample_rate + 500 /* rounding for bps to kbps*/ ) / 1000 /* bps to kbps */);
 		
@@ -44,11 +49,19 @@ public:
 		enum {
 			deltaread = 1024,
 		};
-		m_buffer.set_size(deltaread * raw_total_sample_width);
-		t_size deltaread_done = m_file->read(m_buffer.get_ptr(),deltaread * raw_total_sample_width,p_abort) / raw_total_sample_width;
-		if (deltaread_done == 0) return false;//EOF
 
-		p_chunk.set_data_fixedpoint(m_buffer.get_ptr(),deltaread_done * raw_total_sample_width,raw_sample_rate,raw_channels,raw_bits_per_sample,audio_chunk::g_guess_channel_config(raw_channels));
+		const size_t deltaReadBytes = deltaread * raw_total_sample_width;
+		// Prepare buffer
+		m_buffer.set_size(deltaReadBytes);
+		// Read bytes
+		size_t got = m_file->read(m_buffer.get_ptr(), deltaReadBytes,p_abort) / raw_total_sample_width;
+
+		// EOF?
+		if (got == 0) return false;
+
+		// This converts the data that we've read to the audio_chunk's internal format, audio_sample (float 32-bit).
+		// audio_sample is the audio data format that all fb2k code works with.
+		p_chunk.set_data_fixedpoint(m_buffer.get_ptr(), got * raw_total_sample_width,raw_sample_rate,raw_channels,raw_bits_per_sample,audio_chunk::g_guess_channel_config(raw_channels));
 		
 		//processed successfully, no EOF
 		return true;

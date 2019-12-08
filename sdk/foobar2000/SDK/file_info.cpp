@@ -5,6 +5,9 @@
 #define _atoi64 atoll
 #endif
 
+const float replaygain_info::peak_invalid = -1;
+const float replaygain_info::gain_invalid = -1000;
+
 t_size file_info::meta_find_ex(const char * p_name,t_size p_name_length) const
 {
 	t_size n, m = meta_get_count();
@@ -411,6 +414,19 @@ void file_info::info_calculate_bitrate(t_filesize p_filesize,double p_length)
 	if ( b > 0 ) info_set_bitrate(b);
 }
 
+bool file_info::is_encoding_overkill() const {
+	auto bs = info_get_int("bitspersample");
+	auto extra = info_get("bitspersample_extra");
+	if ( bs <= 24 ) return false; // fixedpoint up to 24bit, OK
+	if ( bs > 32 ) return true; // fixed or float beyond 32bit, overkill
+
+	if ( extra != nullptr ) {
+		if (strcmp(extra, "fixed-point") == 0) return true; // int32, overkill
+	}
+
+	return false;
+}
+
 bool file_info::is_encoding_lossy() const {
 	const char * encoding = info_get("encoding");
 	if (encoding != NULL) {
@@ -537,7 +553,7 @@ void file_info::to_formatter(pfc::string_formatter& out) const {
 }
 
 void file_info::to_console() const {
-	FB2K_console_formatter() << "File info dump:";
+	FB2K_console_formatter1() << "File info dump:";
 	if (get_length() > 0) FB2K_console_formatter() << "Duration: " << pfc::format_time_ex(get_length(), 6);
 	pfc::string_formatter temp;
 	for(t_size metaWalk = 0; metaWalk < meta_get_count(); ++metaWalk) {

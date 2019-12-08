@@ -1,5 +1,6 @@
 #include "foobar2000.h"
 #include <shlwapi.h>
+#include "foosort.h"
 
 namespace {
 
@@ -84,73 +85,11 @@ namespace {
 	private:
 		genrand_service::ptr m_API = genrand_service::get();
 	};
-
-	class tfthread : public pfc::thread {
-	public:
-		tfthread(pfc::counter * walk, metadb_handle_list_cref items,custom_sort_data * out,titleformat_object::ptr script,titleformat_hook * hook) : m_walk(walk), m_items(items), m_out(out), m_script(script), m_hook(hook) {}
-		~tfthread() {waitTillDone();}
-
-
-
-		void threadProc() {
-			TRACK_CALL_TEXT("metadb_handle sort helper thread");
-
-			tfhook_sort myHook;
-			titleformat_hook_impl_splitter hookSplitter(&myHook, m_hook);
-			titleformat_hook * const hookPtr = m_hook ? pfc::implicit_cast<titleformat_hook*>(&hookSplitter) : &myHook;
-
-			pfc::string8_fastalloc temp; temp.prealloc(512);
-			const t_size total = m_items.get_size();
-			for(;;) {
-				const t_size index = (*m_walk)++;
-				if (index >= total) break;
-				m_out[index].index = index;
-				m_items[index]->format_title(hookPtr,temp,m_script,0);
-				m_out[index].text = makeSortString(temp);
-			}
-		}
-	private:
-		pfc::counter * const m_walk;
-		metadb_handle_list_cref m_items;
-		custom_sort_data * const m_out;
-		titleformat_object::ptr const m_script;
-		titleformat_hook * const m_hook;
-	};
 }
 
 void metadb_handle_list_helper::sort_by_format_get_order(metadb_handle_list_cref p_list,t_size* order,const service_ptr_t<titleformat_object> & p_script,titleformat_hook * p_hook,int p_direction)
 {
-//	pfc::hires_timer timer; timer.start();
-
-	const t_size count = p_list.get_count();
-	pfc::array_t<custom_sort_data> data; data.set_size(count);
-	
-	{
-		pfc::counter counter(0);
-		pfc::array_t<pfc::rcptr_t<tfthread> > threads; threads.set_size(pfc::getOptimalWorkerThreadCountEx(p_list.get_count() / 128));
-		PFC_ASSERT( threads.get_size() > 0 );
-		for(t_size walk = 0; walk < threads.get_size(); ++walk) {
-			threads[walk].new_t(&counter,p_list,data.get_ptr(),p_script,p_hook);
-		}
-		for(t_size walk = 1; walk < threads.get_size(); ++walk) threads[walk]->start();
-		threads[0]->threadProc();
-		for(t_size walk = 1; walk < threads.get_size(); ++walk) threads[walk]->waitTillDone();
-	}
-//	console::formatter() << "metadb_handle sort: prepared in " << pfc::format_time_ex(timer.query(),6);
-
-	pfc::sort_t(data, p_direction > 0 ? custom_sort_compare<1> : custom_sort_compare<-1>,count);
-	//qsort(data.get_ptr(),count,sizeof(custom_sort_data),p_direction > 0 ? _custom_sort_compare<1> : _custom_sort_compare<-1>);
-
-
-//	console::formatter() << "metadb_handle sort: sorted in " << pfc::format_time_ex(timer.query(),6);
-
-	for(t_size n=0;n<count;n++)
-	{
-		order[n]=data[n].index;
-		delete[] data[n].text;
-	}
-
-//	console::formatter() << "metadb_handle sort: finished in " << pfc::format_time_ex(timer.query(),6);
+	sort_by_format_get_order_v2(p_list, order, p_script, p_hook, p_direction, fb2k::noAbort );
 }
 
 void metadb_handle_list_helper::sort_by_relative_path(metadb_handle_list_ref p_list)
@@ -344,6 +283,72 @@ void metadb_handle_list_helper::sort_by_path(metadb_handle_list_ref p_list)
 	sort_by_format(p_list,"%path_sort%",NULL);
 }
 
+void metadb_handle_list_helper::sort_by_format_v2(metadb_handle_list_ref p_list, const service_ptr_t<titleformat_object> & script, titleformat_hook * hook, int direction, abort_callback & aborter) {
+	pfc::array_t<size_t> order; order.set_size( p_list.get_count() );
+	sort_by_format_get_order_v2( p_list, order.get_ptr(), script, hook, direction, aborter );
+	p_list.reorder( order.get_ptr() );
+}
+
+void metadb_handle_list_helper::sort_by_format_get_order_v2(metadb_handle_list_cref p_list, size_t * order, const service_ptr_t<titleformat_object> & p_script, titleformat_hook * p_hook, int p_direction, abort_callback & aborter) {
+	//	pfc::hires_timer timer; timer.start();
+
+	const t_size count = p_list.get_count();
+	pfc::array_t<custom_sort_data> data; data.set_size(count);
+
+	{
+		pfc::counter counter(0);
+
+		auto work = [&] {
+			tfhook_sort myHook;
+			titleformat_hook_impl_splitter hookSplitter(&myHook, p_hook);
+			titleformat_hook * const hookPtr = p_hook ? pfc::implicit_cast<titleformat_hook*>(&hookSplitter) : &myHook;
+
+			pfc::string8_fastalloc temp; temp.prealloc(512);
+			const t_size total = p_list.get_size();
+			while( ! aborter.is_aborting() ) {
+				const t_size index = (counter)++;
+				if (index >= total) break;
+				data[index].index = index;
+				p_list[index]->format_title(hookPtr, temp, p_script, 0);
+				data[index].text = makeSortString(temp);
+			}
+		};
+
+
+		pfc::array_staticsize_t< pfc::thread2 > threads; threads.set_size_discard(pfc::getOptimalWorkerThreadCountEx(count / 128) - 1);
+		for (size_t w = 0; w < threads.get_size(); ++w) { threads[w].startHere(work); }
+		work();
+		for (t_size walk = 0; walk < threads.get_size(); ++walk) threads[walk].waitTillDone();
+	}
+	aborter.check();
+	//	console::formatter() << "metadb_handle sort: prepared in " << pfc::format_time_ex(timer.query(),6);
+
+	
+	{
+		typedef decltype(data) container_t;
+		auto compare = p_direction > 0 ? custom_sort_compare<1> : custom_sort_compare<-1>;
+		typedef decltype(compare) compare_t;
+		pfc::sort_callback_impl_simple_wrap_t<container_t, compare_t> cb(data, compare);
+		
+		//pfc::sort_t(data, p_direction > 0 ? custom_sort_compare<1> : custom_sort_compare<-1>, count);
+
+		size_t concurrency = pfc::getOptimalWorkerThreadCountEx( count / 4096 );
+		fb2k::sort( cb, count, concurrency, aborter );
+	}
+	
+	//qsort(data.get_ptr(),count,sizeof(custom_sort_data),p_direction > 0 ? _custom_sort_compare<1> : _custom_sort_compare<-1>);
+
+
+	//	console::formatter() << "metadb_handle sort: sorted in " << pfc::format_time_ex(timer.query(),6);
+
+	for (t_size n = 0; n<count; n++)
+	{
+		order[n] = data[n].index;
+		delete[] data[n].text;
+	}
+
+	//	console::formatter() << "metadb_handle sort: finished in " << pfc::format_time_ex(timer.query(),6);
+}
 
 t_filesize metadb_handle_list_helper::calc_total_size(metadb_handle_list_cref p_list, bool skipUnknown) {
 	pfc::avltree_t< const char*, metadb::path_comparator > beenHere;

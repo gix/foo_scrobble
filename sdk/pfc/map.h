@@ -148,11 +148,13 @@ namespace pfc {
 
 
 		template<typename _t_key> bool get_first(_t_key & p_out) const {
-			return m_data.get_first(t_retrieve_key<_t_key>(p_out));
+			t_retrieve_key<_t_key> wrap(p_out);
+			return m_data.get_first(wrap);
 		}
 
 		template<typename _t_key> bool get_last(_t_key & p_out) const {
-			return m_data.get_last(t_retrieve_key<_t_key>(p_out));
+			t_retrieve_key<_t_key> wrap(p_out);
+			return m_data.get_last(wrap);
 		}
 
 

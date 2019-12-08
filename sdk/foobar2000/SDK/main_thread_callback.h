@@ -1,6 +1,27 @@
+#pragma once
 #include <functional>
 
-//! Callback object class for main_thread_callback_manager service.
+// ======================================================================================================
+// Most of main_thread_callback.h declares API internals and obsolete helpers.
+// In modern code, simply use fb2k::inMainThread() declared below and disregard the rest.
+// ======================================================================================================
+namespace fb2k {
+	//! Queue a call in main thread. Returns immediately. \n
+	//! You can call this from any thread, including main thread - to execute some code outside the current call stack / global fb2k callbacks / etc.
+	void inMainThread(std::function<void() > f);
+	//! Call f synchronously if called from main thread, queue call if called from another.
+	void inMainThread2(std::function<void() > f);
+}
+
+
+
+
+// ======================================================================================================
+// API declarations
+// ======================================================================================================
+
+//! Callback object class for main_thread_callback_manager service. \n
+//! You do not need to implement this directly - simply use fb2k::inMainThread() with a lambda.
 class NOVTABLE main_thread_callback : public service_base {
 public:
 	//! Gets called from main app thread. See main_thread_callback_manager description for more info.
@@ -13,7 +34,8 @@ public:
 
 /*!
 Allows you to queue a callback object to be called from main app thread. This is commonly used to trigger main-thread-only API calls from worker threads.\n
-This can be also used from main app thread, to avoid race conditions when trying to use APIs that dispatch global callbacks from inside some other global callback, or using message loops / modal dialogs inside global callbacks.
+This can be also used from main app thread, to avoid race conditions when trying to use APIs that dispatch global callbacks from inside some other global callback, or using message loops / modal dialogs inside global callbacks. \n
+There is no need to use this API directly - use fb2k::inMainThread() with a lambda.
 */
 class NOVTABLE main_thread_callback_manager : public service_base {
 public:
@@ -24,6 +46,11 @@ public:
 };
 
 
+// ======================================================================================================
+// Obsolete helpers - they still work, but it's easier to just use fb2k::inMainThread().
+// ======================================================================================================
+
+//! Helper, equivalent to main_thread_callback_manager::get()->add_callback(ptr)
 void main_thread_callback_add(main_thread_callback::ptr ptr);
 
 template<typename t_class> static void main_thread_callback_spawn() {
@@ -80,7 +107,8 @@ static void callInMainThreadSvc(myservice_t * host, param_t const & param) {
 //! Have this as a member of your class, then use m_mthelper.add( this, somearg ) ; to defer a call to this->inMainThread(somearg). \n
 //! If your class becomes invalid before inMainThread is executed, the pending callback is discarded. \n
 //! You can optionally call shutdown() to invalidate all pending callbacks early (in a destructor of your class - without waiting for callInMainThreadHelper destructor to do the job. \n
-//! In order to let callInMainThreadHelper access your private methods, declare friend class callInMainThread.
+//! In order to let callInMainThreadHelper access your private methods, declare friend class callInMainThread. \n
+//! Note that callInMainThreadHelper is expected to be created and destroyed in main thread.
 class callInMainThreadHelper {
 public:
     
@@ -157,11 +185,3 @@ private:
     killswitch_t m_ks;
     
 };
-
-// Modern helper
-namespace fb2k {
-	// Queue call in main thread
-    void inMainThread( std::function<void () > f );
-	// Call f synchronously if called from main thread, queue call if called from another
-	void inMainThread2( std::function<void () > f );
-}

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <SDK/dsp.h>
+#include <pfc/map.h>
+
 //! Duration counter class - accumulates duration using sample values, without any kind of rounding error accumulation.
 class duration_counter {
 public:
@@ -37,6 +40,14 @@ public:
 	void add(const audio_chunk & c) {
 		add(c.get_sample_count(), c.get_sample_rate());
 	}
+#ifdef FOOBAR2000_HAVE_DSP
+	void add(dsp_chunk_list const & c) {
+		const size_t num = c.get_count();
+		for (size_t walk = 0; walk < num; ++walk) {
+			add(*c.get_item(walk));
+		}
+	}
+#endif
 	void add(t_uint64 sampleCount, t_uint32 sampleRate) {
 		PFC_ASSERT(sampleRate > 0);
 		if (sampleRate > 0 && sampleCount > 0) {

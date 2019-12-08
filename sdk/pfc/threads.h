@@ -59,6 +59,7 @@ namespace pfc {
 	//! Thread class using lambda entrypoint rather than function override
 	class thread2 : public thread {
 	public:
+		~thread2() { waitTillDone(); }
 		void startHereWithPriority(std::function<void()> e, int priority);
 		void startHere(std::function<void()> e);
 		void setEntry(std::function<void()> e);

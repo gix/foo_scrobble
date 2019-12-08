@@ -38,17 +38,23 @@ public:
 	~critical_section() {destroy();}
 };
 
-class c_insync
+template<typename lock_t>
+class c_insync_
 {
 private:
-	_critical_section_base & m_section;
+	lock_t& m_section;
 public:
-	c_insync(_critical_section_base * p_section) throw() : m_section(*p_section) {m_section.enter();}
-	c_insync(_critical_section_base & p_section) throw() : m_section(p_section) {m_section.enter();}
-	~c_insync() throw() {m_section.leave();}
+	c_insync_(lock_t * p_section) throw() : m_section(*p_section) {m_section.enter();}
+	c_insync_(lock_t & p_section) throw() : m_section(p_section) {m_section.enter();}
+	~c_insync_() throw() {m_section.leave();}
 };
 
+typedef c_insync_<_critical_section_base> c_insync;
+
+// Old typedef for backwards compat
 #define insync(X) c_insync blah____sync(X)
+// New typedef
+#define PFC_INSYNC(X) c_insync_<decltype(X)> blah____sync(X)
 
 
 namespace pfc {

@@ -99,3 +99,30 @@ metadb_info_container::ptr metadb_handle::get_full_info_ref( abort_callback & ab
 	reader->get_info( this->get_subsong_index(), obj->m_info, aborter );
 	return obj;
 }
+
+namespace fb2k {
+	pfc::string_formatter formatTrackList( metadb_handle_list_cref lst ) {
+		pfc::string_formatter ret;
+		auto cnt = lst.get_count();
+		if ( cnt == 0 ) ret << "[Empty track list]\n";
+		else {
+			if (cnt == 1) ret << "[Track list: 1 track]\n";
+			else ret << "[Track list: " << cnt << " tracks]\n";
+			for( size_t walk = 0; walk < cnt; ++ walk ) {
+				ret << "  " << lst[walk]->get_location() << "\n";
+			}
+			ret << "[Track list end]";
+		}
+		return ret;
+	}
+	pfc::string_formatter formatTrackTitle(metadb_handle_ptr item, const char * script ) {
+		pfc::string_formatter ret;
+		item->format_title_legacy(NULL,ret,script,NULL);
+		return ret;
+	}
+	pfc::string_formatter formatTrackTitle(metadb_handle_ptr item,service_ptr_t<class titleformat_object> script) {
+		pfc::string_formatter ret;
+		item->format_title(NULL,ret,script,NULL);
+		return ret;
+	}
+}

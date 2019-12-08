@@ -1,4 +1,5 @@
 #pragma once
+#include "ref_counter.h"
 
 namespace pfc {
 	//! Base class for list nodes. Implemented by list implementers.
@@ -6,7 +7,7 @@ namespace pfc {
 	public:
 		typedef _list_node<t_item> t_self;
 
-		TEMPLATE_CONSTRUCTOR_FORWARD_FLOOD(_list_node,m_content)
+        template<typename ... arg_t> _list_node(arg_t && ... arg) : m_content( std::forward<arg_t>(arg) ...) {}
 
 		t_item m_content;
 

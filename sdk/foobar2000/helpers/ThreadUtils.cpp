@@ -68,104 +68,68 @@ namespace ThreadUtils {
 		}
 	}
 	void WaitAbortable_MsgLoop(HANDLE ev, abort_callback & abort) {
+		abort.check();
 		const HANDLE handles[2] = {ev, abort.get_abort_event()};
-		for(;;) {
-			SetLastError(0);
-			const DWORD status = MsgWaitForMultipleObjects(2, handles, FALSE, INFINITE, QS_ALLINPUT);
-			switch(status) {
-				case WAIT_TIMEOUT:
-					PFC_ASSERT(!"How did we get here?");
-					uBugCheck();
-				case WAIT_OBJECT_0:
-					return;
-				case WAIT_OBJECT_0 + 1:
-					throw exception_aborted();
-				case WAIT_OBJECT_0 + 2:
-					ProcessPendingMessages();
-					break;
-				case WAIT_FAILED:
-					WIN32_OP_FAIL();
-				default:
-					uBugCheck();
-			}
-		}
+		MultiWait_MsgLoop(handles, 2);
+		abort.check();
 	}
 	t_size MultiWaitAbortable_MsgLoop(const HANDLE * ev, t_size evCount, abort_callback & abort) {
+		abort.check();
 		pfc::array_t<HANDLE> handles; handles.set_size(evCount + 1);
 		handles[0] = abort.get_abort_event();
 		pfc::memcpy_t(handles.get_ptr() + 1, ev, evCount);
-		for(;;) {
+		DWORD status = MultiWait_MsgLoop(handles.get_ptr(), handles.get_count());
+		abort.check();
+		return (size_t)(status - WAIT_OBJECT_0);
+	}
+
+	void SleepAbortable_MsgLoop(abort_callback & abort, DWORD timeout) {
+		HANDLE handles[] = { abort.get_abort_event() };
+		MultiWait_MsgLoop(handles, 1, timeout);
+		abort.check();
+	}
+
+	bool WaitAbortable_MsgLoop(HANDLE ev, abort_callback & abort, DWORD timeout) {
+		abort.check();
+		HANDLE handles[2] = { abort.get_abort_event(), ev };
+		DWORD status = MultiWait_MsgLoop(handles, 2, timeout);
+		abort.check();
+		return status != WAIT_TIMEOUT;
+	}
+	
+	DWORD MultiWait_MsgLoop(const HANDLE* ev, DWORD evCount) {
+		for (;; ) {
 			SetLastError(0);
-			const DWORD status = MsgWaitForMultipleObjects(handles.get_count(), handles.get_ptr(), FALSE, INFINITE, QS_ALLINPUT);
-			switch(status) {
-				case WAIT_TIMEOUT:
-					PFC_ASSERT(!"How did we get here?");
-					uBugCheck();
-				case WAIT_OBJECT_0:
-					throw exception_aborted();
-				case WAIT_FAILED:
-					WIN32_OP_FAIL();
-				default:
-					{
-						t_size index = (t_size)(status - (WAIT_OBJECT_0 + 1));
-						if (index == evCount) {
-							ProcessPendingMessages();
-						} else if (index < evCount) {
-							return index;
-						} else {
-							uBugCheck();
-						}
-					}
+			const DWORD status = MsgWaitForMultipleObjects((DWORD) evCount, ev, FALSE, INFINITE, QS_ALLINPUT);
+			if (status == WAIT_FAILED) WIN32_OP_FAIL();
+			if (status == WAIT_OBJECT_0 + evCount) {
+				ProcessPendingMessages();
+			} else if ( status >= WAIT_OBJECT_0 && status < WAIT_OBJECT_0 + evCount ) {
+				return status;
+			} else {
+				uBugCheck();
 			}
 		}
 	}
 
-	void SleepAbortable_MsgLoop(abort_callback & abort, DWORD timeout /*must not be INFINITE*/) {
-		PFC_ASSERT( timeout != INFINITE );
+	DWORD MultiWait_MsgLoop(const HANDLE* ev, DWORD evCount, DWORD timeout) {
+		if (timeout == INFINITE) return MultiWait_MsgLoop(ev, evCount);
 		const DWORD entry = GetTickCount();
-		const HANDLE handles[1] = {abort.get_abort_event()};
-		for(;;) {
-			const DWORD done = GetTickCount() - entry;
-			if (done >= timeout) return;
+		DWORD now = entry;
+		for (;;) {
+			const DWORD done = now - entry;
+			if (done >= timeout) return WAIT_TIMEOUT;
 			SetLastError(0);
-			const DWORD status = MsgWaitForMultipleObjects(1, handles, FALSE, timeout - done, QS_ALLINPUT);
-			switch(status) {
-				case WAIT_TIMEOUT:
-					return;
-				case WAIT_OBJECT_0:
-					throw exception_aborted();
-				case WAIT_OBJECT_0 + 1:
-					ProcessPendingMessages();
-				default:
-					throw exception_win32(GetLastError());
+			const DWORD status = MsgWaitForMultipleObjects((DWORD)evCount, ev, FALSE, timeout - done, QS_ALLINPUT);
+			if (status == WAIT_FAILED) WIN32_OP_FAIL();
+			if (status == WAIT_OBJECT_0 + evCount) {
+				ProcessPendingMessages();
+			} else if (status == WAIT_TIMEOUT || (status >= WAIT_OBJECT_0 && status < WAIT_OBJECT_0 + evCount) ) {
+				return status;
+			} else {
+				uBugCheck();
 			}
-		}
-	}
-
-	bool WaitAbortable_MsgLoop(HANDLE ev, abort_callback & abort, DWORD timeout /*must not be INFINITE*/) {
-		PFC_ASSERT( timeout != INFINITE );
-		const DWORD entry = GetTickCount();
-		const HANDLE handles[2] = {ev, abort.get_abort_event()};
-		for(;;) {
-			const DWORD done = GetTickCount() - entry;
-			if (done >= timeout) return false;
-			SetLastError(0);
-			const DWORD status = MsgWaitForMultipleObjects(2, handles, FALSE, timeout - done, QS_ALLINPUT);
-			switch(status) {
-				case WAIT_TIMEOUT:
-					return false;
-				case WAIT_OBJECT_0:
-					return true;
-				case WAIT_OBJECT_0 + 1:
-					throw exception_aborted();
-				case WAIT_OBJECT_0 + 2:
-					ProcessPendingMessages();
-					break;
-				case WAIT_FAILED:
-					WIN32_OP_FAIL();
-				default:
-					uBugCheck();
-			}
+			now = GetTickCount();
 		}
 	}
 

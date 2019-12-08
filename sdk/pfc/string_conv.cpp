@@ -469,7 +469,7 @@ namespace pfc {
 		t_size convert_codepage_to_wide(unsigned p_codepage,wchar_t * p_out,t_size p_out_size,const char * p_source,t_size p_source_size) {
 			if (p_out_size == 0) return 0;
 			memset(p_out,0,p_out_size * sizeof(*p_out));
-			MultiByteToWideChar(p_codepage,0,p_source,p_source_size,p_out,p_out_size);
+			MultiByteToWideChar(p_codepage,0,p_source, pfc::downcast_guarded<int>(p_source_size),p_out, pfc::downcast_guarded<int>(p_out_size));
 			p_out[p_out_size-1] = 0;
 			return wcslen(p_out);
 		}
@@ -477,16 +477,16 @@ namespace pfc {
 		t_size convert_wide_to_codepage(unsigned p_codepage,char * p_out,t_size p_out_size,const wchar_t * p_source,t_size p_source_size) {
 			if (p_out_size == 0) return 0;
 			memset(p_out,0,p_out_size * sizeof(*p_out));
-			WideCharToMultiByte(p_codepage,0,p_source,p_source_size,p_out,p_out_size,0,FALSE);
+			WideCharToMultiByte(p_codepage,0,p_source,pfc::downcast_guarded<int>(p_source_size),p_out,pfc::downcast_guarded<int>(p_out_size),0,FALSE);
 			p_out[p_out_size-1] = 0;
 			return strlen(p_out);
 		}
 
 		t_size estimate_codepage_to_wide(unsigned p_codepage,const char * p_source,t_size p_source_size) {
-			return MultiByteToWideChar(p_codepage,0,p_source,strlen_max(p_source,p_source_size),0,0) + 1;
+			return MultiByteToWideChar(p_codepage,0,p_source, pfc::downcast_guarded<int>(strlen_max(p_source,p_source_size)),0,0) + 1;
 		}
 		t_size estimate_wide_to_codepage(unsigned p_codepage,const wchar_t * p_source,t_size p_source_size) {
-			return WideCharToMultiByte(p_codepage,0,p_source,wcslen_max(p_source,p_source_size),0,0,0,FALSE) + 1;
+			return WideCharToMultiByte(p_codepage,0,p_source, pfc::downcast_guarded<int>(wcslen_max(p_source,p_source_size)),0,0,0,FALSE) + 1;
 		}
 	}
 

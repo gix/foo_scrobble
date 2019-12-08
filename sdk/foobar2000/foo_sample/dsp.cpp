@@ -95,7 +95,7 @@ public:
 		RangeTotal = RangeMax - RangeMin
 	};
 
-	BEGIN_MSG_MAP(CMyDSPPopup)
+	BEGIN_MSG_MAP_EX(CMyDSPPopup)
 		MSG_WM_INITDIALOG(OnInitDialog)
 		COMMAND_HANDLER_EX(IDOK, BN_CLICKED, OnButton)
 		COMMAND_HANDLER_EX(IDCANCEL, BN_CLICKED, OnButton)

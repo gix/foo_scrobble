@@ -146,23 +146,20 @@ namespace {
 t_size config_object::get_data_raw(void * p_out,t_size p_bytes) {
 	t_size ret = 0;
     stream_writer_fixedbuffer stream(p_out,p_bytes,ret);
-    abort_callback_dummy aborter;
-	get_data(&stream,aborter);
+	get_data(&stream,fb2k::noAbort);
 	return ret;
 }
 
 t_size config_object::get_data_raw_length() {
 	t_size ret = 0;
     stream_writer_get_length stream(ret);
-    abort_callback_dummy aborter;
-	get_data(&stream,aborter);
+	get_data(&stream,fb2k::noAbort);
 	return ret;
 }
 
 void config_object::set_data_raw(const void * p_data,t_size p_bytes, bool p_notify) {
     stream_reader_memblock_ref stream(p_data,p_bytes);
-    abort_callback_dummy aborter;
-	set_data(&stream,aborter,p_notify);
+	set_data(&stream,fb2k::noAbort,p_notify);
 }
 
 void config_object::set_data_string(const char * p_data,t_size p_length) {
@@ -171,8 +168,7 @@ void config_object::set_data_string(const char * p_data,t_size p_length) {
 
 void config_object::get_data_string(pfc::string_base & p_out) {
     stream_writer_string stream(p_out);
-    abort_callback_dummy aborter;
-	get_data(&stream,aborter);
+	get_data(&stream,fb2k::noAbort);
 }
 
 

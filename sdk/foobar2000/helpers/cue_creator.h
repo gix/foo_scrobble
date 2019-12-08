@@ -7,8 +7,10 @@ namespace cue_creator
 	struct t_entry
 	{
 		file_info_impl m_infos;
-		pfc::string8 m_file,m_flags;
+		pfc::string8 m_file, m_fileType, m_flags, m_trackType = "AUDIO";
 		unsigned m_track_number;
+
+		bool isTrackAudio() const;
 
 		t_cuesheet_index_list m_index_list;
 

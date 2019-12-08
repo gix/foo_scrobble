@@ -237,6 +237,44 @@ namespace file_win32_helpers {
 #endif
 	}
 
+	size_t lowLevelIO(HANDLE hFile, const GUID & guid, size_t arg1, void * arg2, size_t arg2size, bool canWrite, abort_callback & abort) {
+		if ( guid == file_lowLevelIO::guid_flushFileBuffers ) {
+			if (!canWrite) {
+				PFC_ASSERT(!"File opened for reading, not writing");
+				throw exception_io_denied();
+			}
+			WIN32_IO_OP( ::FlushFileBuffers(hFile) );
+			return 1;
+		} else if ( guid == file_lowLevelIO::guid_getFileTimes ) {
+			if ( arg2size == sizeof(file_lowLevelIO::filetimes_t) ) {
+				if (canWrite) WIN32_IO_OP(::FlushFileBuffers(hFile));
+				auto ft = reinterpret_cast<file_lowLevelIO::filetimes_t *>(arg2);
+				static_assert(sizeof(t_filetimestamp) == sizeof(FILETIME), "struct sanity");
+				WIN32_IO_OP( GetFileTime( hFile, (FILETIME*)&ft->creation, (FILETIME*)&ft->lastAccess, (FILETIME*)&ft->lastWrite) );
+				return 1;
+			}
+		} else if ( guid == file_lowLevelIO::guid_setFileTimes ) {
+			if (arg2size == sizeof(file_lowLevelIO::filetimes_t)) {
+				if (!canWrite) {
+					PFC_ASSERT(!"File opened for reading, not writing");
+					throw exception_io_denied();
+				}
+				WIN32_IO_OP(::FlushFileBuffers(hFile));
+				auto ft = reinterpret_cast<file_lowLevelIO::filetimes_t *>(arg2);
+				static_assert(sizeof(t_filetimestamp) == sizeof(FILETIME), "struct sanity");
+				const FILETIME * pCreation = nullptr;
+				const FILETIME * pLastAccess = nullptr;
+				const FILETIME * pLastWrite = nullptr;
+				if ( ft->creation != filetimestamp_invalid ) pCreation = (const FILETIME*)&ft->creation;
+				if ( ft->lastAccess != filetimestamp_invalid ) pLastAccess = (const FILETIME*)&ft->lastAccess;
+				if ( ft->lastWrite != filetimestamp_invalid ) pLastWrite = (const FILETIME*)&ft->lastWrite;
+				WIN32_IO_OP( SetFileTime(hFile, pCreation, pLastAccess, pLastWrite) );
+				return 1;
+			}
+		}
+		return 0;
+	}
+
 }
 
 #endif // _WIN32

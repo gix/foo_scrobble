@@ -124,7 +124,7 @@ void tag_processor::read_trailing(const service_ptr_t<file> & p_file,file_info &
 	tag_processor_trailing::get()->read(p_file,p_info,p_abort);
 }
 
-void tag_processor::read_trailing_ex(const service_ptr_t<file> & p_file,file_info & p_info,t_uint64 & p_tagoffset,abort_callback & p_abort) {
+void tag_processor::read_trailing_ex(const service_ptr_t<file> & p_file,file_info & p_info,t_filesize & p_tagoffset,abort_callback & p_abort) {
 	tag_processor_trailing::get()->read_ex(p_file,p_info,p_tagoffset,p_abort);
 }
 
@@ -165,7 +165,7 @@ void tag_processor::read_id3v2_trailing(const service_ptr_t<file> & p_file,file_
 	}
 }
 
-void tag_processor::skip_id3v2(const service_ptr_t<file> & p_file,t_uint64 & p_size_skipped,abort_callback & p_abort) {
+void tag_processor::skip_id3v2(const service_ptr_t<file> & p_file,t_filesize & p_size_skipped,abort_callback & p_abort) {
 	tag_processor_id3v2::g_skip(p_file,p_size_skipped,p_abort);
 }
 

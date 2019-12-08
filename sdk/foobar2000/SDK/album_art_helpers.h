@@ -1,3 +1,4 @@
+#pragma once
 //! Implements album_art_data.
 class album_art_data_impl : public album_art_data {
 public:
@@ -50,32 +51,37 @@ private:
 };
 
 //! Helper implementation of album_art_extractor - reads album art from arbitrary file formats that comply with APEv2 tagging specification.
-class album_art_extractor_impl_stdtags : public album_art_extractor {
+class album_art_extractor_impl_stdtags : public album_art_extractor_v2 {
 public:
 	//! @param exts Semicolon-separated list of file format extensions to support.
-	album_art_extractor_impl_stdtags(const char * exts) {
+	album_art_extractor_impl_stdtags(const char * exts, const GUID & guid) : m_guid(guid) {
 		pfc::splitStringSimple_toList(m_extensions,';',exts);
 	}
 
-	bool is_our_path(const char * p_path,const char * p_extension) {
+	bool is_our_path(const char * p_path,const char * p_extension) override {
 		return m_extensions.have_item(p_extension);
 	}
 
-	album_art_extractor_instance_ptr open(file_ptr p_filehint,const char * p_path,abort_callback & p_abort) {
+	album_art_extractor_instance_ptr open(file_ptr p_filehint,const char * p_path,abort_callback & p_abort) override {
 		PFC_ASSERT( is_our_path(p_path, pfc::string_extension(p_path) ) );
 		file_ptr l_file ( p_filehint );
 		if (l_file.is_empty()) filesystem::g_open_read(l_file, p_path, p_abort);
 		return tag_processor_album_art_utils::get()->open( l_file, p_abort );
 	}
+
+	GUID get_guid() override { 
+		return m_guid;
+	}
 private:
 	pfc::avltree_t<pfc::string,pfc::string::comparatorCaseInsensitiveASCII> m_extensions;
+	const GUID m_guid;
 };
 
 //! Helper implementation of album_art_editor - edits album art from arbitrary file formats that comply with APEv2 tagging specification.
-class album_art_editor_impl_stdtags : public album_art_editor {
+class album_art_editor_impl_stdtags : public album_art_editor_v2 {
 public:
 	//! @param exts Semicolon-separated list of file format extensions to support.
-	album_art_editor_impl_stdtags(const char * exts) {
+	album_art_editor_impl_stdtags(const char * exts, const GUID & guid) : m_guid(guid) {
 		pfc::splitStringSimple_toList(m_extensions,';',exts);
 	}
 
@@ -89,8 +95,12 @@ public:
 		if (l_file.is_empty()) filesystem::g_open(l_file, p_path, filesystem::open_mode_write_existing, p_abort);
 		return tag_processor_album_art_utils::get()->edit( l_file, p_abort );
 	}
+	GUID get_guid() override {
+		return m_guid;
+	}
 private:
 	pfc::avltree_t<pfc::string,pfc::string::comparatorCaseInsensitiveASCII> m_extensions;
+	const GUID m_guid;
 
 };
 

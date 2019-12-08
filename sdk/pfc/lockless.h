@@ -66,7 +66,7 @@ namespace pfc {
 		}
 	private:
 		threadSafeInt m_once;
-		volatile bool m_done;
+		volatile bool m_done = false;
 
 	};
 }

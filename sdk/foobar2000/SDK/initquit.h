@@ -1,3 +1,4 @@
+#pragma once
 //! Basic callback startup/shutdown callback, on_init is called after the main window has been created, on_quit is called before the main window is destroyed. \n
 //! To register: static initquit_factory_t<myclass> myclass_factory; \n
 //! Note that you should be careful with calling other components during on_init/on_quit or \n
@@ -23,6 +24,7 @@ namespace init_stages {
 		before_config_read = 10,
 		after_config_read = 20,
 		before_library_init = 30,
+		// Since foobar2000 v2.0, after_library_init is fired OUT OF ORDER with the rest, after ASYNCHRONOUS library init has completed.
 		after_library_init = 40,
 		before_ui_init = 50,
 		after_ui_init = 60,

@@ -22,3 +22,21 @@ bool abort_callback::waitForEvent( pfc::eventHandle_t evtHandle, double timeOut 
         default: uBugCheck();
     }
 }
+
+bool abort_callback::waitForEvent(pfc::event& evt, double timeOut) { 
+	return waitForEvent(evt.get_handle(), timeOut); 
+}
+
+void abort_callback::waitForEvent(pfc::eventHandle_t evtHandle) {
+	bool status = waitForEvent(evtHandle, -1); (void)status;
+	PFC_ASSERT(status); // should never return false
+}
+
+void abort_callback::waitForEvent(pfc::event& evt) {
+	bool status = waitForEvent(evt, -1); (void)status;
+	PFC_ASSERT(status); // should never return false
+}
+
+namespace fb2k {
+	abort_callback_dummy noAbort;
+}

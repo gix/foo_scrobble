@@ -1,5 +1,9 @@
 #include "pfc.h"
 
+#if defined(_WIN32) && defined(PFC_HAVE_PROFILER)
+#include <ShlObj.h>
+#endif
+
 namespace pfc {
 
 #ifdef PFC_HAVE_PROFILER
@@ -9,6 +13,39 @@ profiler_static::profiler_static(const char * p_name)
 	name = p_name;
 	total_time = 0;
 	num_called = 0;
+}
+
+static void profilerMsg(const char* msg) {
+#ifdef _WIN32
+    if (!IsDebuggerPresent()) {
+        static HANDLE hWriteTo = INVALID_HANDLE_VALUE;
+        static bool initialized = false;
+        if (!initialized) {
+            initialized = true;
+            wchar_t path[1024] = {};
+            if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, path))) {
+                size_t l = wcslen(path);
+                if (l > 0) {
+                    if (path[l - 1] != '\\') {
+                        wcscat_s(path, L"\\");
+                    }
+                    wchar_t fn[256];
+                    wsprintf(fn, L"profiler-%u.txt", GetProcessId(GetCurrentProcess()));
+                    wcscat_s(path, fn);
+                    hWriteTo = CreateFile(path, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
+                }
+            }
+        }
+        if (hWriteTo != INVALID_HANDLE_VALUE) {
+            SetFilePointer(hWriteTo, 0, 0, SEEK_END);
+            pfc::string8 temp = msg;
+            temp += "\r\n";
+            DWORD written = 0;
+            WriteFile(hWriteTo, temp.c_str(), temp.length(), &written, NULL);
+        }
+    }
+#endif
+    outputDebugLine(msg);
 }
 
 profiler_static::~profiler_static()
@@ -21,8 +58,7 @@ profiler_static::~profiler_static()
 		if (num_called > 0) {
 			message << " (executed " << num_called << " times, " << (total_time / num_called) << " average)";
 		}
-		message << "\n";
-		OutputDebugStringA(message);
+        profilerMsg(message);
 	} catch(...) {
 		//should never happen
 		OutputDebugString(_T("unexpected profiler failure\n"));

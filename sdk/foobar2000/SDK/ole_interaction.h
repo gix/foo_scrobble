@@ -44,12 +44,11 @@ public:
 		set_entry_count(total);
 		t_size done = 0;
 		pfc::string8 name; metadb_handle_list content;
-		abort_callback_dummy abort;
 		for(t_size walk = 0; walk < pltotal; ++walk) if (mask[walk]) {
 			pfc::dynamic_assert( done < total );
 			api->playlist_get_name(walk,name); api->playlist_get_all_items(walk,content);
 			set_entry_name(done,name); set_entry_content(done,content);
-			stream_writer_buffer_simple sideData; api->playlist_get_sideinfo(walk, &sideData, abort);
+			stream_writer_buffer_simple sideData; api->playlist_get_sideinfo(walk, &sideData, fb2k::noAbort);
 			set_side_data(done,sideData.m_buffer.get_ptr(), sideData.m_buffer.get_size());
 			++done;
 		}

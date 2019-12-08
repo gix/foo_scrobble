@@ -1,3 +1,7 @@
+#pragma once
+
+#include <functional>
+
 //! (DEPRECATED) This service is used to signal whether something is currently preventing main window from being closed and app from being shut down.
 class NOVTABLE app_close_blocker : public service_base
 {
@@ -61,3 +65,24 @@ protected:
 private:
 	bool m_taskActive;
 };
+
+
+//! \since 1.4.5
+//! Provides means for async tasks - running detached from any UI - to reliably finish before the app terminates. \n
+//! During a late phase of app shutdown, past initquit ops, when no worker code should be still running - a core-managed instance of abort_callback is signaled, \n
+//! then main thread stalls until all objects created with acquire() have been released. \n
+//! As this API was introduced out-of-band with 1.4.5, you should use tryGet() to obtain it with FOOBAR2000_TARGET_VERSION < 80, but can safely use ::get() with FOOBAR2000_TARGET_VERSION >= 80.
+class async_task_manager : public service_base {
+	FB2K_MAKE_SERVICE_COREAPI( async_task_manager );
+public:
+	virtual abort_callback & get_aborter() = 0;
+	virtual service_ptr acquire() = 0;
+
+	//! acquire() helper; returns nullptr if the API isn't available due to old fb2k
+	static service_ptr g_acquire();
+};
+
+namespace fb2k {
+	//! pfc::splitThread() + async_task_manager::acquire
+	void splitTask( std::function<void ()> );
+}

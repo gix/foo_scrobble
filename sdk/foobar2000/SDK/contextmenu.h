@@ -1,3 +1,5 @@
+#pragma once
+
 //! Reserved for future use.
 typedef void * t_glyph;
 
@@ -121,6 +123,7 @@ public:
 	//! Return DEFAULT_ON to show this item in the context menu by default - useful for most cases. \n
 	//! Return DEFAULT_OFF to hide this item in the context menu by default - useful for rarely used utility commands. \n
 	//! Return FORCE_OFF to hide this item by default and prevent the user from making it visible (very rarely used). \n
+	//! foobar2000 v1.6 and newer: FORCE_OFF items are meant for being shown only in the keyboard shortcut list, not anywhere else. \n
 	//! Values returned by this method should be constant for this context menu item and not change later. Do not use this to conditionally hide the item - return false from get_display_data() instead.
 	virtual t_enabled_state get_enabled_state(unsigned p_index) = 0;
 	//! Executes the menu item command without going thru the instantiate_item path. For items with dynamically-generated sub-items, p_node is identifies of the sub-item command to execute.

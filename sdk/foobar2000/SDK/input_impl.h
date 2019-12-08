@@ -1,3 +1,8 @@
+#pragma once
+
+#include "input.h"
+#include "mem_block_container.h"
+
 enum t_input_open_reason {
 	input_open_info_read,
 	input_open_decode,
@@ -73,7 +78,8 @@ public:
 	//! See: input_decoder_v2::run_raw(). Relevant only when implementing input_decoder_v2. Valid after decode_initialize().
 	bool decode_run_raw(audio_chunk & p_chunk, mem_block_container & p_raw, abort_callback & p_abort);
 
-	//! See: input_decoder::set_logger(). Relevant only when implementing input_decoder_v2. Valid after any open().
+	//! OLD way: may be called at any time from input_decoder_v2 \n
+	//! NEW way (1.5): called prior to open().
 	void set_logger(event_logger::ptr ptr);
 protected:
 	input_impl() {}
@@ -91,6 +97,11 @@ public:
 	size_t extended_param(const GUID & type, size_t arg1, void * arg2, size_t arg2size) { return 0; }
 	static GUID g_get_preferences_guid() {return pfc::guid_null;}
 	static bool g_is_low_merit() { return false; }
+
+    bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta) { return false; }
+    bool decode_get_dynamic_info_track(file_info & p_out, double & p_timestamp_delta) { return false; }
+    void decode_on_idle(abort_callback & p_abort) { }
+
 
 	//! These typedefs indicate which interfaces your class actually supports. You can override them to support non default input API interfaces without specifying input_factory parameters.
 	typedef input_decoder_v4 interface_decoder_t;
@@ -154,8 +165,9 @@ template<typename I, typename interface_t>
 class input_impl_interface_wrapper_t : public interface_t
 {
 public:
-	void open(service_ptr_t<file> p_filehint,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort) {
-		m_instance.open(p_filehint,p_path,p_reason,p_abort);
+    template<typename ... args_t>
+	void open( args_t && ... args) {
+        m_instance.open(std::forward<args_t>(args) ... );
 	}
 
 	// input_info_reader methods
@@ -295,9 +307,10 @@ class input_wrapper_singletrack_t : public input_forward_static_methods<I>
 public:
 	input_wrapper_singletrack_t() {}
 
-	void open(service_ptr_t<file> p_filehint,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort) {
-		m_instance.open(p_filehint,p_path,p_reason,p_abort);
-	}
+    template<typename ... args_t>
+    void open( args_t && ... args) {
+        m_instance.open(std::forward<args_t>(args) ... );
+    }
 
 	void get_info(t_uint32 p_subsong,file_info & p_info,abort_callback & p_abort) {
 		if (p_subsong != 0) throw exception_io_bad_subsong_index();
@@ -360,32 +373,40 @@ private:
 
 //! Helper; standard input_entry implementation. Do not instantiate this directly, use input_factory_t or one of other input_*_factory_t helpers instead.
 template<typename I,unsigned t_flags, typename t_decoder = typename I::interface_decoder_t, typename t_inforeader = typename I::interface_info_reader_t, typename t_infowriter = typename I::interface_info_writer_t>
-class input_entry_impl_t : public input_entry_v2
+class input_entry_impl_t : public input_entry_v3
 {
-private:
-	
-	template<typename T, typename out>
-	void instantiate_t(service_ptr_t<out> & p_instance,service_ptr_t<file> p_filehint,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort)
-	{
-		service_ptr_t< service_impl_t<input_impl_interface_wrapper_t<I,T> > > temp;
-		temp = new service_impl_t<input_impl_interface_wrapper_t<I,T> >();
-		temp->open(p_filehint,p_path,p_reason,p_abort);
-		p_instance = temp.get_ptr();
-	}
 public:
 	bool is_our_content_type(const char * p_type) {return I::g_is_our_content_type(p_type);}
 	bool is_our_path(const char * p_full_path,const char * p_extension) {return I::g_is_our_path(p_full_path,p_extension);}
-	
-	void open_for_decoding(service_ptr_t<input_decoder> & p_instance,service_ptr_t<file> p_filehint,const char * p_path,abort_callback & p_abort) {
-		instantiate_t<t_decoder>(p_instance,p_filehint,p_path,input_open_decode,p_abort);
-	}
 
-	void open_for_info_read(service_ptr_t<input_info_reader> & p_instance,service_ptr_t<file> p_filehint,const char * p_path,abort_callback & p_abort) {
-		instantiate_t<t_inforeader>(p_instance,p_filehint,p_path,input_open_info_read,p_abort);
-	}
+    template<typename interface_t, typename outInterace_t, typename ... args_t>
+    void open_ex(service_ptr_t<outInterace_t> & p_instance,args_t && ... args)
+    {
+        auto temp = fb2k::service_new<input_impl_interface_wrapper_t<I,interface_t> >();
+        temp->open(std::forward<args_t>(args) ... );
+        p_instance = temp.get_ptr();
+    }
 
-	void open_for_info_write(service_ptr_t<input_info_writer> & p_instance,service_ptr_t<file> p_filehint,const char * p_path,abort_callback & p_abort) {
-		instantiate_t<t_infowriter>(p_instance,p_filehint,p_path,input_open_info_write,p_abort);
+	service_ptr open_v3(const GUID & whatFor, file::ptr hint, const char * path, event_logger::ptr logger, abort_callback & aborter) {
+		if ( whatFor == input_decoder::class_guid ) {
+			auto obj = fb2k::service_new< input_impl_interface_wrapper_t<I,t_decoder> > ();
+			if ( logger.is_valid() ) obj->set_logger(logger);
+			obj->open( hint, path, input_open_decode, aborter );
+			return obj;
+		}
+		if ( whatFor == input_info_reader::class_guid ) {
+			auto obj = fb2k::service_new < input_impl_interface_wrapper_t<I, t_inforeader> >();
+			if (logger.is_valid()) obj->set_logger(logger);
+			obj->open(hint, path, input_open_info_read, aborter);
+			return obj;
+		}
+		if ( whatFor == input_info_writer::class_guid ) {
+			auto obj = fb2k::service_new < input_impl_interface_wrapper_t<I, t_infowriter> >();
+			if (logger.is_valid()) obj->set_logger(logger);
+			obj->open(hint, path, input_open_info_write, aborter);
+			return obj;
+		}
+		throw pfc::exception_not_implemented();
 	}
 
 	void get_extended_data(service_ptr_t<file> p_filehint,const playable_location & p_location,const GUID & p_guid,mem_block_container & p_out,abort_callback & p_abort) {

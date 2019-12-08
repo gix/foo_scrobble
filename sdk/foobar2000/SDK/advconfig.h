@@ -1,3 +1,5 @@
+#pragma once
+
 //! Entrypoint class for adding items to Advanced Preferences page. \n
 //! Implementations must derive from one of subclasses: advconfig_branch, advconfig_entry_checkbox, advconfig_entry_string. \n
 //! Implementations are typically registered using static service_factory_single_t<myclass>, or using provided helper classes in case of standard implementations declared in this header.
@@ -9,11 +11,10 @@ public:
 	virtual void reset() = 0;
 	virtual double get_sort_priority() = 0;
 
+	bool is_branch();
 	t_uint32 get_preferences_flags_();
 
-	static bool g_find(service_ptr_t<advconfig_entry>& out, const GUID & id) {
-		service_enum_t<advconfig_entry> e; service_ptr_t<advconfig_entry> ptr; while(e.next(ptr)) { if (ptr->get_guid() == id) {out = ptr; return true;} } return false;
-	}
+	static bool g_find(service_ptr_t<advconfig_entry>& out, const GUID & id);
 
 	template<typename outptr> static bool g_find_t(outptr & out, const GUID & id) {
 		service_ptr_t<advconfig_entry> temp;
@@ -22,7 +23,7 @@ public:
 	}
 
 	static const GUID guid_root;
-	static const GUID guid_branch_tagging,guid_branch_decoding,guid_branch_tools,guid_branch_playback,guid_branch_display,guid_branch_debug;
+	static const GUID guid_branch_tagging,guid_branch_decoding,guid_branch_tools,guid_branch_playback,guid_branch_display,guid_branch_debug, guid_branch_tagging_general;
 
 	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(advconfig_entry);
 };
@@ -248,8 +249,8 @@ public:
 	advconfig_integer_factory_(const char * p_name,const GUID & p_guid,const GUID & p_parent,double p_priority,t_uint64 p_initialstate,t_uint64 p_min,t_uint64 p_max, t_uint32 p_prefFlags = 0) 
 		: service_factory_single_t<advconfig_entry_integer_impl_<int_t_> >(p_name,p_guid,p_parent,p_priority,p_initialstate,p_min,p_max,p_prefFlags) {}
 
-	int_t get() const {return get_static_instance().get_state_int();}
-	void set(int_t val) {get_static_instance().set_state_int(val);}
+	int_t get() const {return this->get_static_instance().get_state_int();}
+	void set(int_t val) {this->get_static_instance().set_state_int(val);}
 
 	operator int_t() const {return get();}
 	int_t operator=(int_t val) {set(val); return val;}

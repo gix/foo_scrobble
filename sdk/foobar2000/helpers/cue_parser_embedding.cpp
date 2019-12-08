@@ -26,6 +26,7 @@ namespace {
 		void operator() (unsigned p_trackno,const track_record & p_record) {
 			if (p_trackno > 0) {
 				cue_creator::t_entry_list::iterator iter = m_entries.insert_last();
+				iter->m_trackType = "AUDIO";
 				iter->m_file = p_record.m_file;
 				iter->m_flags = p_record.m_flags;
 				iter->m_index_list = p_record.m_index_list;

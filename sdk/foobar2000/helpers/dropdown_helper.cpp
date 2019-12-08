@@ -42,6 +42,16 @@ static void g_setup_dropdown_fromlist(HWND wnd,const pfc::ptr_list_t<char> & lis
 	}
 }
 
+void _cfg_dropdown_history_base::setup_dropdown_set_value(HWND wnd) {
+	pfc::ptr_list_t<char> list;
+	build_list(list);
+	g_setup_dropdown_fromlist(wnd, list);
+	if ( list.get_size() > 0 ) {
+		uSetWindowText(wnd, list[0] );
+	}
+	list.free_all();
+}
+
 void _cfg_dropdown_history_base::setup_dropdown(HWND wnd)
 {
 	pfc::ptr_list_t<char> list;

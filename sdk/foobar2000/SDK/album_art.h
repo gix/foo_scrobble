@@ -39,6 +39,14 @@ namespace album_art_ids {
 	//! Artist picture.
 	static const GUID artist = { 0x9a654042, 0xacd1, 0x43f7, { 0xbf, 0xcf, 0xd3, 0xec, 0xf, 0xfe, 0x40, 0xfa } };
 
+	size_t num_types();
+	GUID query_type( size_t );
+	// returns lowercase name
+	const char * query_name( size_t );
+	const char * name_of( const GUID & );
+	// returns Capitalized name
+	const char * query_capitalized_name( size_t );
+	const char * capitalized_name_of( const GUID & );
 };
 
 PFC_DECLARE_EXCEPTION(exception_album_art_not_found,exception_io_not_found,"Attached picture not found");
@@ -53,9 +61,8 @@ public:
 	//! Throws exception_album_art_not_found when the requested album art entry could not be found in the referenced media file.
 	virtual album_art_data_ptr query(const GUID & p_what,abort_callback & p_abort) = 0;
 
-	bool query(const GUID & what, album_art_data::ptr & out, abort_callback & abort) {
-		try { out = query(what, abort); return true; } catch(exception_album_art_not_found) { return false; }
-	}
+	bool have_entry( const GUID & what, abort_callback & abort );
+	bool query(const GUID & what, album_art_data::ptr & out, abort_callback & abort);
 };
 
 //! Class encapsulating access to album art stored in a media file. Use album_art_editor class to obtain album_art_editor_instance referring to specified media file.
@@ -70,6 +77,9 @@ public:
 
 	//! Finalizes file tag update operation.
 	virtual void commit(abort_callback & p_abort) = 0;
+
+	//! Helper; see album_art_editor_instance_v2::remove_all();
+	void remove_all_();
 };
 
 class NOVTABLE album_art_editor_instance_v2 : public album_art_editor_instance {
@@ -85,6 +95,7 @@ typedef service_ptr_t<album_art_editor_instance> album_art_editor_instance_ptr;
 //! Entrypoint class for accessing album art extraction functionality. Register your own implementation to allow album art extraction from your media file format. \n
 //! If you want to extract album art from a media file, it's recommended that you use album_art_manager API instead of calling album_art_extractor directly.
 class NOVTABLE album_art_extractor : public service_base {
+	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(album_art_extractor);
 public:
 	//! Returns whether the specified file is one of formats supported by our album_art_extractor implementation.
 	//! @param p_path Path to file being queried.
@@ -101,11 +112,21 @@ public:
 	static album_art_extractor_instance_ptr g_open(file_ptr p_filehint,const char * p_path,abort_callback & p_abort);
 	static album_art_extractor_instance_ptr g_open_allowempty(file_ptr p_filehint,const char * p_path,abort_callback & p_abort);
 
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(album_art_extractor);
+	//! Returns GUID of the corresponding input class. Null GUID if none.
+	GUID get_guid(); 
+};
+
+//! \since 1.5
+class NOVTABLE album_art_extractor_v2 : public album_art_extractor {
+	FB2K_MAKE_SERVICE_INTERFACE(album_art_extractor_v2 , album_art_extractor);
+public:
+	//! Returns GUID of the corresponding input class. Null GUID if none.
+	virtual GUID get_guid() = 0;
 };
 
 //! Entrypoint class for accessing album art editing functionality. Register your own implementation to allow album art editing on your media file format.
 class NOVTABLE album_art_editor : public service_base {
+	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(album_art_editor);
 public:
 	//! Returns whether the specified file is one of formats supported by our album_art_editor implementation.
 	//! @param p_path Path to file being queried.
@@ -124,11 +145,20 @@ public:
 
 	static album_art_editor_instance_ptr g_open(file_ptr p_filehint,const char * p_path,abort_callback & p_abort);
 
-	FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(album_art_editor);
+	//! Returns GUID of the corresponding input class. Null GUID if none.
+	GUID get_guid();
 };
 
+//! \since 1.5
+class NOVTABLE album_art_editor_v2 : public album_art_editor {
+	FB2K_MAKE_SERVICE_INTERFACE( album_art_editor_v2, album_art_editor )
+public:
+	//! Returns GUID of the corresponding input class. Null GUID if none.
+	virtual GUID get_guid() = 0;
+};
 
-//! Helper API for extracting album art from APEv2 tags - introduced in 0.9.5.
+//! \since 0.9.5
+//! Helper API for extracting album art from APEv2 tags.
 class NOVTABLE tag_processor_album_art_utils : public service_base {
 	FB2K_MAKE_SERVICE_COREAPI(tag_processor_album_art_utils)
 public:

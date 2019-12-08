@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <helpers/input_helpers.h>
 
 class calculate_peak_process : public threaded_process_callback {
 public:
@@ -7,7 +8,7 @@ public:
 	void run(threaded_process_status & p_status,abort_callback & p_abort) {
 		try {
 			const t_uint32 decode_flags = input_flag_no_seeking | input_flag_no_looping; // tell the decoders that we won't seek and that we don't want looping on formats that support looping.
-			input_helper input;
+			input_helper input; // this object manages lowlevel input_decoder calls for us.
 			for(t_size walk = 0; walk < m_items.get_size(); ++walk) {
 				p_abort.check(); // in case the input we're working with fails at doing this
 				p_status.set_progress(walk, m_items.get_size());

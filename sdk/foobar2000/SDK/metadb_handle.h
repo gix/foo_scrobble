@@ -1,3 +1,5 @@
+#pragma once
+
 class titleformat_hook;
 class titleformat_text_filter;
 class titleformat_object;
@@ -15,7 +17,6 @@ public:
 //! To obtain a metadb_handle to specific location, use metadb::handle_create(). To obtain a list of metadb_handle objects corresponding to specific path (directory, playlist, multitrack file, etc), use relevant playlist_incoming_item_filter methods (recommended), or call playlist_loader methods directly.\n
 //! A metadb_handle is also the most efficient way of passing playable object locations around because it provides fast access to both location and infos, and is reference counted so duplicating it is as fast as possible.\n
 //! To retrieve a path of a file from a metadb_handle, use metadb_handle::get_path() function. Note that metadb_handle is NOT just file path, some formats support multiple subsongs per physical file, which are signaled using subsong indexes.
-
 class NOVTABLE metadb_handle : public service_base
 {
 public:
@@ -39,9 +40,11 @@ public:
 	//! Returns last seen file stats, filestats_invalid if unknown.
 	virtual t_filestats get_filestats() const = 0;
 
+	//! Obsolete, use get_info_ref() family of methods instead. \n
 	//! Queries whether cached info about item referenced by this metadb_handle object is already available. Note that this function causes the metadb to be temporarily locked; you can not use it in context that where locking is forbidden.\n
 	//! Note that state of cached info changes only inside main thread, so you can safely assume that it doesn't change while some block of your code inside main thread is being executed.
 	virtual bool is_info_loaded() const = 0;
+	//! Obsolete, use get_info_ref() instead. \n
 	//! Queries cached info about item referenced by this metadb_handle object. Returns true on success, false when info is not yet known. Note that this function causes the metadb to be temporarily locked; you can not use it in context that where locking is forbidden. \n
 	//! Note that state of cached info changes only inside main thread, so you can safely assume that it doesn't change while some block of your code inside main thread is being executed.
 	virtual bool get_info(file_info & p_info) const = 0;
@@ -49,9 +52,11 @@ public:
 	//! OBSOLETE, DO NOT CALL
 	__declspec(deprecated) virtual bool get_info_locked(const file_info * & p_info) const = 0;
 	
+	//! Obsolete, use get_info_ref() family of methods instead. \n
 	//! Queries whether cached info about item referenced by this metadb_handle object is already available.\n
 	//! This is intended for use in special cases when you need to immediately retrieve info sent by metadb_io hint from another thread; state of returned data can be altered by any thread, as opposed to non-async methods.
-	virtual bool is_info_loaded_async() const = 0;	
+	virtual bool is_info_loaded_async() const = 0;
+	//! Obsolete, use get_info_ref() family of methods instead. \n
 	//! Queries cached info about item referenced by this metadb_handle object. Returns true on success, false when info is not yet known. Note that this function causes the metadb to be temporarily locked; you can not use it in context that where locking is forbidden.\n
 	//! This is intended for use in special cases when you need to immediately retrieve info sent by metadb_io hint from another thread; state of returned data can be altered by any thread, as opposed to non-async methods.
 	virtual bool get_info_async(file_info & p_info) const = 0;	
@@ -68,34 +73,40 @@ public:
 	__declspec(deprecated) virtual void format_title_from_external_info_nonlocking(const file_info & p_info,titleformat_hook * p_hook,pfc::string_base & p_out,const service_ptr_t<titleformat_object> & p_script,titleformat_text_filter * p_filter) = 0;
 
 #if FOOBAR2000_TARGET_VERSION >= 76
-	//! New in 1.0
+	//! \since 1.0
+	//! Returns browse info for this track. \n
+	//! Browse info comes from an external source - such as internet playlist metadata - not from the media file itself, and is maintained separately. \n
+	//! When title formatting calls are invoked on for a track having browse info present, data for title formatting is sourced from both primary and browse info. \n
+	//! Example: internet radio stream provides no metadata but its playlist XML has title (radio station name), %title% resolves to the radio station name from the playlist.
 	virtual bool get_browse_info(file_info & info, t_filetimestamp & ts) const = 0;
 
+	//! \since 1.0
 	//! OBSOLETE, DO NOT CALL
 	__declspec(deprecated) virtual bool get_browse_info_locked(const file_info * & p_info, t_filetimestamp & ts) const = 0;
 #endif
 #if FOOBAR2000_TARGET_VERSION >= 78
 	//! \since 1.3
 	//! Retrieve a reference to the primary info. \n
-	//! You can hold the reference to the info as long as you like, call the method in any context you like with no lock semantics involved. The info held by the returned reference will remain constant even if the metadb content changes.
+	//! You can hold the reference to the info as long as you like, call the method in any context you like with no lock semantics involved. The info held by the returned reference will remain constant even if the metadb content changes. \n
 	//! Returns true and sets outInfo to a reference to this item's primary info on success, returns false on failure (no info known at this time).
 	virtual bool get_info_ref(metadb_info_container::ptr & outInfo) const = 0;
 
 	//! \since 1.3
 	//! Retrieve a reference to the async info (pending info update). If async info isn't set, a reference to the primary info is returned.\n
-	//! You can hold the reference to the info as long as you like, call the method in any context you like with no lock semantics involved. The info held by the returned reference will remain constant even if the metadb content changes.
+	//! You can hold the reference to the info as long as you like, call the method in any context you like with no lock semantics involved. The info held by the returned reference will remain constant even if the metadb content changes. \n
 	//! Returns true and sets outInfo to a reference to this item's async or primary info on success, returns false on failure (no info known at this time).
 	virtual bool get_async_info_ref(metadb_info_container::ptr & outInfo) const = 0;
 
 	//! \since 1.3
 	//! Retrieve references to the item's primary and browse infos. If no info is set, NULL pointers are returned. For most local files, browse info is not available and you get a NULL for it.\n
-	//! Since browse info is usually used along with the primary info (as a fallback for missing metas), you can get the two with one call for better performance.
-	//! You can hold the reference to the info as long as you like, call the method in any context you like with no lock semantics involved. The info held by the returned reference will remain constant even if the metadb content changes.
+	//! Since browse info is usually used along with the primary info (as a fallback for missing metas), you can get the two with one call for better performance. \n
+	//! You can hold the reference to the info as long as you like, call the method in any context you like with no lock semantics involved. The info held by the returned reference will remain constant even if the metadb content changes. \n
+	//! See also: get_browse_info(), for browse info rationale.
 	virtual void get_browse_info_ref(metadb_info_container::ptr & outInfo, metadb_info_container::ptr & outBrowse) const = 0;
 
-	//! Simplified method, always returns non-null, dummy info if nothing to return
+	//! Simplified method, always returns non-null, dummy info if nothing to return.
 	virtual metadb_info_container::ptr get_info_ref() const = 0; 
-	//! Simplified method, always returns non-null, dummy info if nothing to return
+	//! Simplified method, always returns non-null, dummy info if nothing to return.
 	virtual metadb_info_container::ptr get_async_info_ref() const = 0;  
 
 	//! \since 1.3
@@ -105,10 +116,11 @@ public:
 #endif
 
 	//! \since 1.3
-	//! Helper using get_browse_info_ref()
-	//! Retrieves primary info + browse info merged together.
-	//! Returns true on success, false if neither info is available.
-	//! If neither info is avaialble, output data structure is emptied.
+	//! Helper using get_browse_info_ref(). \n
+	//! Retrieves primary info + browse info merged together. \n
+	//! Returns true on success, false if neither info is available. \n
+	//! If neither info is avaialble, output data structure is emptied. \n
+	//! See also: get_browse_info() for browse info rationale.
 	bool get_browse_info_merged(file_info & infoMerged) const;
 
 
@@ -130,6 +142,9 @@ public:
 	
 	t_filetimestamp get_filetimestamp();
 	t_filesize get_filesize();
+
+	//! Internal method, do not use
+	inline const char * _get_path() const { return get_path(); }
 
 	FB2K_MAKE_SERVICE_INTERFACE(metadb_handle,service_base);
 };
@@ -164,6 +179,9 @@ namespace metadb_handle_list_helper {
 
 	bool extract_single_path(metadb_handle_list_cref list, const char * &path);
 	bool extract_folder_path(metadb_handle_list_cref list, pfc::string_base & path);
+
+	void sort_by_format_get_order_v2( metadb_handle_list_cref p_list, size_t * order, const service_ptr_t<titleformat_object> & script, titleformat_hook * hook,  int direction, abort_callback & aborter );
+	void sort_by_format_v2(metadb_handle_list_ref p_list, const service_ptr_t<titleformat_object> & script, titleformat_hook * hook, int direction, abort_callback & aborter);
 
 };
 
@@ -235,17 +253,10 @@ inline pfc::string_base & operator<<(pfc::string_base & p_fmt,const metadb_handl
 }
 
 
-class string_format_title {
-public:
-	string_format_title(metadb_handle_ptr p_item,const char * p_script) {
-		p_item->format_title_legacy(NULL,m_data,p_script,NULL);
-	}
-	string_format_title(metadb_handle_ptr p_item,service_ptr_t<class titleformat_object> p_script) {
-		p_item->format_title(NULL,m_data,p_script,NULL);
-	}
 
-	const char * get_ptr() const {return m_data.get_ptr();}
-	operator const char * () const {return m_data.get_ptr();}
-private:
-	pfc::string8_fastalloc m_data;
-};
+namespace fb2k {
+	pfc::string_formatter formatTrackList( metadb_handle_list_cref );
+	pfc::string_formatter formatTrackTitle(metadb_handle_ptr item, const char * script = "%title%" );
+	pfc::string_formatter formatTrackTitle(metadb_handle_ptr item,service_ptr_t<class titleformat_object> script);
+}
+

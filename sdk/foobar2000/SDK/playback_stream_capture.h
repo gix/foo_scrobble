@@ -1,4 +1,7 @@
+#pragma once
+
 //! \since 1.0
+//! Implemented by components - register with playback_stream_capture methods.
 class NOVTABLE playback_stream_capture_callback {
 public:
 	//! Delivers a real-time chunk of audio data. \n
@@ -11,13 +14,12 @@ protected:
 };
 
 //! \since 1.0
+//! Implemented by core.
 class NOVTABLE playback_stream_capture : public service_base {
+	FB2K_MAKE_SERVICE_COREAPI(playback_stream_capture)
 public:
 	//! Possible to call only from the main thread.
 	virtual void add_callback(playback_stream_capture_callback * ) = 0;
 	//! Possible to call only from the main thread.
 	virtual void remove_callback(playback_stream_capture_callback * ) = 0;
-	
-
-	FB2K_MAKE_SERVICE_COREAPI(playback_stream_capture)
 };

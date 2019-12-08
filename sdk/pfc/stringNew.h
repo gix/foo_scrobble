@@ -2,14 +2,14 @@
 
 namespace pfc {
 	//helper, const methods only
-	class __stringEmpty : public string_base {
+	class _stringEmpty : public string_base {
 	public:
 		const char * get_ptr() const {return "";}
-		void add_string(const char * p_string,t_size p_length = ~0) {throw exception_not_implemented();}
-		void set_string(const char * p_string,t_size p_length = ~0) {throw exception_not_implemented();}
-		void truncate(t_size len) {throw exception_not_implemented();}
+		void add_string(const char * ,t_size) {throw exception_not_implemented();}
+		void set_string(const char * ,t_size) {throw exception_not_implemented();}
+		void truncate(t_size) {throw exception_not_implemented();}
 		t_size get_length() const {return 0;}
-		char * lock_buffer(t_size p_requested_length) {throw exception_not_implemented();}
+		char * lock_buffer(t_size) {throw exception_not_implemented();}
 		void unlock_buffer() {throw exception_not_implemented();}
 	};
 
@@ -23,7 +23,7 @@ namespace pfc {
 		typedef rcptr_t<string_base const> t_data;
 		typedef rcptr_t<string8> t_dataImpl;
 		
-		string() : m_content(rcnew_t<__stringEmpty>()) {}
+		string() : m_content(rcnew_t<_stringEmpty>()) {}
 		string(const char * p_source) : m_content(rcnew_t<string8>(p_source)) {}
 		string(const char * p_source, t_size p_sourceLen) : m_content(rcnew_t<string8>(p_source,p_sourceLen)) {}
 		string(char * p_source) : m_content(rcnew_t<string8>(p_source)) {}
@@ -76,12 +76,12 @@ namespace pfc {
 
 		string toLower() const {
 			string8_fastalloc temp; temp.prealloc(128);
-			stringToLowerAppend(temp,ptr(),~0);
+			stringToLowerAppend(temp,ptr(),SIZE_MAX);
 			return string(temp.get_ptr());
 		}
 		string toUpper() const {
 			string8_fastalloc temp; temp.prealloc(128);
-			stringToUpperAppend(temp,ptr(),~0);
+			stringToUpperAppend(temp,ptr(),SIZE_MAX);
 			return string(temp.get_ptr());
 		}
 		
@@ -90,15 +90,15 @@ namespace pfc {
 		//! @returns ~0 if not found.
 		t_size indexOf(char c,t_size base = 0) const;
 		//! @returns ~0 if not found.
-		t_size lastIndexOf(char c,t_size base = ~0) const;
+		t_size lastIndexOf(char c,t_size base = SIZE_MAX) const;
 		//! @returns ~0 if not found.
 		t_size indexOf(stringp s,t_size base = 0) const;
 		//! @returns ~0 if not found.
-		t_size lastIndexOf(stringp s,t_size base = ~0) const;
+		t_size lastIndexOf(stringp s,t_size base = SIZE_MAX) const;
 		//! @returns ~0 if not found.
 		t_size indexOfAnyChar(stringp s,t_size base = 0) const;
 		//! @returns ~0 if not found.
-		t_size lastIndexOfAnyChar(stringp s,t_size base = ~0) const;
+		t_size lastIndexOfAnyChar(stringp s,t_size base = SIZE_MAX) const;
 
 		bool contains(char c) const;
 		bool contains(stringp s) const;
@@ -129,7 +129,7 @@ namespace pfc {
 		t_size length() const {return m_content->get_length();}
 		t_size get_length() const {return m_content->get_length();}
 
-		void set_string(const char * ptr, t_size len = ~0) {
+		void set_string(const char * ptr, t_size len = SIZE_MAX) {
 			*this = string(ptr, len);
 		}
 

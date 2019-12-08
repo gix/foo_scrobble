@@ -61,6 +61,9 @@ public:
 	virtual t_size query_insert_mark() = 0;
 
 	void sort_by_format(const char * spec, bool onlySelection);
+
+	//! Safely prevent destruction from worker threads (some components attempt that).
+	static bool serviceRequiresMainThreadDestructor() { return true; }
 };
 
 //! Special case of ui_edit_context operating on a specific playlist (see playlist_manager). \n

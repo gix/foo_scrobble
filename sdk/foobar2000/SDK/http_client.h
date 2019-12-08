@@ -41,6 +41,13 @@ public:
 	void add_post_data(const char * name, const char * value) { add_post_data(name, value, strlen(value), "", ""); }
 };
 
+//! \since 1.5
+class NOVTABLE http_request_post_v2 : public http_request_post {
+	FB2K_MAKE_SERVICE_INTERFACE(http_request_post_v2, http_request_post);
+public:
+	virtual void set_post_data(const void* blob, size_t bytes, const char* contentType) = 0;
+};
+
 class NOVTABLE http_client : public service_base {
 	FB2K_MAKE_SERVICE_COREAPI(http_client)
 public:

@@ -7,6 +7,8 @@ public:
 	virtual void set_progress(float value) = 0;
 	//! Toggles paused state.
 	virtual void set_pause(bool isPaused) = 0;
+
+	static bool serviceRequiresMainThreadDestructor() { return true; }
 };
 
 //! Entrypoint interface for instantiating progress_meter_instance objects.
