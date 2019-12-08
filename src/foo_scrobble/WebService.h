@@ -40,7 +40,7 @@ enum class Status
     //! Something else went wrong.
     OperationFailed = 8,
 
-    //! Please re - authenticate.
+    //! Please re-authenticate.
     InvalidSessionKey = 9,
 
     //! You must be granted a valid key by last.fm.
@@ -111,7 +111,7 @@ public:
         case Status::OperationFailed:
             return "Something else went wrong.";
         case Status::InvalidSessionKey:
-            return "Please re - authenticate.";
+            return "Please re-authenticate.";
         case Status::InvalidAPIKey:
             return "You must be granted a valid key by last.fm.";
         case Status::ServiceOffline:
