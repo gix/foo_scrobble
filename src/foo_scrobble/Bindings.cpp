@@ -1,4 +1,4 @@
-﻿#include "Bindings.h"
+#include "Bindings.h"
 
 #include <algorithm>
 

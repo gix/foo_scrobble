@@ -1,4 +1,4 @@
-﻿#include "Authorizer.h"
+#include "Authorizer.h"
 #include "WebService.h"
 
 #include <experimental/resumable>

@@ -1,4 +1,4 @@
-﻿#include "ScrobbleCache.h"
+#include "ScrobbleCache.h"
 #include "ScrobbleService.h"
 
 using namespace foo_scrobble;

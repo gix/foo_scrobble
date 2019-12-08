@@ -1,4 +1,4 @@
-﻿#include "ScrobbleConfig.h"
+#include "ScrobbleConfig.h"
 
 namespace foo_scrobble
 {
