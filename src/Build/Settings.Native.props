@@ -58,7 +58,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <ConformanceMode>false</ConformanceMode><!-- foobar2000 SDK is not compliant. -->
-      <AdditionalOptions>-Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:externConstexpr -Gw %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:externConstexpr -Gw -utf-8 %(AdditionalOptions)</AdditionalOptions>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
     </ClCompile>
     <Link>

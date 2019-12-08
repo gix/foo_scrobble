@@ -255,7 +255,7 @@ void ScrobblerPreferencesDialog::UpdateAuthButton(Authorizer::State state)
         break;
     case Authorizer::State::RequestingAuth:
         button.ModifyStyle(0, BS_SPLITBUTTON);
-        button.SetWindowTextW(L"Requesting authorization…");
+        button.SetWindowTextW(L"Requesting authorizationâ€¦");
         break;
     case Authorizer::State::WaitingForApproval:
         button.ModifyStyle(0, BS_SPLITBUTTON);
@@ -263,7 +263,7 @@ void ScrobblerPreferencesDialog::UpdateAuthButton(Authorizer::State state)
         break;
     case Authorizer::State::CompletingAuth:
         button.ModifyStyle(0, BS_SPLITBUTTON);
-        button.SetWindowTextW(L"Completing authorization…");
+        button.SetWindowTextW(L"Completing authorizationâ€¦");
         break;
     case Authorizer::State::Authorized:
         button.ModifyStyle(BS_SPLITBUTTON, 0);
