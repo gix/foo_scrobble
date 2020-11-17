@@ -22,11 +22,15 @@ void popup_message::g_complain(const char * p_whatFailed, const char * msg) {
     g_complain( PFC_string_formatter() << p_whatFailed << ": " << msg );
 }
 
-void popup_message_v3::show_query( const char * title, const char * msg, unsigned buttons, completion_notify::ptr reply) {
+#if FOOBAR2000_TARGET_VERSION >= 80
+void popup_message_v3::show_query(const char* title, const char* msg, unsigned buttons,
+                                  completion_notify::ptr reply)
+{
     query_t q;
     q.title = title; q.msg = msg; q.buttons = buttons; q.reply = reply;
     this->show_query( q );
 }
+#endif
 
 
 #ifdef FOOBAR2000_DESKTOP_WINDOWS
@@ -68,7 +72,10 @@ void popup_message::g_showToastLongDuration(const char * msg) {
 #endif // FOOBAR2000_MODERN
 
 #ifdef FOOBAR2000_DESKTOP_WINDOWS
-int popup_message_v3::messageBox(HWND parent, const char* msg, const char* title, UINT flags) {
+#if FOOBAR2000_TARGET_VERSION >= 80
+int popup_message_v3::messageBox(HWND parent, const char* msg, const char* title,
+                                 UINT flags)
+{
 	query_t q = {};
 	q.title = title;
 	q.msg = msg;
@@ -132,4 +139,5 @@ int popup_message_v3::messageBox(HWND parent, const char* msg, const char* title
 
 	return -1;
 }
+#endif
 #endif
