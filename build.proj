@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="15.0" DefaultTargets="Package">
+<Project ToolsVersion="Current" DefaultTargets="Package">
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <PackageDir>$(MSBuildThisFileDirectory)build\publish\</PackageDir>
+    <BuildProperties>Configuration=$(Configuration);Platform=x86;OfficialBuild=true;ContinuousIntegrationBuild=true;FinalVersionKind=release</BuildProperties>
+  </PropertyGroup>
   <ItemGroup>
     <Project Include="src\foo_scrobble.sln"/>
   </ItemGroup>
-  <PropertyGroup>
-    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
-    <PackageDir>$(MSBuildThisFileDirectory)dist\</PackageDir>
 
-    <BuildProperties>Configuration=$(Configuration);Platform=x86;OfficialBuild=true</BuildProperties>
-  </PropertyGroup>
+  <Import Project="eng\common\GetVersionInfo.targets"/>
 
   <UsingTask TaskName="Zip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
@@ -43,7 +43,7 @@
     </Task>
   </UsingTask>
 
-  <Target Name="Clean">
+  <Target Name="Clean" Condition="'$(Clean)'!='false'">
     <MSBuild Projects="@(Project)"
              Properties="$(BuildProperties)"
              BuildInParallel="true"
@@ -52,7 +52,15 @@
     <RemoveDir Directories="build\x86"/>
   </Target>
 
-  <Target Name="Build">
+  <Target Name="Restore" Condition="'$(Restore)'!='false'">
+    <MSBuild Projects="@(Project)"
+             Properties="$(BuildProperties)"
+             BuildInParallel="true"
+             StopOnFirstFailure="true"
+             Targets="Restore"/>
+  </Target>
+
+  <Target Name="Build" DependsOnTargets="Restore" Condition="'$(Build)'!='false'">
     <MSBuild Projects="@(Project)"
              Properties="$(BuildProperties)"
              BuildInParallel="true"
@@ -61,9 +69,12 @@
   </Target>
 
   <Target Name="Package" DependsOnTargets="Clean;Build">
-    <Zip Files="build\x86\bin\foo_scrobble.dll"
+    <GetVersionInfo ModulePath="build\x86\bin\foo_scrobble\foo_scrobble.dll">
+      <Output TaskParameter="FileVersion" PropertyName="FileVersion"/>
+    </GetVersionInfo>
+    <Zip Files="build\x86\bin\foo_scrobble\foo_scrobble.dll"
          OutputFilename="$(PackageDir)foo_scrobble.fb2k-component"/>
-    <Zip Files="build\x86\bin\foo_scrobble.dll;build\x86\bin\foo_scrobble.pdb"
-         OutputFilename="$(PackageDir)foo_scrobble-$(CommitInfo).zip"/>
+    <Zip Files="build\x86\bin\foo_scrobble\foo_scrobble.dll;build\x86\bin\foo_scrobble\foo_scrobble.pdb"
+         OutputFilename="$(PackageDir)foo_scrobble-$(FileVersion).zip"/>
   </Target>
 </Project>

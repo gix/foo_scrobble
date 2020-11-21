@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Import Project="Versions.props"/>
+  <Import Project="Common\Preamble.props"/>
+
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+    <VCToolsVersion>14.28.29333</VCToolsVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <VcpkgTriplet Condition="'$(Platform)' == 'x64'">x64-windows-static-md-noiso</VcpkgTriplet>
+    <VcpkgTriplet Condition="'$(Platform)' != 'x64'">x86-windows-static-md-noiso</VcpkgTriplet>
+    <UseMultiToolTask>true</UseMultiToolTask>
+    <EnforceProcessCountAcrossBuilds>true</EnforceProcessCountAcrossBuilds>
+  </PropertyGroup>
+
+  <Import Project="SharedProperties.Cpp.props"/>
+</Project>

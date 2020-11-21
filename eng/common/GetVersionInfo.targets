@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!--
+    Task: GetVersionInfo
+
+    Retrieves version strings from the VERSIONINFO resource for native modules.
+
+    Properties:
+      string    ModulePath      Path to the module (*.exe or *.dll)
+
+    Outputs:
+      ITaskItem FileVersion     The FileVersion component.
+      ITaskItem ProductVersion  The ProductVersion component.
+  -->
+  <UsingTask TaskName="GetVersionInfo"
+             TaskFactory="CodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <ModulePath ParameterType="System.String" Required="true"/>
+      <FileVersion ParameterType="System.String" Output="true"/>
+      <ProductVersion ParameterType="System.String" Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Diagnostics"/>
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+        var versionInfo = FileVersionInfo.GetVersionInfo(ModulePath);
+        FileVersion = versionInfo.FileVersion;
+        ProductVersion = versionInfo.ProductVersion;
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+</Project>

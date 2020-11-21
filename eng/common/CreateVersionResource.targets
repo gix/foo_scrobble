@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!--
+    Task: CreateVersionResource
+
+    Creates a VERSIONINFO resource for native modules.
+
+    Properties:
+      string      FileVersion              Dotted file version string ("0.0.0.0")
+      string      ProductVersion           Dotted product version string ("0.0.0.0")
+      string      ConfigurationType        Configuration type ("Application", "DynamicLibrary" or "StaticLibrary")
+      bool        IsDebugBuild             true for debug builds, otherwise false.
+      int         LangId                   Windows LANGID (defaults to 0x409 "U.S. English")
+      ITaskItem[] Attributes               Additional attributes to be set
+
+    Outputs:
+      ITaskItem   OutputFile               Task item of the generated resource file
+  -->
+  <UsingTask TaskName="CreateVersionResource"
+             TaskFactory="CodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <FileVersion ParameterType="System.String"/>
+      <ProductVersion ParameterType="System.String"/>
+      <ConfigurationType ParameterType="System.String"/>
+      <IsDebugBuild ParameterType="System.Boolean"/>
+      <LangId ParameterType="System.Int32"/>
+      <Attributes ParameterType="Microsoft.Build.Framework.ITaskItem[]"/>
+      <OutputFile ParameterType="Microsoft.Build.Framework.ITaskItem" Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System"/>
+      <Using Namespace="System.Linq"/>
+      <Using Namespace="System.IO"/>
+      <Using Namespace="System.Text"/>
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+    var fileVersion = (!string.IsNullOrEmpty(FileVersion) ? FileVersion : "0.0.0.0").TrimEnd('.');
+    var productVersion = (!string.IsNullOrEmpty(ProductVersion) ? ProductVersion : "0.0.0.0").TrimEnd('.');
+
+    int dots = 0;
+    foreach (char c in fileVersion) {
+        if (c == '.')
+            ++dots;
+    }
+    for (int i = dots; i < 3; ++i)
+        fileVersion += ".0";
+
+    dots = 0;
+    foreach (char c in productVersion) {
+        if (c == '.')
+            ++dots;
+    }
+    for (int i = dots; i < 3; ++i)
+        productVersion += ".0";
+
+    int fileFlags = 0;
+    if (IsDebugBuild)
+        fileFlags |= 0x1;
+    if (Attributes.Any(x => x.ItemSpec == "PrivateBuild"))
+        fileFlags |= 0x8; // VS_FF_PRIVATEBUILD
+    if (Attributes.Any(x => x.ItemSpec == "SpecialBuild"))
+        fileFlags |= 0x20; // VS_FF_SPECIALBUILD
+
+    int fileOS = 0x40004; // VOS_NT_WINDOWS32;
+
+    int fileType;
+    switch (ConfigurationType) {
+    default:               fileType = 0; break; // VFT_UNKNOWN
+    case "Application":    fileType = 1; break; // VFT_APP
+    case "DynamicLibrary": fileType = 2; break; // VFT_DLL
+    case "StaticLibrary":  fileType = 7; break; // VFT_STATIC_LIB
+    }
+
+    if (LangId == 0)
+        LangId = 0x409; // U.S. English
+    int charsetId = 1200; // Unicode
+
+    var buffer = new StringBuilder();
+    buffer.Append("#pragma code_page(65001)\n");
+    buffer.Append("#define APSTUDIO_READONLY_SYMBOLS\n");
+    buffer.Append("#include \"winres.h\"\n");
+    buffer.Append("#undef APSTUDIO_READONLY_SYMBOLS\n");
+    buffer.Append("LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US\n");
+    buffer.Append("VS_VERSION_INFO VERSIONINFO\n");
+    buffer.AppendFormat("  FILEVERSION {0}\n", fileVersion.Replace(".", ","));
+    buffer.AppendFormat("  PRODUCTVERSION {0}\n", productVersion.Replace(".", ","));
+    buffer.Append("  FILEFLAGSMASK 0x3FL\n");
+    buffer.AppendFormat("  FILEFLAGS 0x{0:X}L\n", fileFlags);
+    buffer.AppendFormat("  FILEOS 0x{0:X}L\n", fileOS);
+    buffer.AppendFormat("  FILETYPE 0x{0:X}L\n", fileType);
+    buffer.Append("  FILESUBTYPE 0x0L\n");
+    buffer.Append("BEGIN\n");
+    buffer.Append("    BLOCK \"StringFileInfo\"\n");
+    buffer.Append("    BEGIN\n");
+    buffer.AppendFormat("        BLOCK \"{0:X4}{1:X4}\"\n", LangId, charsetId);
+    buffer.Append("        BEGIN\n");
+
+    foreach (var attrib in Attributes) {
+        buffer.AppendFormat("            VALUE \"{0}\", \"{1}\"\n", attrib.ItemSpec, attrib.GetMetadata("Value"));
+    }
+
+    buffer.Append("        END\n");
+    buffer.Append("    END\n");
+    buffer.Append("    BLOCK \"VarFileInfo\"\n");
+    buffer.Append("    BEGIN\n");
+    buffer.AppendFormat("        VALUE \"Translation\", {0:D}, {1:D}\n", LangId, charsetId);
+    buffer.Append("    END\n");
+    buffer.Append("END\n");
+
+    File.WriteAllText(OutputFile.GetMetadata("FullPath"), buffer.ToString());
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+</Project>

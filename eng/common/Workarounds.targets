@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+    <!-- Reset Version if it is intended to be empty. The C++ MSBuild targets
+         also include .NET targets which initialize Version to 1.0.0.0 unless
+         already set. -->
+    <Version Condition="'$(Version)' =='_EmptySentinel'"></Version>
+  </PropertyGroup>
+
+  <!-- Place the generated AssemblyAttributes source file into IntDir. By
+       default it is generated in the user's temp directory.
+       https://github.com/Microsoft/msbuild/issues/1479 -->
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj' and '$(CLRSupport)' != 'false'">
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntDir)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+  </PropertyGroup>
+
+  <!-- The TargetFrameworkMonikerAssemblyAttributesPath source file is added as
+       a ClCompile item using the path as-is. If this path is absolute, using
+       %(RelativeDir) for ClCompile properties can result in invalid paths
+       (e.g., when ObjectFileName is set to '$(IntDir)%(RelativeDir)', the
+       resulting path looks like 'C:\path\to\C:\path\to\file.obj'). To avoid
+       this, affected properties are explicitly overwritten here. -->
+  <Target Name="UpdateTargetFrameworkMonikerAttributeCompile"
+          BeforeTargets="ComputeReferenceCLInput;ClCompile"
+          DependsOnTargets="GenerateTargetFrameworkMonikerAttribute"
+          AfterTargets="GenerateTargetFrameworkMonikerAttribute"
+          Condition="'$(GenerateTargetFrameworkAttribute)' == 'true'">
+    <ItemGroup>
+      <ClCompile Condition="'%(ClCompile.Identity)' == '$(TargetFrameworkMonikerAssemblyAttributesPath)'">
+        <AssemblerListingLocation>$(TargetFrameworkMonikerAssemblyAttributesPath).asm</AssemblerListingLocation>
+        <ObjectFileName>$(TargetFrameworkMonikerAssemblyAttributesPath).obj</ObjectFileName>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
+</Project>

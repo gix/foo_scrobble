@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <Deterministic Condition="'$(Deterministic)' == '' and '$(ContinuousIntegrationBuild)' == 'true'">true</Deterministic>
+    <Deterministic Condition="'$(Deterministic)' == ''">false</Deterministic>
+    <DeterministicSourcePaths Condition="'$(DeterministicSourcePaths)'=='' and '$(Deterministic)' == 'true' and '$(ContinuousIntegrationBuild)' == 'true'">true</DeterministicSourcePaths>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj' and '$(Deterministic)' == 'true'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions) /experimental:deterministic</AdditionalOptions>
+    </ClCompile>
+
+    <Link>
+      <AdditionalOptions>%(AdditionalOptions) /experimental:deterministic</AdditionalOptions>
+      <!-- By default the full path to the PDB file is embedded in the PE debug
+           directory. Use only the filename. -->
+      <AdditionalOptions>%(AdditionalOptions) /PDBALTPATH:"$(TargetName).pdb"</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

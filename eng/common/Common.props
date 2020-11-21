@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <OfficialBuild Condition="'$(OfficialBuild)' == '' and '$(OfficialBuildId)' != ''">true</OfficialBuild>
+    <OfficialBuild Condition="'$(OfficialBuild)' == ''">false</OfficialBuild>
+
+    <PreReleaseVersionLabel Condition="'$(PreReleaseVersionLabel)' == '' AND '$(OfficialBuild)' == 'true'">beta1</PreReleaseVersionLabel>
+    <PreReleaseVersionLabel Condition="'$(PreReleaseVersionLabel)' == ''">dev</PreReleaseVersionLabel>
+    <IgnoreVersionsInVersionInfoHash Condition="'$(ContinuousIntegrationBuild)' != 'true'">true</IgnoreVersionsInVersionInfoHash>
+  </PropertyGroup>
+</Project>

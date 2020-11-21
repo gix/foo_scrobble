@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <Product>foo_scrobble</Product>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(VersionPrefix)' == ''">
+    <VersionPrefix Condition="'$(MSBuildProjectName)' == 'foo_scrobble'">1.4.0</VersionPrefix>
+
+    <!-- Force an explicitly specified prefix for all projects. -->
+    <VersionPrefix Condition="'$(VersionPrefix)' == ''">VersionPrefixMissing</VersionPrefix>
+
+    <ForceVersionDateStamp>true</ForceVersionDateStamp>
+    <PreReleaseVersionLabel>preview</PreReleaseVersionLabel>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,227 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <WholeProgramOptimization Condition="'$(IsDebugBuild)' != 'false'">false</WholeProgramOptimization>
+    <WholeProgramOptimization Condition="'$(IsDebugBuild)' == 'false'">true</WholeProgramOptimization>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <!-- Enable exceptions and RTTI -->
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <!-- C++/CLI does not support synchronous exceptions. -->
+      <ExceptionHandling Condition="'$(CLRSupport)' == 'true'">Async</ExceptionHandling>
+
+      <!-- Create debug symbols for all build types -->
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+
+      <!-- Enable Just My Code debugging for debug builds -->
+      <SupportJustMyCode Condition="'$(IsDebugBuild)' != 'false'">true</SupportJustMyCode>
+
+      <!-- Run-Time Error Checks for debug builds -->
+      <BasicRuntimeChecks Condition="'$(IsDebugBuild)' != 'false'">EnableFastChecks</BasicRuntimeChecks>
+      <BasicRuntimeChecks Condition="'$(CLRSupport)' == 'true'">Default</BasicRuntimeChecks>
+
+      <!-- Optimization -->
+      <Optimization Condition="'$(IsDebugBuild)' != 'false'">Disabled</Optimization>
+      <InlineFunctionExpansion Condition="'$(IsDebugBuild)' != 'false'">Disabled</InlineFunctionExpansion>
+      <WholeProgramOptimization Condition="'$(IsDebugBuild)' != 'false'">false</WholeProgramOptimization>
+
+      <Optimization Condition="'$(IsDebugBuild)' == 'false'">MaxSpeed</Optimization>
+      <InlineFunctionExpansion Condition="'$(IsDebugBuild)' == 'false'">Default</InlineFunctionExpansion>
+      <AdditionalOptions Condition="'$(IsDebugBuild)' == 'false'">%(AdditionalOptions) /Ob3</AdditionalOptions>
+      <OmitFramePointers Condition="'$(IsDebugBuild)' == 'false'">false</OmitFramePointers>
+      <WholeProgramOptimization Condition="'$(IsDebugBuild)' == 'false'">true</WholeProgramOptimization>
+
+      <!-- Diagnostics -->
+      <WarningLevel>Level4</WarningLevel>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
+
+      <!-- Emit full source paths in diagnostics -->
+      <UseFullPaths>true</UseFullPaths>
+
+      <!-- C4013: 'function' undefined; assuming extern returning int -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4013</TreatSpecificWarningsAsErrors>
+
+      <!-- C4099: 'identifier' : type name first seen using 'objecttype1' now seen using 'objecttype2' -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4099</TreatSpecificWarningsAsErrors>
+
+      <!-- C4130: 'operator' : logical operation on address of string constant -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4130</TreatSpecificWarningsAsErrors>
+
+      <!-- C4150: deletion of pointer to incomplete type 'type'; no destructor called
+           While allowed, this is dangerous. The standard says:
+             If the object being deleted has incomplete class type at the point
+             of deletion and the complete class has a non-trivial destructor or
+             a deallocation function, the behavior is undefined.
+           In other words, if and only if the destructor turns out to be trivial,
+           it is legal. But the compiler does not have enough information when
+           this warning is emitted. -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4150</TreatSpecificWarningsAsErrors>
+
+      <!-- C4172: returning address of local variable or temporary -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4172</TreatSpecificWarningsAsErrors>
+
+      <!-- C4200: nonstandard extension used : zero-sized array in struct/union -->
+      <DisableSpecificWarnings>%(DisableSpecificWarnings);4200</DisableSpecificWarnings>
+
+      <!-- C4311: 'variable' : pointer truncation from 'type' to 'type'
+           Pointer truncation is a serious bug. -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4311</TreatSpecificWarningsAsErrors>
+
+      <!-- C4312: 'variable' : pointer truncation from 'type' to 'type'
+           The reverse of pointer truncation. This may also be a bug for pointer
+           values that fit in 32 bits (e.h. some OS handles) when sign extension
+           occurs. If a negative 32-bit integer is assigned to a 64-bit pointer
+           type, sign extension causes the pointer value to reference a different
+           memory address. -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4312</TreatSpecificWarningsAsErrors>
+
+      <!-- C4324: 'struct_name' : structure was padded due to __declspec(align())
+           This warning can be safely ignored. It is just a note that the type
+           is smaller than its alignment. -->
+      <DisableSpecificWarnings>%(DisableSpecificWarnings);4324</DisableSpecificWarnings>
+
+      <!-- C4456: declaration of 'identifier' hides previous local declaration -->
+      <!-- C4457: declaration of 'identifier' hides function parameter -->
+      <!-- C4458: declaration of 'identifier' hides class member -->
+      <!-- C4459: declaration of 'identifier' hides global declaration -->
+      <DisableSpecificWarnings>%(DisableSpecificWarnings);4456;4457;4458;4459</DisableSpecificWarnings>
+
+      <!-- C4471: 'enumeration': a forward declaration of an unscoped enumeration must have an underlying type (int assumed)
+           The standard forbids forward declarations of enums without explicit
+           underlying type. MSVC is lenient enough and assumes int for such enums
+           which might be wrong (too small or too large). -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4471</TreatSpecificWarningsAsErrors>
+
+      <!-- C4477: 'function' : format string 'string' requires an argument of type 'type', but variadic argument number has type 'type' -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4477</TreatSpecificWarningsAsErrors>
+
+      <!-- C4505: 'function' : unreferenced local function has been removed -->
+      <DisableSpecificWarnings>%(DisableSpecificWarnings);4505</DisableSpecificWarnings>
+
+      <!-- C4566: character represented by universal-character-name 'char' cannot be represented in the current code page
+           With Windows-1252 as execution charset it is important to fail the
+           build if the source contains any non-representable characters. -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4566</TreatSpecificWarningsAsErrors>
+
+      <!-- C4715: 'function' : not all control paths return a value -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4715</TreatSpecificWarningsAsErrors>
+
+      <!-- C4828: The file contains a character starting at offset 'offset' that is illegal in the current source character set
+           With Windows-1252 as execution charset it is important to fail the
+           build if the source contains any non-representable characters. -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4828</TreatSpecificWarningsAsErrors>
+
+      <!-- C4840: non-portable use of class 'type' as an argument to a variadic function
+           This warning usually crops up by using string classes as argument
+           to formatting functions. Enforce explicit conversion to a compatible
+           type, e.g. to a C string using a cast, '.c_str()' or similar. -->
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors);4840</TreatSpecificWarningsAsErrors>
+
+      <!-- Warning settings for external headers. All headers included with <> are
+           treated as external. -->
+      <AdditionalOptions>%(AdditionalOptions) /experimental:external /external:anglebrackets</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions) /external:W0</AdditionalOptions>
+
+      <!-- Enforce unique output paths -->
+      <ProgramDataBaseFileName Condition="'$(ConfigurationType)' == 'StaticLibrary'">$(TargetDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
+
+      <!-- Make the compiler emit individual COMDAT sections for functions and
+           global data to enable linker optimizations. -->
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalOptions>%(AdditionalOptions) /Gw</AdditionalOptions>
+
+      <!-- Enable faster PDB generation. -->
+      <AdditionalOptions>%(AdditionalOptions) /Zf</AdditionalOptions>
+
+      <!-- Use UTF-8 for all files -->
+      <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
+
+      <!-- Standard Conformance -->
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <!-- C++/CLI only supports C++17 -->
+      <LanguageStandard Condition="'$(CLRSupport)' != 'false'">stdcpp17</LanguageStandard>
+      <ConformanceMode>true</ConformanceMode>
+
+      <!-- Conformance: Enforce the C++11 requirement that all functions declared
+           inline must have a definition available in the same translation unit
+           if they are used. -->
+      <RemoveUnreferencedCodeData>true</RemoveUnreferencedCodeData>
+
+      <!-- Conformance: Use external linkage for constexpr variables. -->
+      <AdditionalOptions>%(AdditionalOptions) /Zc:externConstexpr</AdditionalOptions>
+
+      <!-- Conformance: Assume that operator new throws std::bad_alloc instead
+           of returning a null pointer. Avoids unnecessary null checks for
+           allocation. -->
+      <AdditionalOptions>%(AdditionalOptions) /Zc:throwingNew</AdditionalOptions>
+
+      <!-- Conformance: Enables the __cplusplus preprocessor macro to report an
+           updated value for recent C++ language standards support. -->
+      <AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus</AdditionalOptions>
+
+      <!-- Two-phase name lookup is not supported for C++/CLI. -->
+      <AdditionalOptions Condition="'$(CLRSupport)' != 'false'">%(AdditionalOptions) /Zc:twoPhase-</AdditionalOptions>
+
+      <!-- Conformance: Enable standard conform preprocessor. -->
+      <AdditionalOptions Condition="'$(CLRSupport)' == 'false'">%(AdditionalOptions) /Zc:preprocessor</AdditionalOptions>
+
+      <!-- Target Windows Vista -->
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);NTDDI_VERSION=0x06000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);_WIN32_WINNT=0x0600</PreprocessorDefinitions>
+
+      <!-- Windows SDK -->
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32_LEAN_AND_MEAN;VC_EXTRALEAN;NOMINMAX</PreprocessorDefinitions>
+
+      <!-- CoreCRT options -->
+
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);__STDC_WANT_LIB_EXT1__</PreprocessorDefinitions>
+
+      <!-- Use standard conform printf format specifiers. -->
+      <!--<PreprocessorDefinitions>%(PreprocessorDefinitions);_CRT_STDIO_ISO_WIDE_SPECIFIERS</PreprocessorDefinitions>-->
+
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);_SCL_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+
+    <Lib>
+      <TargetMachine Condition="'$(Platform)'=='Win32'">MachineX86</TargetMachine>
+      <TargetMachine Condition="'$(Platform)'=='x64'">MachineX64</TargetMachine>
+    </Lib>
+    <Lib Condition="'$(IsDebugBuild)'=='false'">
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+
+    <Link Condition="'$(IsDebugBuild)'!='false'">
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+    </Link>
+    <Link Condition="'$(IsDebugBuild)'=='false'">
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+      <ImageHasSafeExceptionHandlers Condition="'$(Platform)'=='Win32'">true</ImageHasSafeExceptionHandlers>
+      <SetChecksum>true</SetChecksum>
+    </Link>
+
+    <ResourceCompile>
+      <ResourceOutputFileName>$(IntDir)%(RelativeDir)%(Filename).res</ResourceOutputFileName>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <Target Name="FixupBuildProperties" BeforeTargets="Build;ClCompile">
+    <ItemGroup>
+      <ClCompile>
+        <!-- Unconditionally enable debugging for debug and release configurations.
+             We do this here because the platform props files unconditionally
+             set $(DebugInformationFormat) after this file has been processed. -->
+        <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Import Project="Common.props"/>
+  <Import Project="Workarounds.props"/>
+  <Import Project="Version.props"/>
+  <Import Project="RepoLayout.props"/>
+  <Import Project="ProjectLayout.props"/>
+  <Import Project="DeterministicBuild.props" Condition="'$(MSBuildProjectExtension)' == '.vcxproj'"/>
+</Project>

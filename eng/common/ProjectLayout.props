@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <BuildRoot Condition="'$(BuildRoot)' == ''">$(RepoRoot)build\</BuildRoot>
+    <IsDebugBuild Condition="'$(IsDebugBuild)' == '' and $([System.Text.RegularExpressions.Regex]::IsMatch('$(Configuration)', 'Debug'))">true</IsDebugBuild>
+    <IsDebugBuild Condition="'$(IsDebugBuild)' == ''">false</IsDebugBuild>
+    <ConfigSuffix Condition="'$(Configuration)'!=''">-$(Configuration.ToLowerInvariant())</ConfigSuffix>
+    <ConfigSuffix Condition="'$(Configuration)'=='Debug'">-dbg</ConfigSuffix>
+    <ConfigSuffix Condition="'$(Configuration)'=='Release'"></ConfigSuffix>
+    <OutputPlatform Condition="'$(Platform)' == 'Win32' or '$(Platform)' == 'x86'">x86</OutputPlatform>
+    <OutputPlatform Condition="'$(Platform)' == 'x64'">x64</OutputPlatform>
+    <OutputPlatform Condition="'$(Platform)' == 'AnyCPU'">any</OutputPlatform>
+    <OutputPlatform Condition="'$(OutputPlatform)' == ''">$(Platform)</OutputPlatform>
+    <OutputBaseName Condition="'$(OutputBaseName)' == ''">$(OutputPlatform)$(ConfigSuffix)</OutputBaseName>
+  </PropertyGroup>
+
+  <!-- Native projects -->
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+    <Toolset>$(PlatformToolset)</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v90'">vc90</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v100'">vc100</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'Windows7.1SDK'">vc101</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v110'">vc110</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v120'">vc120</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v140'">vc140</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v141'">vc141</Toolset>
+    <Toolset Condition="'$(PlatformToolset)' == 'v142'">vc142</Toolset>
+
+    <OutDir Condition="'$(UseSharedOutputPath)' != 'true'">$(BuildRoot)$(OutputBaseName)\bin\$(MSBuildProjectName)\</OutDir>
+    <OutDir Condition="'$(UseSharedOutputPath)' == 'true'">$(BuildRoot)$(OutputBaseName)\bin\</OutDir>
+    <IntDir>$(BuildRoot)$(OutputBaseName)\obj\$(MSBuildProjectName)\</IntDir>
+  </PropertyGroup>
+
+  <!-- Managed projects -->
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$([System.IO.Path]::GetFullPath('$(BuildRoot)$(OutputBaseName)\bin\'))</BaseOutputPath>
+    <OutputPath Condition="'$(UseSharedOutputPath)' != 'true'">$(BaseOutputPath)$(MSBuildProjectName)\</OutputPath>
+    <OutputPath Condition="'$(UseSharedOutputPath)' == 'true'">$(BaseOutputPath)</OutputPath>
+
+    <!-- BaseIntermediateOutputPath must be project-specific. -->
+    <BaseIntermediateOutputPath>$([System.IO.Path]::GetFullPath('$(BuildRoot)$(OutputBaseName)\obj\$(MSBuildProjectName)\'))</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Target Name="_InitializeSourceRootMappedPathsFromSourceControl"
+          DependsOnTargets="InitializeSourceControlInformation"
+          Condition="'$(SourceControlInformationFeatureSupported)' == 'true'"/>
+
+  <Target Name="InitializeSourceRootMappedPaths"
+          DependsOnTargets="_InitializeSourceRootMappedPathsFromSourceControl">
+    <!-- FIXME: Handle multiple source roots. -->
+    <Error Condition="'@(SourceRoot->Count())' &gt; 1" Text="Multiple source roots specified."/>
+
+    <ItemGroup>
+      <_MappedSourceRoot Include="@(SourceRoot)">
+        <MappedPath>/_/</MappedPath>
+      </_MappedSourceRoot>
+      <SourceRoot Remove="@(SourceRoot)" />
+      <SourceRoot Include="@(_MappedSourceRoot)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_SetPathMapFromSourceRoots"
+          DependsOnTargets="InitializeSourceRootMappedPaths"
+          BeforeTargets="ClCompile"
+          Condition="'$(DeterministicSourcePaths)' == 'true'">
+
+    <ItemGroup>
+      <_TopLevelSourceRoot Include="@(SourceRoot)" Condition="'%(SourceRoot.NestedRoot)' == ''"/>
+    </ItemGroup>
+
+    <PropertyGroup Condition="'@(_TopLevelSourceRoot)' != ''">
+      <PathMap Condition="'$(PathMap)' != ''">,$(PathMap)</PathMap>
+
+      <!--
+        Prepend the SourceRoot.MappedPath values to PathMap, if it already has a value.
+        For each emitted source path the compiler applies the first mapping that matches the path.
+        PathMap values set previously will thus only be applied if the mapping provided by 
+        SourceRoot.MappedPath doesn't match. Since SourceRoot.MappedPath is also used by SourceLink 
+        preferring it over manually set PathMap ensures that PathMap is consistent with SourceLink.
+      
+        TODO: quote the paths to avoid misinterpreting ',' and '=' in them as separators, 
+        but quoting doesn't currently work (see https://github.com/dotnet/roslyn/issues/22835).
+      -->
+      <PathMap>@(_TopLevelSourceRoot->'%(Identity)=%(MappedPath)', ',')$(PathMap)</PathMap>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(Language)' == 'C++'">
+      <ClCompile Update="@(ClCompile)">
+        <AdditionalOptions>%(ClCompile.AdditionalOptions) /pathmap:"$(PathMap)"</AdditionalOptions>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
+</Project>

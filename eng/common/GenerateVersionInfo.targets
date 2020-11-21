@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <GeneratedVersionInfoFile Condition="'$(GeneratedVersionInfoFile)' ==''">$(IntermediateOutputPath)$(MSBuildProjectName).Version.rc</GeneratedVersionInfoFile>
+    <GenerateVersionInfo Condition="'$(GenerateVersionInfo)' == ''">true</GenerateVersionInfo>
+    <IgnoreVersionsInVersionInfoHash Condition="'$(IgnoreVersionsInVersionInfoHash)' == ''">false</IgnoreVersionsInVersionInfoHash>
+  </PropertyGroup>
+
+  <Import Project="CreateVersionResource.targets"/>
+
+  <PropertyGroup Condition="'$(Version)' == ''">
+    <VersionPrefix Condition="'$(VersionPrefix)' == ''">1.0.0</VersionPrefix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(VersionPrefix)-$(VersionSuffix)</Version>
+    <Version Condition="'$(Version)' == ''">$(VersionPrefix)</Version>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors Condition="'$(Authors)'==''">$(TargetName)</Authors>
+    <Company Condition="'$(Company)'==''">$(Authors)</Company>
+    <ModuleTitle Condition="'$(ModuleTitle)' == ''">$(TargetName)</ModuleTitle>
+    <InternalName Condition="'$(InternalName)' == ''">$(TargetName)</InternalName>
+    <OriginalFilename Condition="'$(OriginalFilename)' == ''">$(TargetName)$(TargetExt)</OriginalFilename>
+    <Product Condition="'$(Product)' == ''">$(TargetName)</Product>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GenerateVersionInfo)' == 'true'">
+    <GenerateModuleCompanyAttribute Condition="'$(GenerateModuleCompanyAttribute)' == ''">true</GenerateModuleCompanyAttribute>
+    <GenerateModuleConfigurationAttribute Condition="'$(GenerateModuleConfigurationAttribute)' == ''">true</GenerateModuleConfigurationAttribute>
+    <GenerateModuleCopyrightAttribute Condition="'$(GenerateModuleCopyrightAttribute)' == ''">true</GenerateModuleCopyrightAttribute>
+    <GenerateModuleDescriptionAttribute Condition="'$(GenerateModuleDescriptionAttribute)' == ''">true</GenerateModuleDescriptionAttribute>
+    <GenerateModuleFileVersionAttribute Condition="'$(GenerateModuleFileVersionAttribute)' == ''">true</GenerateModuleFileVersionAttribute>
+    <GenerateModuleInformationalVersionAttribute Condition="'$(GenerateModuleInformationalVersionAttribute)' == ''">true</GenerateModuleInformationalVersionAttribute>
+    <GenerateModuleInternalNameAttribute Condition="'$(GenerateModuleInternalNameAttribute)' == ''">true</GenerateModuleInternalNameAttribute>
+    <GenerateModuleOriginalFilenameAttribute Condition="'$(GenerateModuleOriginalFilenameAttribute)' == ''">true</GenerateModuleOriginalFilenameAttribute>
+    <GenerateModuleProductAttribute Condition="'$(GenerateModuleProductAttribute)' == ''">true</GenerateModuleProductAttribute>
+    <GenerateModuleProductVersionAttribute Condition="'$(GenerateModuleProductVersionAttribute)' == ''">true</GenerateModuleProductVersionAttribute>
+    <GenerateModuleTrademarkAttribute Condition="'$(GenerateModuleTrademarkAttribute)' == ''">true></GenerateModuleTrademarkAttribute>
+    <GenerateModuleTitleAttribute Condition="'$(GenerateModuleTitleAttribute)' == ''">true</GenerateModuleTitleAttribute>
+    <GenerateModuleVersionAttribute Condition="'$(GenerateModuleVersionAttribute)' == ''">true</GenerateModuleVersionAttribute>
+    <IncludeSourceRevisionInInformationalVersion Condition="'$(IncludeSourceRevisionInInformationalVersion)' == ''">true</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <Target Name="GenerateVersionInfo"
+          BeforeTargets="BeforeResourceCompile"
+          DependsOnTargets="CoreGenerateVersionInfo"
+          Condition="('$(ConfigurationType)' == 'Application' or '$(ConfigurationType)' == 'DynamicLibrary') and '$(GenerateVersionInfo)' == 'true'"/>
+
+  <Target Name="GetModuleVersion">
+    <PropertyGroup>
+      <ProductVersion Condition="'$(ProductVersion)' == ''">$(VersionPrefix).$(VersionSuffixDateStamp)</ProductVersion>
+      <FileVersion Condition="'$(FileVersion)' == ''">$(VersionPrefix).$(VersionSuffixDateStamp)</FileVersion>
+      <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(Version)</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="InitializeSourceControlInformation" Condition="'$(SourceRevisionId)' == ''">
+    <PropertyGroup>
+      <_DotGitDir>$(RepoRoot).git</_DotGitDir>
+      <_HeadFileContent Condition="Exists('$(_DotGitDir)/HEAD')">$([System.IO.File]::ReadAllText('$(_DotGitDir)/HEAD').Trim())</_HeadFileContent>
+      <_RefPath Condition="$(_HeadFileContent.StartsWith('ref: '))">$(_DotGitDir)/$(_HeadFileContent.Substring(5))</_RefPath>
+      <SourceRevisionId Condition="'$(_RefPath)' != '' and Exists('$(_RefPath)')">$([System.IO.File]::ReadAllText('$(_RefPath)').Trim())</SourceRevisionId>
+      <SourceRevisionId Condition="'$(_HeadFileContent)' != '' and '$(_RefPath)' == ''">$(_HeadFileContent)</SourceRevisionId>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="AddSourceRevisionToInformationalVersion"
+          DependsOnTargets="GetModuleVersion;InitializeSourceControlInformation"
+          Condition="'$(SourceControlInformationFeatureSupported)' == 'true' and '$(IncludeSourceRevisionInInformationalVersion)' == 'true'">
+    <PropertyGroup Condition="'$(SourceRevisionId)' != ''">
+      <!-- Follow SemVer 2.0 rules -->
+      <_InformationalVersionContainsPlus>false</_InformationalVersionContainsPlus>
+      <_InformationalVersionContainsPlus Condition="$(InformationalVersion.Contains('+'))">true</_InformationalVersionContainsPlus>
+
+      <InformationalVersion Condition="!$(_InformationalVersionContainsPlus)">$(InformationalVersion)+$(SourceRevisionId)</InformationalVersion>
+      <InformationalVersion Condition="$(_InformationalVersionContainsPlus)">$(InformationalVersion).$(SourceRevisionId)</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="GetModuleAttributes"
+          DependsOnTargets="GetModuleVersion;AddSourceRevisionToInformationalVersion">
+    <ItemGroup>
+      <ModuleAttribute Include="Comments" Condition="'$(Description)' != '' and '$(GenerateModuleDescriptionAttribute)' == 'true'">
+        <Value>$(Description)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="CompanyName" Condition="'$(Company)' != '' and '$(GenerateModuleCompanyAttribute)' == 'true'">
+        <Value>$(Company)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="FileDescription" Condition="'$(ModuleTitle)' != '' and '$(GenerateModuleTitleAttribute)' == 'true'">
+        <Value>$(ModuleTitle)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="InternalName" Condition="'$(InternalName)' != '' and '$(GenerateModuleInternalNameAttribute)' == 'true'">
+        <Value>$(InternalName)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="LegalCopyright" Condition="'$(Copyright)' != '' and '$(GenerateModuleCopyrightAttribute)' == 'true'">
+        <Value>$(Copyright)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="LegalTrademarks" Condition="'$(Trademark)' != '' and '$(GenerateModuleTrademarkAttribute)' == 'true'">
+        <Value>$(Trademark)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="OriginalFilename" Condition="'$(OriginalFilename)' != '' and '$(GenerateModuleOriginalFilenameAttribute)' == 'true'">
+        <Value>$(OriginalFilename)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="ProductName" Condition="'$(Product)' != '' and '$(GenerateModuleProductAttribute)' == 'true'">
+        <Value>$(Product)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="FileVersion" Condition="'$(FileVersion)' != '' and '$(GenerateModuleFileVersionAttribute)' == 'true'">
+        <Value>$(FileVersion)</Value>
+      </ModuleAttribute>
+      <ModuleAttribute Include="ProductVersion" Condition="'$(InformationalVersion)' != '' and '$(GenerateModuleInformationalVersionAttribute)' == 'true'">
+        <Value>$(InformationalVersion)</Value>
+      </ModuleAttribute>
+    </ItemGroup>
+  </Target>
+
+  <!--
+    To allow version changes to be respected on incremental builds (e.g. through
+    CLI parameters), create a hash of all module attributes so that the cache
+    file will change with the calculated module attribute values and msbuild
+    will then execute CoreGenerateVersionInfo to generate a new file.
+  -->
+  <Target Name="CreateGeneratedVersionInfoInputsCacheFile"
+          DependsOnTargets="GetModuleAttributes">
+    <PropertyGroup>
+      <GeneratedVersionInfoInputsCacheFile>$(IntermediateOutputPath)$(MSBuildProjectName).VersionInfoInputs.cache</GeneratedVersionInfoInputsCacheFile>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VersionInfoHashInput Include="@(ModuleAttribute->'%(Identity)%(Value)')"/>
+      <_VersionInfoHashInput Condition="'$(IgnoreVersionsInVersionInfoHash)' == 'true' and ('%(ModuleAttribute.Identity)' == 'FileVersion' or '%(ModuleAttribute.Identity)' == 'ProductVersion')"
+                             Remove="@(ModuleAttribute->'%(Identity)%(Value)')"/>
+    </ItemGroup>
+
+    <Hash ItemsToHash="@(_VersionInfoHashInput)">
+      <Output TaskParameter="HashResult" PropertyName="_ModuleAttributesHash" />
+    </Hash>
+
+    <WriteLinesToFile Lines="$(_ModuleAttributesHash)" File="$(GeneratedVersionInfoInputsCacheFile)" Overwrite="True" WriteOnlyWhenDifferent="True" />
+
+    <ItemGroup>
+      <FileWrites Include="$(GeneratedVersionInfoInputsCacheFile)"/>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CoreGenerateVersionInfo"
+          Condition="'$(Language)'=='C' or '$(Language)'=='C++'"
+          DependsOnTargets="CreateGeneratedVersionInfoInputsCacheFile"
+          Inputs="$(MSBuildAllProjects)"
+          Outputs="$(GeneratedVersionInfoFile)">
+    <CreateVersionResource FileVersion="$(FileVersion)"
+                           ProductVersion="$(ProductVersion)"
+                           ConfigurationType="$(ConfigurationType)"
+                           IsDebugBuild="$(UseDebugLibraries)"
+                           Attributes="@(ModuleAttribute)"
+                           OutputFile="$(GeneratedVersionInfoFile)">
+      <Output TaskParameter="OutputFile" ItemName="FileWrites"/>
+    </CreateVersionResource>
+
+    <ItemGroup>
+      <ResourceCompile Remove="$(GeneratedVersionInfoFile)"/>
+      <ResourceCompile Include="$(GeneratedVersionInfoFile)">
+        <ResourceOutputFileName>$(GeneratedVersionInfoFile).res</ResourceOutputFileName>
+      </ResourceCompile>
+    </ItemGroup>
+  </Target>
+</Project>

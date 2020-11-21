@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+    <!-- The C++ MSBuild targets also include .NET targets which initialize
+         Version to 1.0.0.0 unless already set. Workaround this by setting the
+         version to a sentinel value that will be cleared again later. -->
+    <Version Condition="'$(Version)' == ''">_EmptySentinel</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWpfTempProject)' == ''">
+    <IsWpfTempProject>false</IsWpfTempProject>
+    <IsWpfTempProject Condition="$(MSBuildProjectName.EndsWith('_wpftmp'))">true</IsWpfTempProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWpfTempProject)' == 'true'">
+    <_WpfTempProjectNuGetFilePathNoExt>$(BuildRoot)$(OutputBaseName)\obj\$(_TargetAssemblyProjectName)\$(_TargetAssemblyProjectName)$(MSBuildProjectExtension).nuget.g</_WpfTempProjectNuGetFilePathNoExt>
+
+    <EnableSourceLink>false</EnableSourceLink>
+    <DeterministicSourcePaths>false</DeterministicSourcePaths>
+    <EnableXlfLocalization>false</EnableXlfLocalization>
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <!-- Import NuGet props to WPF temp projects (workaround for
+       https://github.com/dotnet/sourcelink/issues/91) -->
+  <Import Project="$(_WpfTempProjectNuGetFilePathNoExt).props"
+          Condition="'$(_WpfTempProjectNuGetFilePathNoExt)' != '' and Exists('$(_WpfTempProjectNuGetFilePathNoExt).props')"/>
+</Project>
