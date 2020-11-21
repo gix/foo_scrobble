@@ -47,7 +47,7 @@ public:
     {
         switch (p_index) {
         case ToggleScrobblingCommand:
-            p_out = "Enables or disables scrobble tracks to last.fm";
+            p_out = "Enables or disables scrobbling tracks to last.fm";
             return true;
         default:
             uBugCheck();
