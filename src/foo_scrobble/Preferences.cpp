@@ -235,7 +235,8 @@ void ScrobblerPreferencesDialog::apply()
 
 bool ScrobblerPreferencesDialog::HasChanged() const
 {
-    return bindings_.HasChanged() || authorizer_.GetState() != savedAuthorizerState_;
+    return bindings_.HasChanged() || authorizer_.GetState() != savedAuthorizerState_ ||
+           authorizer_.GetSessionKey() != Config.SessionKey;
 }
 
 void ScrobblerPreferencesDialog::OnChanged()
