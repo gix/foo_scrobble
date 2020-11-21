@@ -14,8 +14,8 @@ inline concurrency::task<void> create_delay(
     concurrency::cancellation_token token = concurrency::cancellation_token::none())
 {
     concurrency::task_completion_event<void> tce;
-    auto timer =
-        std::make_unique<concurrency::timer<int>>(delay.count(), 0, nullptr, false);
+    auto timer = std::make_unique<concurrency::timer<int>>(delay.count(), 0, nullptr,
+                                                           false);
     auto callback = std::make_unique<concurrency::call<int>>([tce](int) { tce.set(); });
 
     timer->link_target(callback.get());
@@ -31,8 +31,7 @@ auto operator co_await(std::chrono::system_clock::duration duration)
     public:
         explicit awaiter(std::chrono::system_clock::duration d)
             : duration(d)
-        {
-        }
+        {}
 
         ~awaiter()
         {

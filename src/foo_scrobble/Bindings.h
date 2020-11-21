@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <memory>
 #include <vector>
 
@@ -12,7 +12,7 @@ public:
     Binding(bool& var, HWND hwnd, int controlId);
 
     Binding(Binding&& source) noexcept;
-    Binding& operator =(Binding&& source) noexcept;
+    Binding& operator=(Binding&& source) noexcept;
     ~Binding();
 
     bool HasChanged() const;
@@ -24,7 +24,6 @@ public:
 private:
     std::unique_ptr<IBinding> binding_;
 };
-
 
 class BindingCollection
 {

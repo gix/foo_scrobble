@@ -113,15 +113,15 @@ void FillParamsFromTrack(WebService::ParamsMap& params, Track const& track,
                          bool simple = false)
 {
     if (!simple)
-        params["timestamp"sv] =
-            std::to_string(track.Timestamp.time_since_epoch().count());
+        params["timestamp"sv] = std::to_string(
+            track.Timestamp.time_since_epoch().count());
 
     params["artist"sv] = track.Artist;
     params["track"sv] = track.Title;
 
     if (track.Duration > std::chrono::seconds::zero())
-        params["duration"sv] =
-            std::to_string(static_cast<int>(std::round(track.Duration.count())));
+        params["duration"sv] = std::to_string(
+            static_cast<int>(std::round(track.Duration.count())));
 
     if (!track.Album.is_empty()) {
         params["album"sv] = track.Album;
@@ -140,15 +140,15 @@ void FillParamsFromTrack(WebService::ParamsMap& params, Track const& track,
 
 void FillParamsFromTrack(WebService::ParamsMap& params, Track const& track, uint8_t index)
 {
-    params[{"timestamp"sv, index}] =
-        std::to_string(track.Timestamp.time_since_epoch().count());
+    params[{"timestamp"sv, index}] = std::to_string(
+        track.Timestamp.time_since_epoch().count());
 
     params[{"artist"sv, index}] = track.Artist;
     params[{"track"sv, index}] = track.Title;
 
     if (track.Duration > std::chrono::seconds::zero())
-        params[{"duration"sv, index}] =
-            std::to_string(static_cast<int>(std::round(track.Duration.count())));
+        params[{"duration"sv, index}] = std::to_string(
+            static_cast<int>(std::round(track.Duration.count())));
 
     if (!track.Album.is_empty()) {
         params[{"album"sv, index}] = track.Album;
@@ -183,8 +183,7 @@ WebService::WebService(char const* apiKey, char const* secret)
     : client_(ServiceBaseUrl)
     , apiKey_(apiKey)
     , secret_(secret)
-{
-}
+{}
 
 WebService::ParamsMap WebService::NewParams(std::string_view method) const
 {
@@ -221,8 +220,8 @@ void WebService::SignRequestParams(ParamsMap& params)
     params["api_sig"sv] = ToLowercaseHex(hasher->get_result(state));
 }
 
-pplx::task<outcome<std::string>>
-WebService::GetAuthToken(pplx::cancellation_token cancellationToken)
+pplx::task<outcome<std::string>> WebService::GetAuthToken(
+    pplx::cancellation_token cancellationToken)
 {
     auto params = NewParams("auth.getToken");
     SignRequestParams(params);
@@ -240,9 +239,8 @@ WebService::GetAuthToken(pplx::cancellation_token cancellationToken)
     }
 }
 
-pplx::task<outcome<std::string>>
-WebService::GetSessionKey(std::string_view authToken,
-                          pplx::cancellation_token cancellationToken)
+pplx::task<outcome<std::string>> WebService::GetSessionKey(
+    std::string_view authToken, pplx::cancellation_token cancellationToken)
 {
     auto params = NewParams("auth.getSession");
     params["token"sv] = authToken;
@@ -261,8 +259,8 @@ WebService::GetSessionKey(std::string_view authToken,
     }
 }
 
-pplx::task<outcome<void>>
-WebService::SendNowPlaying(Track const& track, pplx::cancellation_token cancellationToken)
+pplx::task<outcome<void>> WebService::SendNowPlaying(
+    Track const& track, pplx::cancellation_token cancellationToken)
 {
     auto params = NewAuthedParams("track.updateNowPlaying");
     FillParamsFromTrack(params, track, true);
@@ -335,9 +333,9 @@ pplx::task<outcome<void>> WebService::Scrobble(ScrobbleRequest request,
     }
 }
 
-pplx::task<web::http::http_response>
-WebService::Request(web::http::method method, ParamsMap const& params,
-                    pplx::cancellation_token cancellationToken)
+pplx::task<web::http::http_response> WebService::Request(
+    web::http::method method, ParamsMap const& params,
+    pplx::cancellation_token cancellationToken)
 {
     FormDataBuilder formData;
     for (auto const& param : params)

@@ -311,7 +311,8 @@ void PlaybackScrobbler::on_playback_seek(double p_time)
     lastPlaybackTime_ = SecondsD(p_time);
 }
 
-void PlaybackScrobbler::on_playback_pause(bool /*p_state*/) {}
+void PlaybackScrobbler::on_playback_pause(bool /*p_state*/)
+{}
 
 void PlaybackScrobbler::on_playback_edited(metadb_handle_ptr p_track)
 {
@@ -322,7 +323,8 @@ void PlaybackScrobbler::on_playback_edited(metadb_handle_ptr p_track)
         pendingTrack_.Reformat(*p_track, GetFormatContext());
 }
 
-void PlaybackScrobbler::on_playback_dynamic_info(file_info const& /*p_info*/) {}
+void PlaybackScrobbler::on_playback_dynamic_info(file_info const& /*p_info*/)
+{}
 
 void PlaybackScrobbler::on_playback_dynamic_info_track(file_info const& p_info)
 {
@@ -350,7 +352,8 @@ void PlaybackScrobbler::on_playback_time(double p_time)
     }
 }
 
-void PlaybackScrobbler::on_volume_change(float /*p_new_val*/) {}
+void PlaybackScrobbler::on_volume_change(float /*p_new_val*/)
+{}
 
 unsigned int PlaybackScrobbler::get_flags()
 {

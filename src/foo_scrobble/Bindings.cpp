@@ -24,8 +24,7 @@ public:
         : var_(var)
         , hwnd_(hwnd)
         , controlId_(controlId)
-    {
-    }
+    {}
 
     virtual bool HasChanged() const override
     {
@@ -56,8 +55,7 @@ public:
         : var_(var)
         , hwnd_(hwnd)
         , controlId_(controlId)
-    {
-    }
+    {}
 
     virtual bool HasChanged() const override
     {
@@ -85,23 +83,30 @@ private:
 
 Binding::Binding(pfc::string_base& var, HWND hwnd, int controlId)
     : binding_(std::make_unique<StringBinding>(var, hwnd, controlId))
-{
-}
+{}
 
 Binding::Binding(bool& var, HWND hwnd, int controlId)
     : binding_(std::make_unique<BoolBinding>(var, hwnd, controlId))
-{
-}
+{}
 
 Binding::Binding(Binding&&) noexcept = default;
 Binding& Binding::operator=(Binding&&) noexcept = default;
 Binding::~Binding() = default;
 
-bool Binding::HasChanged() const { return binding_->HasChanged(); }
+bool Binding::HasChanged() const
+{
+    return binding_->HasChanged();
+}
 
-void Binding::FlowToControl() { binding_->FlowToControl(); }
+void Binding::FlowToControl()
+{
+    binding_->FlowToControl();
+}
 
-void Binding::FlowToVar() { binding_->FlowToVar(); }
+void Binding::FlowToVar()
+{
+    binding_->FlowToVar();
+}
 
 bool BindingCollection::HasChanged() const
 {

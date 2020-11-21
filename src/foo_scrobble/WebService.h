@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Outcome.h"
 #include "OutcomeCompat.h"
 #include "fb2ksdk.h"
@@ -74,13 +74,11 @@ namespace std
 {
 template<>
 struct is_error_code_enum<lastfm::Status> : true_type
-{
-};
+{};
 
 template<>
 struct is_error_condition_enum<lastfm::Status> : true_type
-{
-};
+{};
 } // namespace std
 
 namespace lastfm
@@ -168,11 +166,11 @@ public:
         sessionKey_ = std::move(newSessionKey);
     }
 
-    pplx::task<outcome<std::string>>
-    GetAuthToken(pplx::cancellation_token cancellationToken);
+    pplx::task<outcome<std::string>> GetAuthToken(
+        pplx::cancellation_token cancellationToken);
 
-    pplx::task<outcome<std::string>>
-    GetSessionKey(std::string_view authToken, pplx::cancellation_token cancellationToken);
+    pplx::task<outcome<std::string>> GetSessionKey(
+        std::string_view authToken, pplx::cancellation_token cancellationToken);
 
     pplx::task<outcome<void>> SendNowPlaying(Track const& track,
                                              pplx::cancellation_token cancellationToken);
@@ -234,8 +232,7 @@ public:
     private:
         ScrobbleRequest(ParamsMap params)
             : params_(std::move(params))
-        {
-        }
+        {}
 
         ParamsMap TakeParams() { return std::move(params_); }
 
@@ -262,9 +259,9 @@ private:
         return Request(web::http::methods::POST, params, cancellationToken);
     }
 
-    pplx::task<web::http::http_response>
-    Request(web::http::method method, ParamsMap const& params,
-            pplx::cancellation_token cancellationToken);
+    pplx::task<web::http::http_response> Request(
+        web::http::method method, ParamsMap const& params,
+        pplx::cancellation_token cancellationToken);
 
     web::http::client::http_client client_;
     std::string_view const apiKey_;

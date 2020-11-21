@@ -28,10 +28,12 @@ static void OpenAuthConfirmationInBrowser(std::string const& token)
 Authorizer::Authorizer(pfc::string_base const& sessionKey)
     : state_(FromSessionKey(sessionKey))
     , sessionKey_(sessionKey)
-{
-}
+{}
 
-Authorizer::State Authorizer::GetState() const { return state_; }
+Authorizer::State Authorizer::GetState() const
+{
+    return state_;
+}
 
 void Authorizer::ClearAuth()
 {
@@ -84,8 +86,8 @@ pplx::task<bool> Authorizer::CompleteAuthAsync()
     console::info("foo_scrobble: Requesting session key");
 
     WebService service(lastfm::ApiKey, lastfm::Secret);
-    outcome<std::string> result =
-        co_await service.GetSessionKey(authToken_.c_str(), cts_.get_token());
+    outcome<std::string> result = co_await service.GetSessionKey(authToken_.c_str(),
+                                                                 cts_.get_token());
 
     if (!result) {
         FB2K_console_formatter()

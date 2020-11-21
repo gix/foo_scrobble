@@ -19,8 +19,7 @@ ScrobbleConfig::ScrobbleConfig()
     , AlbumArtistMapping(DefaultAlbumArtistMapping)
     , TrackNumberMapping(DefaultTrackNumberMapping)
     , MBTrackIdMapping(DefaultMBTrackIdMapping)
-{
-}
+{}
 
 void ScrobbleConfig::get_data_raw(stream_writer* p_stream, abort_callback& p_abort)
 {

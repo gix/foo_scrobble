@@ -16,13 +16,9 @@ public:
         , burstCapacity_(burstCapacity)
         , tokens_(burstCapacity)
         , lastStep_(Clock::now())
-    {
-    }
+    {}
 
-    Duration Acquire(size_t n = 1)
-    {
-        return Acquire(Clock::now(), n);
-    }
+    Duration Acquire(size_t n = 1) { return Acquire(Clock::now(), n); }
 
     Duration Acquire(Clock::time_point now, size_t n = 1)
     {

@@ -35,8 +35,7 @@ public:
         , config_(Config)
         , authorizer_(config_.SessionKey)
         , savedAuthorizerState_(authorizer_.GetState())
-    {
-    }
+    {}
 
     static int const IDD = IDD_PREFERENCES;
 
@@ -137,9 +136,8 @@ BOOL ScrobblerPreferencesDialog::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lIn
     return FALSE;
 }
 
-concurrency::task<void>
-ScrobblerPreferencesDialog::OnAuthButtonClicked(UINT /*uNotifyCode*/, int /*nID*/,
-                                                CWindow /*wndCtl*/)
+concurrency::task<void> ScrobblerPreferencesDialog::OnAuthButtonClicked(
+    UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
 {
     switch (authorizer_.GetState()) {
     case Authorizer::State::Unauthorized: {
@@ -240,7 +238,10 @@ bool ScrobblerPreferencesDialog::HasChanged() const
     return bindings_.HasChanged() || authorizer_.GetState() != savedAuthorizerState_;
 }
 
-void ScrobblerPreferencesDialog::OnChanged() { callback_->on_state_changed(); }
+void ScrobblerPreferencesDialog::OnChanged()
+{
+    callback_->on_state_changed();
+}
 
 void ScrobblerPreferencesDialog::UpdateAuthButton()
 {

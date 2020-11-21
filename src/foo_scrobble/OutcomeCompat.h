@@ -19,4 +19,4 @@ private:
     Type result_{OUTCOME_V2_NAMESPACE::failure(S())};
 };
 
-} // Concurrency::details
+} // namespace Concurrency::details
