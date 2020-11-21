@@ -171,8 +171,8 @@ bool IsSuccess(web::http::http_response const& response)
 }
 
 #if _DEBUG
-// wchar_t const* const ServiceBaseUrl = L"http://localhost:64660/";
-wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
+wchar_t const* const ServiceBaseUrl = L"http://localhost:5000/";
+//wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
 #else
 wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
 #endif

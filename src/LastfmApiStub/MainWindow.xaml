@@ -1,0 +1,83 @@
+<Window x:Class="LastfmApiStub.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LastfmApiStub"
+        xmlns:primitives="clr-namespace:Microsoft.Extensions.Primitives;assembly=Microsoft.Extensions.Primitives"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance {x:Type local:MainViewModel}}"
+        Title="Lastfm API Stub"
+        Width="1280"
+        Height="720"
+        TextOptions.TextFormattingMode="Display"
+        WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <DataTemplate DataType="{x:Type local:LastmApiRequest}">
+      <DataGrid ItemsSource="{Binding Data}">
+
+      </DataGrid>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type primitives:StringValues}">
+      <TextBlock x:Name="Text" Text="{Binding [0]}"></TextBlock>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding Count}" Value="0">
+          <Setter TargetName="Text" Property="Text" Value="&lt;empty>"/>
+        </DataTrigger>
+        <DataTrigger Binding="{Binding Count}" Value="1">
+          <Setter TargetName="Text" Property="Text" Value="{Binding [0]}"/>
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+  </Window.Resources>
+  <DockPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
+      </MenuItem>
+    </Menu>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition/>
+        <RowDefinition Height="5"/>
+        <RowDefinition/>
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="2*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <ListView Grid.Column="0"
+                  ItemsSource="{Binding Requests}"
+                  SelectedItem="{Binding SelectedRequest}">
+          <ListView.View>
+            <GridView>
+              <GridViewColumn Header="Method" DisplayMemberBinding="{Binding Method}"/>
+              <GridViewColumn Header="Result" DisplayMemberBinding="{Binding DisplayResult}"/>
+              <GridViewColumn Header="Data" DisplayMemberBinding="{Binding EncodedData}"/>
+            </GridView>
+          </ListView.View>
+        </ListView>
+        <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" Width="5" Background="Transparent"/>
+        <ContentControl Grid.Column="2" Content="{Binding SelectedRequest}">
+
+        </ContentControl>
+      </Grid>
+
+      <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" Height="5" Background="Transparent"/>
+
+      <ListView Grid.Row="3" ItemsSource="{Binding LogItems}">
+        <ListView.View>
+          <GridView>
+            <GridViewColumn Header="Level" DisplayMemberBinding="{Binding LogLevel}"/>
+            <GridViewColumn Header="Id" DisplayMemberBinding="{Binding EventId}"/>
+            <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}"/>
+          </GridView>
+        </ListView.View>
+      </ListView>
+    </Grid>
+  </DockPanel>
+</Window>
