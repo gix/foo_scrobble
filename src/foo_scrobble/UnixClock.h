@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <ctime>
 
 namespace foo_scrobble
 {
@@ -15,17 +16,17 @@ struct unix_clock
 
     static time_point now() noexcept
     {
-        __time64_t tm;
-        _time64(&tm);
+        time_t tm;
+        time(&tm);
         return time_point{duration{tm}};
     }
 
-    static __time64_t to_time_t(time_point const& time) noexcept
+    static time_t to_time_t(time_point const& time) noexcept
     {
-        return static_cast<__time64_t>(time.time_since_epoch().count());
+        return static_cast<time_t>(time.time_since_epoch().count());
     }
 
-    static time_point from_time_t(__time64_t tm) noexcept
+    static time_point from_time_t(time_t tm) noexcept
     {
         return time_point{duration{tm}};
     }

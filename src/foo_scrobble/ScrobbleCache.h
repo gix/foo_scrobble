@@ -30,9 +30,9 @@ private:
         : cfg_var(guid)
     {}
 
-    virtual void get_data_raw(stream_writer* stream, abort_callback& abort) override;
-    virtual void set_data_raw(stream_reader* stream, t_size sizehint,
-                              abort_callback& abort) override;
+    void get_data_raw(stream_writer* stream, abort_callback& abort) override;
+    void set_data_raw(stream_reader* stream, t_size sizehint,
+                      abort_callback& abort) override;
 
     std::vector<Track> tracks_;
     static ScrobbleCache instance_;

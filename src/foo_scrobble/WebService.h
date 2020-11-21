@@ -88,9 +88,9 @@ namespace lastfm
 class ErrorCategory : public std::error_category
 {
 public:
-    virtual const char* name() const noexcept override { return "last.fm api"; }
+    char const* name() const noexcept override { return "last.fm api"; }
 
-    virtual std::string message(int ev) const override
+    std::string message(int ev) const override
     {
         switch (static_cast<Status>(ev)) {
         case Status::Success:
@@ -181,7 +181,7 @@ public:
 
     class MapIndex
     {
-        static constexpr size_t const MaxSize = 16;
+        static constexpr size_t MaxSize = 16;
 
     public:
         MapIndex() = default;
@@ -231,7 +231,7 @@ public:
         bool AddTrack(Track const& track);
 
     private:
-        ScrobbleRequest(ParamsMap params)
+        explicit ScrobbleRequest(ParamsMap params)
             : params_(std::move(params))
         {}
 

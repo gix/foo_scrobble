@@ -14,9 +14,15 @@ namespace
 
 using SecondsD = std::chrono::duration<double>;
 
-std::chrono::duration<double> const MinRequiredTrackLength{30.0};
-std::chrono::duration<double> const MaxElapsedPlaytime{240.0};
-std::chrono::duration<double> const NowPlayingMinimumPlaybackTime{3.0};
+#ifdef _DEBUG
+static constexpr bool IsDebug = true;
+#else
+static constexpr bool IsDebug = false;
+#endif
+
+constexpr SecondsD MinRequiredTrackLength{30.0};
+constexpr SecondsD MaxElapsedPlaytime{240.0};
+constexpr SecondsD NowPlayingMinimumPlaybackTime{3.0};
 
 class TitleformatContext
 {
@@ -86,15 +92,16 @@ private:
 class PendingTrack : public Track
 {
 public:
-    std::chrono::duration<double> RequiredScrobbleTime() const
+    SecondsD RequiredScrobbleTime() const
     {
         if (Duration <= SecondsD::zero())
             return MinRequiredTrackLength;
-#ifdef _DEBUG
-        return std::min(Duration, SecondsD{2.0});
-#else
-        return std::min(Duration * 0.5, MaxElapsedPlaytime);
-#endif
+
+        if constexpr (IsDebug) {
+            return std::min(Duration, SecondsD{2.0});
+        } else {
+            return std::min(Duration * 0.5, MaxElapsedPlaytime);
+        }
     }
 
     bool HasRequiredFields() const
@@ -126,7 +133,7 @@ public:
         return true;
     }
 
-    bool ShouldSendNowPlaying(std::chrono::duration<double> elapsedPlayback) const
+    bool ShouldSendNowPlaying(SecondsD elapsedPlayback) const
     {
         return !notifiedNowPlaying_ && !IsSkipped() && HasRequiredFields() &&
                elapsedPlayback >= NowPlayingMinimumPlaybackTime;
@@ -152,7 +159,7 @@ public:
         track.format_title(nullptr, TrackNumber, formatContext.GetTrackNumberFormat(),
                            nullptr);
 
-        auto skipFormat = formatContext.GetSkipSubmissionFormat();
+        auto const skipFormat = formatContext.GetSkipSubmissionFormat();
         if (!skipFormat.is_empty()) {
             pfc::string8_fast skip;
             track.format_title(nullptr, skip, formatContext.GetSkipSubmissionFormat(),
@@ -179,7 +186,7 @@ public:
         TrackNumber.force_reset();
         MusicBrainzId.force_reset();
 
-        auto skipFormat = formatContext.GetSkipSubmissionFormat();
+        auto const skipFormat = formatContext.GetSkipSubmissionFormat();
         if (!skipFormat.is_empty()) {
             pfc::string8_fast skip;
             pc->playback_format_title(nullptr, skip,
@@ -210,25 +217,25 @@ public:
     virtual ~PlaybackScrobbler() = default;
 
     // #pragma region play_callback
-    virtual void on_playback_starting(play_control::t_track_command p_command,
-                                      bool p_paused) override;
-    virtual void on_playback_new_track(metadb_handle_ptr p_track) override;
-    virtual void on_playback_stop(play_control::t_stop_reason p_reason) override;
-    virtual void on_playback_seek(double p_time) override;
-    virtual void on_playback_pause(bool p_state) override;
-    virtual void on_playback_edited(metadb_handle_ptr p_track) override;
-    virtual void on_playback_dynamic_info(file_info const& p_info) override;
-    virtual void on_playback_dynamic_info_track(file_info const& p_info) override;
-    virtual void on_playback_time(double p_time) override;
-    virtual void on_volume_change(float p_new_val) override;
+    void on_playback_starting(play_control::t_track_command p_command,
+                              bool p_paused) override;
+    void on_playback_new_track(metadb_handle_ptr p_track) override;
+    void on_playback_stop(play_control::t_stop_reason p_reason) override;
+    void on_playback_seek(double p_time) override;
+    void on_playback_pause(bool p_state) override;
+    void on_playback_edited(metadb_handle_ptr p_track) override;
+    void on_playback_dynamic_info(file_info const& p_info) override;
+    void on_playback_dynamic_info_track(file_info const& p_info) override;
+    void on_playback_time(double p_time) override;
+    void on_volume_change(float p_new_val) override;
     // #pragma endregion play_callback
 
     // #pragma region play_callback_static
-    virtual unsigned get_flags() override;
+    unsigned get_flags() override;
     // #pragma endregion play_callback_static
 
     // #pragma region ScrobbleConfigNotify
-    virtual void OnConfigChanged() override
+    void OnConfigChanged() override
     {
         if (formatContext_)
             formatContext_->Recompile(Config);

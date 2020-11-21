@@ -30,23 +30,23 @@ class ScrobblerPreferencesDialog
     , public concurrency::scheduler_interface
 {
 public:
-    ScrobblerPreferencesDialog(preferences_page_callback::ptr callback)
+    explicit ScrobblerPreferencesDialog(preferences_page_callback::ptr callback)
         : callback_(callback)
         , config_(Config)
         , authorizer_(config_.SessionKey)
         , savedAuthorizerState_(authorizer_.GetState())
     {}
 
-    static int const IDD = IDD_PREFERENCES;
+    static constexpr int IDD = IDD_PREFERENCES;
 
     // #pragma region preferences_page_instance
-    virtual t_uint32 get_state() override;
-    virtual void apply() override;
-    virtual void reset() override;
+    t_uint32 get_state() override;
+    void apply() override;
+    void reset() override;
     // #pragma endregion
 
     // #pragma region concurrency::scheduler_interface
-    virtual void schedule(concurrency::TaskProc_t proc, void* arg) override
+    void schedule(concurrency::TaskProc_t proc, void* arg) override
     {
         PostMessageW(WM_EXECUTE_TASK, reinterpret_cast<WPARAM>(proc),
                      reinterpret_cast<LPARAM>(arg));
@@ -281,17 +281,17 @@ class ScrobblerPreferencesPage : public preferences_page_impl<ScrobblerPreferenc
 public:
     virtual ~ScrobblerPreferencesPage() = default;
 
-    virtual const char* get_name() override { return "Last.fm Scrobbling"; }
+    char const* get_name() override { return "Last.fm Scrobbling"; }
 
-    virtual GUID get_guid() override
+    GUID get_guid() override
     {
         // {B94D4B57-0080-4FAA-AE64-0AC515A1B37C}
-        static GUID const guid = {
+        static constexpr GUID guid = {
             0xB94D4B57, 0x80, 0x4FAA, {0xAE, 0x64, 0xA, 0xC5, 0x15, 0xA1, 0xB3, 0x7C}};
         return guid;
     }
 
-    virtual GUID get_parent_guid() override { return guid_tools; }
+    GUID get_parent_guid() override { return guid_tools; }
 };
 
 preferences_page_factory_t<ScrobblerPreferencesPage> g_PageFactory;

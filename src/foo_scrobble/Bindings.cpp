@@ -26,16 +26,16 @@ public:
         , controlId_(controlId)
     {}
 
-    virtual bool HasChanged() const override
+    bool HasChanged() const override
     {
         pfc::string8_fast text;
         uGetDlgItemText(hwnd_, controlId_, text);
         return uStringCompare(var_.c_str(), text.c_str()) != 0;
     }
 
-    virtual void FlowToControl() override { uSetDlgItemText(hwnd_, controlId_, var_); }
+    void FlowToControl() override { uSetDlgItemText(hwnd_, controlId_, var_); }
 
-    virtual void FlowToVar() override
+    void FlowToVar() override
     {
         pfc::string8_fast text;
         uGetDlgItemText(hwnd_, controlId_, text);
@@ -57,18 +57,18 @@ public:
         , controlId_(controlId)
     {}
 
-    virtual bool HasChanged() const override
+    bool HasChanged() const override
     {
         bool const checked = IsDlgButtonChecked(hwnd_, controlId_) == BST_CHECKED;
         return checked != var_;
     }
 
-    virtual void FlowToControl() override
+    void FlowToControl() override
     {
         CheckDlgButton(hwnd_, controlId_, var_ ? BST_CHECKED : BST_UNCHECKED);
     }
 
-    virtual void FlowToVar() override
+    void FlowToVar() override
     {
         var_ = IsDlgButtonChecked(hwnd_, controlId_) == BST_CHECKED;
     }

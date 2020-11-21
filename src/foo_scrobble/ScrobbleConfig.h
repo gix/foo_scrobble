@@ -3,12 +3,12 @@
 namespace foo_scrobble
 {
 
-inline char const* const DefaultArtistMapping = "[%artist%]";
-inline char const* const DefaultTitleMapping = "[%title%]";
-inline char const* const DefaultAlbumMapping = "[%album%]";
-inline char const* const DefaultAlbumArtistMapping = "[%album artist%]";
-inline char const* const DefaultTrackNumberMapping = "[%tracknumber%]";
-inline char const* const DefaultMBTrackIdMapping = "[%musicbrainz_trackid%]";
+inline constexpr char const* DefaultArtistMapping = "[%artist%]";
+inline constexpr char const* DefaultTitleMapping = "[%title%]";
+inline constexpr char const* DefaultAlbumMapping = "[%album%]";
+inline constexpr char const* DefaultAlbumArtistMapping = "[%album artist%]";
+inline constexpr char const* DefaultTrackNumberMapping = "[%tracknumber%]";
+inline constexpr char const* DefaultMBTrackIdMapping = "[%musicbrainz_trackid%]";
 
 class ScrobbleConfig : public cfg_var
 {
@@ -32,9 +32,9 @@ public:
     pfc::string8 SessionKey;
 
 private:
-    virtual void get_data_raw(stream_writer* p_stream, abort_callback& p_abort) override;
-    virtual void set_data_raw(stream_reader* p_stream, t_size p_sizehint,
-                              abort_callback& p_abort) override;
+    void get_data_raw(stream_writer* p_stream, abort_callback& p_abort) override;
+    void set_data_raw(stream_reader* p_stream, t_size p_sizehint,
+                      abort_callback& p_abort) override;
 
     static unsigned const Version = 2;
 };

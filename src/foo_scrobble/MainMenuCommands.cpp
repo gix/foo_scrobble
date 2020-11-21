@@ -16,9 +16,9 @@ public:
         CommandCount
     };
 
-    virtual t_uint32 get_command_count() override { return CommandCount; }
+    t_uint32 get_command_count() override { return CommandCount; }
 
-    virtual GUID get_command(t_uint32 p_index) override
+    GUID get_command(t_uint32 p_index) override
     {
         switch (p_index) {
         case ToggleScrobblingCommand:
@@ -32,7 +32,7 @@ public:
         }
     }
 
-    virtual void get_name(t_uint32 p_index, pfc::string_base& p_out) override
+    void get_name(t_uint32 p_index, pfc::string_base& p_out) override
     {
         switch (p_index) {
         case ToggleScrobblingCommand:
@@ -43,7 +43,7 @@ public:
         }
     }
 
-    virtual bool get_description(t_uint32 p_index, pfc::string_base& p_out) override
+    bool get_description(t_uint32 p_index, pfc::string_base& p_out) override
     {
         switch (p_index) {
         case ToggleScrobblingCommand:
@@ -54,10 +54,10 @@ public:
         }
     }
 
-    virtual GUID get_parent() override { return mainmenu_groups::playback; }
+    GUID get_parent() override { return mainmenu_groups::playback; }
 
-    virtual bool get_display(t_uint32 p_index, pfc::string_base& p_text,
-                             t_uint32& p_flags) override
+    bool get_display(t_uint32 p_index, pfc::string_base& p_text,
+                     t_uint32& p_flags) override
     {
         switch (p_index) {
         case ToggleScrobblingCommand:
@@ -69,8 +69,7 @@ public:
         }
     }
 
-    virtual void execute(t_uint32 p_index,
-                         service_ptr_t<service_base> p_callback) override
+    void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback) override
     {
         switch (p_index) {
         case ToggleScrobblingCommand:

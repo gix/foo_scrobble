@@ -35,17 +35,17 @@ class LastfmScrobbleService
 public:
     virtual ~LastfmScrobbleService() = default;
 
-    virtual void ScrobbleAsync(Track track) override;
-    virtual void SendNowPlayingAsync(Track const& track) override;
-    virtual void Shutdown() override;
+    void ScrobbleAsync(Track track) override;
+    void SendNowPlayingAsync(Track const& track) override;
+    void Shutdown() override;
 
-    virtual void on_init_stage(t_uint32 stage) override
+    void on_init_stage(t_uint32 stage) override
     {
         if (stage == init_stages::after_ui_init)
             SetSessionKey(Config.SessionKey);
     }
 
-    virtual void OnConfigChanged() override { SetSessionKey(Config.SessionKey); }
+    void OnConfigChanged() override { SetSessionKey(Config.SessionKey); }
 
 private:
     enum class State
@@ -79,6 +79,8 @@ private:
         return (5 * 60) * tokensPerSecond / 2.0;
     }
 
+    static constexpr size_t MaxScrobblesPerRequestLimit = 50;
+
     using ExclusiveLock = std::scoped_lock<std::mutex>;
     std::mutex mutex_;
     std::condition_variable cv_;
@@ -91,6 +93,7 @@ private:
     pplx::cancellation_token_source cts_;
     size_t pendingSubmissionSize_ = 0;
     Track pendingNowPlaying_;
+    size_t maxScrobblesPerRequest_ = MaxScrobblesPerRequestLimit;
 };
 
 void LastfmScrobbleService::ScrobbleAsync(Track track)
@@ -230,7 +233,7 @@ void LastfmScrobbleService::ProcessLocked()
     if (!pendingNowPlaying_.IsValid() && scrobbleCache_.IsEmpty())
         return; // No work to do.
 
-    auto delay = duration_cast<duration<int, std::milli>>(rateLimiter_.Acquire());
+    auto const delay = duration_cast<duration<int, std::milli>>(rateLimiter_.Acquire());
     if (delay.count() != 0) {
         PauseProcessing(delay);
         return;
@@ -238,7 +241,8 @@ void LastfmScrobbleService::ProcessLocked()
 
     if (pendingNowPlaying_.IsValid()) {
         state_ = State::AwaitingResponse;
-        auto task = webService_.SendNowPlaying(pendingNowPlaying_, cts_.get_token());
+        auto const task = webService_.SendNowPlaying(pendingNowPlaying_,
+                                                     cts_.get_token());
         task.then([&](outcome<void> result) { OnNowPlayingResponse(std::move(result)); });
         return;
     }
@@ -249,11 +253,11 @@ void LastfmScrobbleService::ProcessLocked()
         FB2K_console_formatter() << "foo_scrobble: Submitting track";
 
         state_ = State::AwaitingResponse;
-        auto task = webService_.Scrobble(scrobbleCache_[0], cts_.get_token());
+        auto const task = webService_.Scrobble(scrobbleCache_[0], cts_.get_token());
         task.then([&](outcome<void> result) { OnScrobbleResponse(std::move(result)); });
     } else if (scrobbleCache_.Count() > 1) {
-        size_t const maxScrobblesPerRequest = 50;
-        size_t const batchSize = std::min(scrobbleCache_.Count(), maxScrobblesPerRequest);
+        size_t const batchSize = std::min(scrobbleCache_.Count(),
+                                          maxScrobblesPerRequest_);
 
         pendingSubmissionSize_ = batchSize;
         auto request = webService_.CreateScrobbleRequest();
@@ -264,7 +268,7 @@ void LastfmScrobbleService::ProcessLocked()
                                  << scrobbleCache_.Count() << " cached tracks";
 
         state_ = State::AwaitingResponse;
-        auto task = webService_.Scrobble(std::move(request), cts_.get_token());
+        auto const task = webService_.Scrobble(std::move(request), cts_.get_token());
         task.then([&](outcome<void> result) { OnScrobbleResponse(std::move(result)); });
     }
 }
@@ -322,7 +326,7 @@ void LastfmScrobbleService::OnScrobbleResponse(outcome<void> result)
         case lastfm::Status::Success:
             scrobbleCache_.Evict(pendingSubmissionSize_);
             pendingSubmissionSize_ = 0;
-            maxScrobblesPerRequest_ = maxScrobblesPerRequestLimit;
+            maxScrobblesPerRequest_ = MaxScrobblesPerRequestLimit;
             break;
 
         case lastfm::Status::InvalidParameters:
@@ -331,7 +335,7 @@ void LastfmScrobbleService::OnScrobbleResponse(outcome<void> result)
                 // Invalid entry so retrying is of no use.
                 scrobbleCache_.Evict(pendingSubmissionSize_);
                 pendingSubmissionSize_ = 0;
-                maxScrobblesPerRequest_ = maxScrobblesPerRequestLimit;
+                maxScrobblesPerRequest_ = MaxScrobblesPerRequestLimit;
             } else {
                 // Retry.
                 maxScrobblesPerRequest_ = 1;
