@@ -66,6 +66,7 @@ enum class Status
     InvalidResponse = -1,
     InternalError = -2,
     ConnectionError = -3,
+    EncodingError = -4,
 };
 
 } // namespace lastfm

@@ -333,6 +333,8 @@ pplx::task<outcome<void>> WebService::Scrobble(ScrobbleRequest request,
     }
 }
 
+static utf8string const ContentTypeUrlEncoded = "application/x-www-form-urlencoded"s;
+
 pplx::task<web::http::http_response> WebService::Request(
     web::http::method method, ParamsMap const& params,
     pplx::cancellation_token cancellationToken)
@@ -342,7 +344,7 @@ pplx::task<web::http::http_response> WebService::Request(
         formData.Append(param.first.string(), param.second);
 
     web::http::http_request req(method);
-    req.set_body(formData.ReleaseString(), "application/x-www-form-urlencoded");
+    req.set_body(formData.ReleaseString(), ContentTypeUrlEncoded);
 
     return client_.request(req, cancellationToken);
 }

@@ -299,6 +299,11 @@ lastfm::Status AsStatus(outcome<void> const& result)
         std::rethrow_exception(result.exception());
     } catch (web::http::http_exception const& ex) {
         return MapException(ex);
+    } catch (std::range_error const& ex) {
+        std::string_view const msg = ex.what();
+        if (msg.starts_with("UTF-8 "))
+            return lastfm::Status::EncodingError;
+        return lastfm::Status::InternalError;
     } catch (...) {
         return lastfm::Status::InternalError;
     }
@@ -315,9 +320,22 @@ void LastfmScrobbleService::OnScrobbleResponse(outcome<void> result)
 
         switch (status) {
         case lastfm::Status::Success:
-        case lastfm::Status::InvalidParameters: // Invalid entry so retrying is of no use.
             scrobbleCache_.Evict(pendingSubmissionSize_);
             pendingSubmissionSize_ = 0;
+            maxScrobblesPerRequest_ = maxScrobblesPerRequestLimit;
+            break;
+
+        case lastfm::Status::InvalidParameters:
+        case lastfm::Status::EncodingError:
+            if (pendingSubmissionSize_ == 1) {
+                // Invalid entry so retrying is of no use.
+                scrobbleCache_.Evict(pendingSubmissionSize_);
+                pendingSubmissionSize_ = 0;
+                maxScrobblesPerRequest_ = maxScrobblesPerRequestLimit;
+            } else {
+                // Retry.
+                maxScrobblesPerRequest_ = 1;
+            }
             break;
 
         default:
@@ -470,6 +488,11 @@ void LastfmScrobbleService::LogResponse(std::string_view task,
     case lastfm::Status::InternalError:
         FB2K_console_formatter()
             << "foo_scrobble: " << task << " (Internal foo_scrobble error)";
+        break;
+
+    case lastfm::Status::EncodingError:
+        FB2K_console_formatter()
+            << "foo_scrobble: " << task << " (Internal encoding error)";
         break;
     }
 }
