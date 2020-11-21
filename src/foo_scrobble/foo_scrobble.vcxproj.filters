@@ -39,4 +39,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="ThirdPartyLicenses.txt" />
+  </ItemGroup>
 </Project>

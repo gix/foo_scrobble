@@ -135,6 +135,9 @@ copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v1.5\components\"</Comm
       <Project>{ebfffb4e-261d-44d3-b89c-957b31a0bf9c}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="ThirdPartyLicenses.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\foo_scrobble-deps.1.0.0\build\native\foo_scrobble-deps.targets" Condition="Exists('..\packages\foo_scrobble-deps.1.0.0\build\native\foo_scrobble-deps.targets')" />
