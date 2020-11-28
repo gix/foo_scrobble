@@ -144,6 +144,7 @@ $nuget = Get-Command nuget -ErrorAction SilentlyContinue
 if (! $nuget) {
     Write-Output 'Downloading nuget commandline client'
     $nuget = Join-Path (Join-Path $rootDir 'build') 'nuget.exe'
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/v5.4.0/nuget.exe -OutFile $nuget
 }
 
@@ -152,3 +153,5 @@ Step -N 5 -Status 'Installing Nuget package to solution' -Failure 'nuget install
     &$nuget install $nugetPackageId -Version $nugetPackageVersion -Source $VcpkgDir `
             -OutputDirectory $packagesDir -NonInteractive -Verbosity quiet
 }
+
+Write-Output 'Installation successful.'
