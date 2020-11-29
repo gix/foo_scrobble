@@ -55,7 +55,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;$(SolutionDir)..\build\deps\installed\$(VcpkgTriplet)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -80,7 +80,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;$(SolutionDir)..\build\deps\installed\$(VcpkgTriplet)\include</AdditionalIncludeDirectories>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>

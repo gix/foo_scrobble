@@ -49,6 +49,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Precompiled.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(Foobar2000SdkPath);$(Foobar2000SdkPath)foobar2000\SDK;$(Foobar2000SdkPath)foobar2000\helpers;$(SolutionDir)..\build\deps\installed\$(VcpkgTriplet)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winhttp.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -66,6 +67,7 @@ copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v1.5\components\"</Comm
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Precompiled.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(Foobar2000SdkPath);$(Foobar2000SdkPath)foobar2000\SDK;$(Foobar2000SdkPath)foobar2000\helpers;$(SolutionDir)..\build\deps\installed\$(VcpkgTriplet)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winhttp.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
