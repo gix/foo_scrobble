@@ -98,6 +98,7 @@ $nuget = Join-Path (Join-Path $rootDir 'build') 'nuget.exe'
 if (-not (Test-Path $nuget)) {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Write-Output 'Downloading nuget commandline client'
+    New-Item -ItemType Directory -Force -Path (Join-Path $rootDir 'build')
     Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/v5.8.0/nuget.exe -OutFile $nuget -UseBasicParsing
 }
 
