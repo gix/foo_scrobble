@@ -21,12 +21,21 @@ You may have to install [Visual C++ Redistributable for Visual Studio 2015-2019]
 ## Building
 
 Requires Visual Studio 2019 with:
-- Workload: Desktop development for C++
-- Component: MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.28)
+- Workloads:
+  - Desktop development with C++
+  - .NET desktop development
+  - .NET Core cross-platform development
+- Components:
+  - MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.28)
+
+The .NET workloads are not required for the `foo_scrobble` library, but are used
+by the included test server project and the `build.proj` script assumes those
+are present.
 
 External dependencies are consumed using the `foo_scrobble-deps` NuGet package.
-Run the `eng\Build-Dependencies.ps1` script to build and install the package to the solution.
-The foobar2000 SDK is already contained in the repository.
+Before opening the solution or building from the command-line, run the
+`eng\Build-Dependencies.ps1` script to build and install the package to the
+solution. The foobar2000 SDK is already contained in the repository.
 
 To build a release version run the following from a Visual Studio Developer Command Prompt:
 ```
