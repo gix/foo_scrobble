@@ -53,16 +53,20 @@
   </Target>
 
   <Target Name="Restore" Condition="'$(Restore)'!='false'">
-    <MSBuild Projects="@(Project)"
-             Properties="$(BuildProperties)"
-             BuildInParallel="true"
-             StopOnFirstFailure="true"
-             Targets="Restore"/>
+    <PropertyGroup>
+      <NuGetExecutable Condition="'$(NuGetExecutable)'==''">build\nuget.exe</NuGetExecutable>
+      <NuGetPackagesDirectory>$(MSBuildThisFileDirectory)src\packages\</NuGetPackagesDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <NuGetRestoreTarget Include="@(Project)"/>
+    </ItemGroup>
+    <Exec Condition="'@(NuGetRestoreTarget)'!=''"
+          Command="&quot;$(NuGetExecutable)&quot; restore -NonInteractive -PackagesDirectory &quot;$(NuGetPackagesDirectory)\&quot; &quot;%(NuGetRestoreTarget.Identity)&quot;"/>
   </Target>
 
   <Target Name="Build" DependsOnTargets="Restore" Condition="'$(Build)'!='false'">
     <MSBuild Projects="@(Project)"
-             Properties="$(BuildProperties)"
+             Properties="$(BuildProperties);Dummy=1"
              BuildInParallel="true"
              StopOnFirstFailure="true"
              Targets="Build"/>
