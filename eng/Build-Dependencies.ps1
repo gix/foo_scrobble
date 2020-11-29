@@ -20,11 +20,11 @@ $nugetPackageId = 'foo_scrobble-deps'
 $nugetPackageVersion = '1.0.0'
 
 if (! $VcpkgRepository) {
-    $VcpkgRepository = 'https://github.com/microsoft/vcpkg.git'
+    $VcpkgRepository = 'https://github.com/gix/vcpkg.git'
 }
 
 if (! $VcpkgRevision) {
-    $VcpkgRevision = 'ba75631be7ea8ada210da3aa83f0f95c4f478a08'
+    $VcpkgRevision = '56ec9296902d6b026f5617cbf7a99b896c3e3fbb'
 }
 
 # ------------------------------------------------------------------------------
@@ -93,6 +93,14 @@ if (! $VcpkgDir) {
 
 $vcpkg = Join-Path $VcpkgDir 'vcpkg.exe'
 
+# Download nuget
+$nuget = Join-Path (Join-Path $rootDir 'build') 'nuget.exe'
+if (-not (Test-Path $nuget)) {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Write-Output 'Downloading nuget commandline client'
+    Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/v5.8.0/nuget.exe -OutFile $nuget -UseBasicParsing
+}
+
 # Download and bootstrap vcpkg
 if (-not (Test-Path $vcpkg)) {
     if (-not (Test-Path (Join-Path $VcpkgDir '.git'))) {
@@ -140,14 +148,6 @@ Step -N 4 -Status 'Exporting packages' -Failure 'vcpkg export failed' {
 }
 
 # Install the package to the solution packages directory
-$nuget = Get-Command nuget -ErrorAction SilentlyContinue
-if (! $nuget) {
-    Write-Output 'Downloading nuget commandline client'
-    $nuget = Join-Path (Join-Path $rootDir 'build') 'nuget.exe'
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/v5.4.0/nuget.exe -OutFile $nuget
-}
-
 Step -N 5 -Status 'Installing Nuget package to solution' -Failure 'nuget install failed' {
     Write-Output "Installing Nuget package to $packagesDir"
     &$nuget install $nugetPackageId -Version $nugetPackageVersion -Source $VcpkgDir `
