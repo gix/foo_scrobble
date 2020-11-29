@@ -24,7 +24,7 @@ if (! $VcpkgRepository) {
 }
 
 if (! $VcpkgRevision) {
-    $VcpkgRevision = 'ba75631be7ea8ada210da3aa83f0f95c4f478a08'
+    $VcpkgRevision = '2020.11-1'
 }
 
 # ------------------------------------------------------------------------------
