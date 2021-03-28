@@ -171,16 +171,29 @@ bool IsSuccess(web::http::http_response const& response)
 }
 
 #if _DEBUG
-wchar_t const* const ServiceBaseUrl = L"http://localhost:5000/";
-//wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
+bool HasEnvironmentVariable(wchar_t const* name)
+{
+    DWORD const numChars = GetEnvironmentVariableW(name, nullptr, 0);
+    return numChars != 0;
+}
+
+wchar_t const* ServiceBaseUrl()
+{
+    return HasEnvironmentVariable(L"FOO_SCROBBLE_LOCAL")
+               ? L"http://localhost:5000/"
+               : L"http://ws.audioscrobbler.com/2.0/";
+}
 #else
-wchar_t const* const ServiceBaseUrl = L"http://ws.audioscrobbler.com/2.0/";
+constexpr wchar_t const* ServiceBaseUrl()
+{
+    return L"http://ws.audioscrobbler.com/2.0/";
+}
 #endif
 
 } // namespace
 
 WebService::WebService(char const* apiKey, char const* secret)
-    : client_(ServiceBaseUrl)
+    : client_(ServiceBaseUrl())
     , apiKey_(apiKey)
     , secret_(secret)
 {}
