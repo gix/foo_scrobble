@@ -405,6 +405,9 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
             break;
 
         case lastfm::Status::AuthenticationFailed:
+            PauseProcessing(minutes(1));
+            break;
+
         case lastfm::Status::InvalidSessionKey:
             state_ = State::UnauthenticatedIdle;
             ClearSessionKeyLocked();
