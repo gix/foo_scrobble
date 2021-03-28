@@ -386,6 +386,7 @@ void LastfmScrobbleService::OnNowPlayingResponse(outcome<void> result)
         case lastfm::Status::Success:
         default:
             pendingNowPlaying_ = {};
+            break;
         }
 
         HandleResponseStatus(status);
