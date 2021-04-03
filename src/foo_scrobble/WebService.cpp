@@ -279,16 +279,12 @@ pplx::task<outcome<void>> WebService::SendNowPlaying(
     FillParamsFromTrack(params, track, true);
     SignRequestParams(params);
 
-    try {
-        web::http::http_response response = co_await Post(params, cancellationToken);
-        web::json::value msg = co_await response.extract_json();
-        if (!IsSuccess(response))
-            co_return ExtractError(msg);
+    web::http::http_response response = co_await Post(params, cancellationToken);
+    web::json::value msg = co_await response.extract_json();
+    if (!IsSuccess(response))
+        co_return ExtractError(msg);
 
-        co_return success();
-    } catch (...) {
-        co_return std::current_exception();
-    }
+    co_return success();
 }
 
 pplx::task<outcome<void>> WebService::Scrobble(Track const& track,
@@ -298,16 +294,12 @@ pplx::task<outcome<void>> WebService::Scrobble(Track const& track,
     FillParamsFromTrack(params, track);
     SignRequestParams(params);
 
-    try {
-        web::http::http_response response = co_await Post(params, cancellationToken);
-        web::json::value msg = co_await response.extract_json();
-        if (!IsSuccess(response))
-            co_return ExtractError(msg);
+    web::http::http_response response = co_await Post(params, cancellationToken);
+    web::json::value msg = co_await response.extract_json();
+    if (!IsSuccess(response))
+        co_return ExtractError(msg);
 
-        co_return success();
-    } catch (...) {
-        co_return std::current_exception();
-    }
+    co_return success();
 }
 
 bool WebService::MapIndex::operator<(MapIndex const& other) const noexcept
@@ -333,17 +325,13 @@ pplx::task<outcome<void>> WebService::Scrobble(ScrobbleRequest request,
     auto params = request.TakeParams();
     SignRequestParams(params);
 
-    try {
-        web::http::http_response response = co_await Post(params, cancellationToken);
-        web::json::value msg = co_await response.extract_json();
-        std::wstring str = co_await response.extract_string();
-        if (!IsSuccess(response))
-            co_return ExtractError(msg);
+    web::http::http_response response = co_await Post(params, cancellationToken);
+    web::json::value msg = co_await response.extract_json();
+    std::wstring str = co_await response.extract_string();
+    if (!IsSuccess(response))
+        co_return ExtractError(msg);
 
-        co_return success();
-    } catch (...) {
-        co_return std::current_exception();
-    }
+    co_return success();
 }
 
 static utf8string const ContentTypeUrlEncoded = "application/x-www-form-urlencoded"s;

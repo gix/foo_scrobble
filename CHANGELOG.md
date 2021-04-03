@@ -1,11 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [?] - ?
+### Fixed
+- Handle all exceptions in API response handlers. (may fix #30)
+
+
 ## [1.5.0] - 2021-03-28
 ### Changed
 - A permission denied error from last.fm only temporarily suspends scrobbling
   instead of resetting authorization. This may help with intermittent errors
   on last.fm's side. (#27)
+
 
 ## [1.4.0] - 2020-11-22
 ### Fixed

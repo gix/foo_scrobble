@@ -28,6 +28,16 @@ pfc::string_base& operator<<(pfc::string_base& fmt, std::string_view str)
     return fmt;
 }
 
+template<typename T>
+outcome<T> UnwrapTask(Concurrency::task<outcome<T>>& task)
+{
+    try {
+        return task.get();
+    } catch (...) {
+        return std::current_exception();
+    }
+}
+
 class LastfmScrobbleService
     : public service_multi_inherit3<ScrobbleService, ScrobbleConfigNotify,
                                     init_stage_callback>
@@ -256,7 +266,9 @@ void LastfmScrobbleService::ProcessLocked()
         state_ = State::AwaitingResponse;
         auto const task = webService_.SendNowPlaying(pendingNowPlaying_,
                                                      cts_.get_token());
-        task.then([&](outcome<void> result) { OnNowPlayingResponse(std::move(result)); });
+        task.then([&](Concurrency::task<outcome<void>> result) {
+            OnNowPlayingResponse(UnwrapTask(result));
+        });
         return;
     }
 
@@ -267,7 +279,9 @@ void LastfmScrobbleService::ProcessLocked()
 
         state_ = State::AwaitingResponse;
         auto const task = webService_.Scrobble(scrobbleCache_[0], cts_.get_token());
-        task.then([&](outcome<void> result) { OnScrobbleResponse(std::move(result)); });
+        task.then([&](Concurrency::task<outcome<void>> result) {
+            OnScrobbleResponse(UnwrapTask(result));
+        });
     } else if (scrobbleCache_.Count() > 1) {
         size_t const batchSize = std::min(scrobbleCache_.Count(),
                                           maxScrobblesPerRequest_);
@@ -282,7 +296,9 @@ void LastfmScrobbleService::ProcessLocked()
 
         state_ = State::AwaitingResponse;
         auto const task = webService_.Scrobble(std::move(request), cts_.get_token());
-        task.then([&](outcome<void> result) { OnScrobbleResponse(std::move(result)); });
+        task.then([&](Concurrency::task<outcome<void>> result) {
+            OnScrobbleResponse(UnwrapTask(result));
+        });
     }
 }
 
