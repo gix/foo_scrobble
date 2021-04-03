@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [?] - ?
 ### Fixed
 - Handle all exceptions in API response handlers. (may fix #30)
+### Added
+- Provide foobar2000_sdk.user.props out-of-the-box when compiling from source. (#31)
 
 
 ## [1.5.0] - 2021-03-28
