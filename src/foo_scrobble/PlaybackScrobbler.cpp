@@ -182,9 +182,9 @@ public:
                                   playback_control::display_level_titles);
         pc->playback_format_title(nullptr, Album, formatContext.GetAlbumFormat(), nullptr,
                                   playback_control::display_level_titles);
-        AlbumArtist.force_reset();
-        TrackNumber.force_reset();
-        MusicBrainzId.force_reset();
+        AlbumArtist.clear();
+        TrackNumber.clear();
+        MusicBrainzId.clear();
 
         auto const skipFormat = formatContext.GetSkipSubmissionFormat();
         if (!skipFormat.is_empty()) {

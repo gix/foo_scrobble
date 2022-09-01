@@ -1,5 +1,7 @@
 #pragma once
 
+#include "string_base.h"
+
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
 #define PFC_HAVE_PROFILER
@@ -42,7 +44,6 @@ namespace pfc {
 #ifdef _WIN32
 
 namespace pfc {
-	// ALWAYS define 64bit tickcount - don't cause mayhem if different modules are compiled for different Windows versions
 	typedef uint64_t tickcount_t;
 	inline tickcount_t getTickCount() { return GetTickCount64(); }
 

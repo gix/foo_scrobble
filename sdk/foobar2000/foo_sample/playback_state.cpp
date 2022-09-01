@@ -124,7 +124,7 @@ void CPlaybackStateDemo::OnContextMenu(CWindow wnd, CPoint point) {
 				api->win32_build_menu(menu, ID_CM_BASE, ~0);
 				menudesc.SetCM(api.get_ptr(), ID_CM_BASE, ~0);
 			} else {
-				menu.AppendMenu(MF_STRING|MF_GRAYED|MF_DISABLED, (UINT)0, _T("No items selected"));
+				menu.AppendMenu(MF_STRING|MF_GRAYED|MF_DISABLED, (UINT_PTR)0, _T("No items selected"));
 			}
 			
 			int cmd = menu.TrackPopupMenu(TPM_RIGHTBUTTON|TPM_NONOTIFY|TPM_RETURNCMD,point.x,point.y,menudesc,0);

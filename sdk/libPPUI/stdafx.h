@@ -12,10 +12,10 @@
 #include <atlbase.h>
 #include <atltypes.h>
 #include <atlstr.h>
-#include <wtl/atlapp.h>
-#include <wtl/atlctrls.h>
+#include <atlapp.h>
+#include <atlctrls.h>
 #include <atlwin.h>
 #include <atlcom.h>
-#include <wtl/atlcrack.h>
+#include <atlcrack.h>
 
 #include <pfc/pfc.h>

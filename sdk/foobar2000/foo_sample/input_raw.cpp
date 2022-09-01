@@ -82,7 +82,9 @@ public:
 	bool decode_get_dynamic_info_track(file_info & p_out, double & p_timestamp_delta) {return false;} // deals with dynamic information such as track changes in live streams
 	void decode_on_idle(abort_callback & p_abort) {m_file->on_idle(p_abort);}
 
-	void retag(const file_info & p_info,abort_callback & p_abort) {throw exception_io_unsupported_format();}
+	// Note that open() already rejects requests to open for tag writing, so these two should never get called.
+	void retag(const file_info & p_info,abort_callback & p_abort) { throw exception_tagging_unsupported(); }
+	void remove_tags(abort_callback&) { throw exception_tagging_unsupported(); }
 	
 	static bool g_is_our_content_type(const char * p_content_type) {return false;} // match against supported mime types here
 	static bool g_is_our_path(const char * p_path,const char * p_extension) {return stricmp_utf8(p_extension,"raw") == 0;}
