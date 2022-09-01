@@ -24,6 +24,7 @@ BraceWrapping:
   AfterUnion: true
   BeforeCatch: false
   BeforeElse: false
+  SplitEmptyFunction: false
   SplitEmptyRecord: false
 BreakConstructorInitializersBeforeComma: true
 BreakStringLiterals: false
