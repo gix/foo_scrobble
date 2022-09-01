@@ -18,7 +18,15 @@
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'!='true'">$(Foobar2000SdkPath)foobar2000\SDK\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'=='true'">$(Foobar2000SdkPath)foobar2000\foobar2000_component_client\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32' and '$(UseDebugLibraries)'!='true'">$(Foobar2000SdkPath)foobar2000\foobar2000_component_client\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>shared.lib;pfc.lib;libPPUI.lib;foobar2000_SDK.lib;foobar2000_sdk_helpers.lib;foobar2000_component_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64' and '$(UseDebugLibraries)'=='true'">$(MSBuildThisFileDirectory)x64\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64' and '$(UseDebugLibraries)'!='true'">$(MSBuildThisFileDirectory)x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64' and '$(UseDebugLibraries)'=='true'">$(Foobar2000SdkPath)foobar2000\SDK\x64\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64' and '$(UseDebugLibraries)'!='true'">$(Foobar2000SdkPath)foobar2000\SDK\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64' and '$(UseDebugLibraries)'=='true'">$(Foobar2000SdkPath)foobar2000\foobar2000_component_client\x64\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64' and '$(UseDebugLibraries)'!='true'">$(Foobar2000SdkPath)foobar2000\foobar2000_component_client\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pfc.lib;libPPUI.lib;foobar2000_SDK.lib;foobar2000_sdk_helpers.lib;foobar2000_component_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='Win32'">shared-Win32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+	  <AdditionalDependencies Condition="'$(Platform)'=='x64'">shared-x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 </Project>

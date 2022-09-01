@@ -4,13 +4,26 @@
   <Import Project="Common\Preamble.props"/>
 
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
-    <VCToolsVersion>14.28.29910</VCToolsVersion>
+    <VCToolsVersion>14.33.31629</VCToolsVersion>
+    <PlatformToolset>v143</PlatformToolset>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <VcpkgTriplet Condition="'$(Platform)' == 'x64'">x64-windows-static-md-noiso</VcpkgTriplet>
     <VcpkgTriplet Condition="'$(Platform)' != 'x64'">x86-windows-static-md-noiso</VcpkgTriplet>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <UseMultiToolTask>true</UseMultiToolTask>
     <EnforceProcessCountAcrossBuilds>true</EnforceProcessCountAcrossBuilds>
+    <EnableCLServerMode>true</EnableCLServerMode>
+    <BuildPassReferences>true</BuildPassReferences>
+    <AllowParallelCompileInReferencedProjects>true</AllowParallelCompileInReferencedProjects>
   </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+  </ItemDefinitionGroup>
 
   <Import Project="SharedProperties.Cpp.props"/>
 </Project>

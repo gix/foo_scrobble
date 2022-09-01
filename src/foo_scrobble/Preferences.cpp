@@ -7,6 +7,7 @@
 
 #include <foobar2000+atl.h>
 
+#include <DarkMode.h>
 #include <atl-misc.h>
 #include <pplawait.h>
 
@@ -69,6 +70,7 @@ public:
     COMMAND_HANDLER_EX(IDC_MBTRACKID_MAPPING_EDIT, EN_CHANGE, OnEditChange)
     COMMAND_HANDLER_EX(IDC_SKIP_SUBMISSION_FORMAT_EDIT, EN_CHANGE, OnEditChange)
     MESSAGE_HANDLER(WM_EXECUTE_TASK, ExecuteTaskShim)
+    MSG_WM_STYLECHANGED(OnStyleChanged)
     END_MSG_MAP()
 
 private:
@@ -84,16 +86,25 @@ private:
     void UpdateAuthButton();
     void UpdateAuthButton(Authorizer::State state);
 
+    LRESULT OnStyleChanged(UINT , STYLESTRUCT*)
+    {
+        darkMode_.SetDark(fb2k::isDarkMode());
+        SetMsgHandled(FALSE);
+        return 0;
+    }
+
     preferences_page_callback::ptr const callback_;
     ScrobbleConfig& config_;
     BindingCollection bindings_;
     CToolTipCtrl authTooltip_;
     Authorizer authorizer_;
     Authorizer::State savedAuthorizerState_;
+    DarkMode::CHooks darkMode_{fb2k::isDarkMode()};
 };
 
 BOOL ScrobblerPreferencesDialog::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/)
 {
+    darkMode_.AddDialogWithControls(m_hWnd);
     bindings_.Bind(config_.EnableScrobbling, m_hWnd, IDC_ENABLE_SCROBBLING);
     bindings_.Bind(config_.EnableNowPlaying, m_hWnd, IDC_ENABLE_NOW_PLAYING);
     bindings_.Bind(config_.SubmitOnlyInLibrary, m_hWnd, IDC_SUBMIT_ONLY_IN_LIBRARY);
@@ -198,7 +209,8 @@ void ScrobblerPreferencesDialog::OnEditChange(UINT /*uNotifyCode*/, int /*nID*/,
 
 t_uint32 ScrobblerPreferencesDialog::get_state()
 {
-    t_uint32 state = preferences_state::resettable;
+    t_uint32 state = preferences_state::resettable |
+                     preferences_state::dark_mode_supported;
     if (HasChanged())
         state |= preferences_state::changed;
     return state;
