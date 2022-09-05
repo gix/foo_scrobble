@@ -15,18 +15,18 @@ To get started, open foobar2000's preferences, navigate to `Tools > Last.fm Scro
 
 ## Prerequisites
 
-You may have to install [Visual C++ Redistributable for Visual Studio 2015-2019](https://aka.ms/vs/16/release/vc_redist.x86.exe). Windows 7 also requires [Update for Windows 7 (KB2999226)](https://www.microsoft.com/en-us/download/details.aspx?id=49077) which usually is already installed via Windows Update.
+You may have to install [Visual C++ Redistributable for Visual Studio 2015-2022](https://aka.ms/vs/17/release/vc_redist.x86.exe). Windows 7 also requires [Update for Windows 7 (KB2999226)](https://www.microsoft.com/en-us/download/details.aspx?id=49077) which usually is already installed via Windows Update.
 
 
 ## Building
 
-Requires Visual Studio 2019 with:
+Requires Visual Studio 2022 (17.3.0) with:
 - Workloads:
   - Desktop development with C++
   - .NET desktop development
   - .NET Core cross-platform development
 - Components:
-  - MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.28)
+  - MSVC v143 - VS 2022 C++ x64/x86 build tools (v14.33-17.3)
 
 The .NET workloads are not required for the `foo_scrobble` library, but are used
 by the included test server project and the `build.proj` script assumes those
@@ -41,7 +41,7 @@ To build a release version run the following from a Visual Studio Developer Comm
 ```
 msbuild -m build.proj
 ```
-This creates the `foo_scrobble.fb2k-component` and a `foo_scrobble-<VERSION>.zip` archive (containing both DLL and symbols) in the `build\publish` directory.
+This creates the `foo_scrobble-<VERSION>.fb2k-component` and a `foo_scrobble-<VERSION>.zip` archive (containing both DLL and symbols) in the `build\publish` directory.
 
 ## License
 
