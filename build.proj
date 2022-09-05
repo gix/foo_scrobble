@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <PackageDir>$(MSBuildThisFileDirectory)build\publish\</PackageDir>
-    <BuildProperties>Configuration=$(Configuration);Platform=x86;OfficialBuild=true;ContinuousIntegrationBuild=true;FinalVersionKind=release</BuildProperties>
+    <BuildProperties>Configuration=$(Configuration);OfficialBuild=true;ContinuousIntegrationBuild=true;FinalVersionKind=release</BuildProperties>
   </PropertyGroup>
   <ItemGroup>
     <Project Include="src\foo_scrobble.sln"/>
@@ -28,8 +28,11 @@
           using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create)) {
               foreach (ITaskItem fileItem in Files) {
                   string filename = fileItem.ItemSpec;
+                  string entryName = fileItem.GetMetadata("Name");
+                  if (string.IsNullOrEmpty(entryName))
+                      entryName = new FileInfo(filename).Name;
                   using (var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
-                  using (var entryStream = archive.CreateEntry(new FileInfo(filename).Name).Open())
+                  using (var entryStream = archive.CreateEntry(entryName).Open())
                       fileStream.CopyTo(entryStream);
               }
           }
@@ -43,18 +46,30 @@
     </Task>
   </UsingTask>
 
-  <Target Name="Clean" Condition="'$(Clean)'!='false'">
+  <Target Name="Clean32" Condition="'$(Clean)'!='false'">
     <MSBuild Projects="@(Project)"
-             Properties="$(BuildProperties)"
+             Properties="$(BuildProperties);Platform=x86"
              BuildInParallel="true"
              StopOnFirstFailure="true"
              Targets="Clean"/>
     <RemoveDir Directories="build\x86"/>
   </Target>
 
+  <Target Name="Clean64" Condition="'$(Clean)'!='false'">
+    <MSBuild Projects="@(Project)"
+             Properties="$(BuildProperties);Platform=x64"
+             BuildInParallel="true"
+             StopOnFirstFailure="true"
+             Targets="Clean"/>
+    <RemoveDir Directories="build\x64"/>
+  </Target>
+
+  <Target Name="Clean" DependsOnTargets="Clean32;Clean64" Condition="'$(Clean)'!='false'">
+  </Target>
+
   <Target Name="Restore" Condition="'$(Restore)'!='false'">
     <PropertyGroup>
-      <NuGetExecutable Condition="'$(NuGetExecutable)'==''">build\nuget.exe</NuGetExecutable>
+      <NuGetExecutable Condition="'$(NuGetExecutable)'==''">nuget.exe</NuGetExecutable>
       <NuGetPackagesDirectory>$(MSBuildThisFileDirectory)src\packages\</NuGetPackagesDirectory>
     </PropertyGroup>
     <ItemGroup>
@@ -62,23 +77,55 @@
     </ItemGroup>
     <Exec Condition="'@(NuGetRestoreTarget)'!=''"
           Command="&quot;$(NuGetExecutable)&quot; restore -NonInteractive -PackagesDirectory &quot;$(NuGetPackagesDirectory)\&quot; &quot;%(NuGetRestoreTarget.Identity)&quot;"/>
+    <MSBuild Projects="@(Project)"
+             Properties="$(BuildProperties);Platform=x86;Dummy=2"
+             BuildInParallel="true"
+             StopOnFirstFailure="true"
+             Targets="Restore"/>
+    <MSBuild Projects="@(Project)"
+             Properties="$(BuildProperties);Platform=x64;Dummy=3"
+             BuildInParallel="true"
+             StopOnFirstFailure="true"
+             Targets="Restore"/>
   </Target>
 
-  <Target Name="Build" DependsOnTargets="Restore" Condition="'$(Build)'!='false'">
+  <Target Name="Build32" DependsOnTargets="Restore" Condition="'$(Build)'!='false'">
     <MSBuild Projects="@(Project)"
-             Properties="$(BuildProperties);Dummy=1"
+             Properties="$(BuildProperties);Platform=x86;Dummy=1"
              BuildInParallel="true"
              StopOnFirstFailure="true"
              Targets="Build"/>
   </Target>
 
+  <Target Name="Build64" DependsOnTargets="Restore" Condition="'$(Build)'!='false'">
+    <MSBuild Projects="@(Project)"
+             Properties="$(BuildProperties);Platform=x64;Dummy=1"
+             BuildInParallel="true"
+             StopOnFirstFailure="true"
+             Targets="Build"/>
+  </Target>
+
+  <Target Name="Build" DependsOnTargets="Build32;Build64" Condition="'$(Build)'!='false'">
+  </Target>
+
   <Target Name="Package" DependsOnTargets="Clean;Build">
-    <GetVersionInfo ModulePath="build\x86\bin\foo_scrobble\foo_scrobble.dll">
+    <ItemGroup>
+      <_ComponentFile Include="build\x86\bin\foo_scrobble\foo_scrobble.dll"/>
+      <_ComponentFile Include="build\x64\bin\foo_scrobble\foo_scrobble.dll">
+        <Name>x64/foo_scrobble.dll</Name>
+      </_ComponentFile>
+      <_ArchiveFile Include="@(_ComponentFile)"/>
+      <_ArchiveFile Include="build\x86\bin\foo_scrobble\foo_scrobble.pdb"/>
+      <_ArchiveFile Include="build\x64\bin\foo_scrobble\foo_scrobble.pdb">
+        <Name>x64/foo_scrobble.pdb</Name>
+      </_ArchiveFile>
+    </ItemGroup>
+    <GetVersionInfo ModulePath="build\x64\bin\foo_scrobble\foo_scrobble.dll">
       <Output TaskParameter="FileVersion" PropertyName="FileVersion"/>
     </GetVersionInfo>
-    <Zip Files="build\x86\bin\foo_scrobble\foo_scrobble.dll"
-         OutputFilename="$(PackageDir)foo_scrobble.fb2k-component"/>
-    <Zip Files="build\x86\bin\foo_scrobble\foo_scrobble.dll;build\x86\bin\foo_scrobble\foo_scrobble.pdb"
+    <Zip Files="@(_ComponentFile)"
+         OutputFilename="$(PackageDir)foo_scrobble-$(FileVersion).fb2k-component"/>
+    <Zip Files="@(_ArchiveFile)"
          OutputFilename="$(PackageDir)foo_scrobble-$(FileVersion).zip"/>
   </Target>
 </Project>
