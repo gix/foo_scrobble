@@ -104,11 +104,6 @@ copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v1.5\components\"</Comm
     <Link>
       <AdditionalDependencies>winhttp.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000\components\"
-copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v1.4.8\components\"
-copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v1.5\components\"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -121,9 +116,6 @@ copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v1.5\components\"</Comm
     <Link>
       <AdditionalDependencies>winhttp.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "$(ProjectDir)..\..\test\foobar2000_v2.0\components\"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AsyncHelper.h" />

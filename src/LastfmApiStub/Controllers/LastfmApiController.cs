@@ -1,13 +1,17 @@
 namespace LastfmApiStub.Controllers
 {
     using System;
+    using System.IO;
     using System.Linq;
+    using System.Net.Mime;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Http.Extensions;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.Mvc.Infrastructure;
     using Microsoft.Extensions.Logging;
 
     [ApiController]
@@ -27,10 +31,8 @@ namespace LastfmApiStub.Controllers
         [HttpPost]
         public IActionResult Index([FromForm] IFormCollection data)
         {
+            var now = DateTime.Now;
             var result = HandleRequest(data);
-            var values = data
-                .OrderBy(x => x.Key, StringComparer.Ordinal)
-                .Select(x => $"  {x.Key}: {x.Value}\n");
 
             //logger.LogWarning("{0} {1}\nQuery: {2}\nValue:\n{3}\n{4}",
             //                  HttpContext.Request.Method,
@@ -40,6 +42,7 @@ namespace LastfmApiStub.Controllers
             //                  DumpResult(result));
 
             requestLogger.Log(new LastmApiRequest(
+                now,
                 data["method"],
                 data.ToDictionary(x => x.Key, x => x.Value),
                 result));
@@ -47,28 +50,49 @@ namespace LastfmApiStub.Controllers
             return result;
         }
 
-        private static string? DumpResult(object result)
+        private static string? DumpResult(object? result)
         {
-            switch (result) {
-                case JsonResult json:
-                    return DumpObject(json.Value);
-                case BadRequestObjectResult badRequest:
-                    return "400: " + DumpResult(badRequest.Value);
-                case null:
-                    return "<null>";
-                default:
-                    return result.ToString();
-            }
+            return result switch {
+                JsonResult json => DumpObject(json.Value),
+                BadRequestObjectResult badRequest => "400: " + DumpResult(badRequest.Value),
+                null => "<null>",
+                _ => result.ToString()
+            };
         }
 
-        private static string DumpObject(object value)
+        private static string DumpObject(object? value)
         {
             return JsonSerializer.Serialize(value);
+        }
+
+        private class EncodingErrorResult : StatusCodeResult
+        {
+            public EncodingErrorResult() : base(200)
+            { }
+
+            public override void ExecuteResult(ActionContext context)
+            {
+                base.ExecuteResult(context);
+
+                var windows1252 = CodePagesEncodingProvider.Instance.GetEncoding(1252)
+                    ?? throw new InvalidOperationException("CodePage 1252 not available");
+
+                context.HttpContext.Response.ContentType = "application/json";
+
+                string response = "{\"status\":\"ök\"}";
+
+                Stream stream = context.HttpContext.Response.Body;
+                stream.Write(windows1252.GetBytes(response));
+            }
         }
 
         private IActionResult HandleRequest(IFormCollection data)
         {
             string method = data["method"];
+
+            if (requestLogger.SlowResponseTime != null) {
+                Thread.Sleep(TimeSpan.FromMilliseconds(requestLogger.SlowResponseTime.Value));
+            }
 
             if (!CheckSignature(data)) {
                 return BadRequest(
@@ -76,18 +100,23 @@ namespace LastfmApiStub.Controllers
                         LastfmStatus.InvalidMethodSignature, "Invalid method signature supplied."));
             }
 
-            //if (counter++ % 2 == 0) {
-            //    return new JsonResult(
-            //        MakeErrorResult(Status.OperationFailed, "Failed")) {
-            //        StatusCode = 500
-            //    };
-            //}
+            if (requestLogger.ErrorResponseKind != null) {
+                if (requestLogger.ErrorResponseKind > 0) {
+                    var status = (LastfmStatus)requestLogger.ErrorResponseKind;
+                    return BadRequest(MakeErrorResult(status, status.ToString()));
+                }
+
+                return requestLogger.ErrorResponseKind switch {
+                    ErrorResponseKind.InvalidContentType => Content("Bogus", "text/plain"),
+                    ErrorResponseKind.EncodingError => new EncodingErrorResult(),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            }
 
             switch (method) {
                 case "track.updateNowPlaying":
                     break;
                 case "track.scrobble":
-                    //Thread.Sleep(1500);
                     break;
 
                 default:
@@ -98,7 +127,7 @@ namespace LastfmApiStub.Controllers
             return Json(new { status = "ok" });
         }
 
-        private object MakeErrorResult(LastfmStatus error, string message)
+        private static object MakeErrorResult(LastfmStatus error, string message)
         {
             return new { error, message };
         }
@@ -122,7 +151,7 @@ namespace LastfmApiStub.Controllers
         private static byte[] ToBytes(string str)
         {
             if (str.Length % 2 != 0)
-                throw new ArgumentException();
+                throw new ArgumentException("String must have even length.", nameof(str));
 
             var bytes = new byte[str.Length / 2];
             for (int i = 0; i < bytes.Length; ++i) {

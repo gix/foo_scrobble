@@ -17,7 +17,7 @@ namespace LastfmApiStub
 
     public partial class App
     {
-        private readonly ApiStubSettings settings = new ApiStubSettings();
+        private readonly ApiStubSettings settings = new();
         private readonly Thread serverThread;
         private IHost? host;
         private MainViewModel? mainViewModel;
@@ -43,7 +43,7 @@ namespace LastfmApiStub
 
             mainViewModel = new MainViewModel(settings);
             var window = new MainWindow {
-                DataContext = mainViewModel
+                DataContext = mainViewModel,
             };
             window.Closing += OnMainWindowClosing;
             window.Closed += OnMainWindowClosed;
@@ -126,15 +126,15 @@ namespace LastfmApiStub
             }
 
             public void Log<TState>(
-                LogLevel logLevel, EventId eventId, TState state, Exception exception,
-                Func<TState, Exception, string> formatter)
+                LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+                Func<TState, Exception?, string> formatter)
             {
                 string message = formatter(state, exception);
                 logSink.Log(new LogItem(logLevel, eventId, message));
             }
         }
 
-        private void OnMainWindowClosing(object sender, CancelEventArgs e)
+        private void OnMainWindowClosing(object? sender, CancelEventArgs e)
         {
         }
 
@@ -151,32 +151,18 @@ namespace LastfmApiStub
         void Log(LogItem item);
     }
 
-    public class LastmApiRequest
+    public record LastmApiRequest(DateTime Time, string Method, IReadOnlyDictionary<string, StringValues> Data, IActionResult Result)
     {
-        public LastmApiRequest(string method, Dictionary<string, StringValues> data, IActionResult result)
-        {
-            Method = method;
-            Data = data;
-            Result = result;
-        }
-
-        public string Method { get; }
-        public IReadOnlyDictionary<string, StringValues> Data { get; }
-        public IActionResult Result { get; }
         public string? DisplayResult => DumpResult(Result);
 
-        private static string? DumpResult(object result)
+        private static string? DumpResult(object? result)
         {
-            switch (result) {
-                case JsonResult json:
-                    return JsonSerializer.Serialize(json.Value);
-                case BadRequestObjectResult badRequest:
-                    return "400: " + DumpResult(badRequest.Value);
-                case null:
-                    return "<null>";
-                default:
-                    return result.ToString();
-            }
+            return result switch {
+                JsonResult json => JsonSerializer.Serialize(json.Value),
+                BadRequestObjectResult badRequest => "400: " + DumpResult(badRequest.Value),
+                null => "<null>",
+                _ => result.ToString()
+            };
         }
 
         public string EncodedData
@@ -199,6 +185,8 @@ namespace LastfmApiStub
     public interface ILastfmRequestLogger
     {
         void Log(LastmApiRequest request);
+        int? SlowResponseTime { get; }
+        ErrorResponseKind? ErrorResponseKind { get; }
     }
 
     public class ApiStubSettings

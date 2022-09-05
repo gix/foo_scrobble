@@ -14,9 +14,7 @@
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
     <DataTemplate DataType="{x:Type local:LastmApiRequest}">
-      <DataGrid ItemsSource="{Binding Data}">
-
-      </DataGrid>
+      <DataGrid ItemsSource="{Binding Data}"/>
     </DataTemplate>
     <DataTemplate DataType="{x:Type primitives:StringValues}">
       <TextBlock x:Name="Text" Text="{Binding [0]}"></TextBlock>
@@ -49,22 +47,40 @@
           <ColumnDefinition Width="2*"/>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="1*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <ListView Grid.Column="0"
                   ItemsSource="{Binding Requests}"
                   SelectedItem="{Binding SelectedRequest}">
           <ListView.View>
             <GridView>
+              <GridViewColumn Header="Time" DisplayMemberBinding="{Binding Time}"/>
               <GridViewColumn Header="Method" DisplayMemberBinding="{Binding Method}"/>
               <GridViewColumn Header="Result" DisplayMemberBinding="{Binding DisplayResult}"/>
               <GridViewColumn Header="Data" DisplayMemberBinding="{Binding EncodedData}"/>
             </GridView>
           </ListView.View>
         </ListView>
-        <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" Width="5" Background="Transparent"/>
-        <ContentControl Grid.Column="2" Content="{Binding SelectedRequest}">
-
-        </ContentControl>
+        <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" Width="5" Background="Transparent" ResizeBehavior="PreviousAndNext"/>
+        <ContentControl Grid.Column="2" Content="{Binding SelectedRequest}"/>
+        <GridSplitter Grid.Column="3" VerticalAlignment="Stretch" Width="5" Background="Transparent" ResizeBehavior="PreviousAndNext"/>
+        <GroupBox Grid.Column="4" Header="Response Options" Margin="0,0,4,0">
+          <Grid VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="100"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <CheckBox Grid.Row="0" Grid.Column="0" Margin="2" Content="Slow response" IsChecked="{Binding UseSlowResponse}"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Margin="2" Text="{Binding SlowResponseTime}"/>
+            <CheckBox Grid.Row="1" Grid.Column="0" Margin="2" Content="Error response" IsChecked="{Binding UseErrorResponse}"/>
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="2" ItemsSource="{Binding ErrorResponseKinds}" SelectedItem="{Binding SelectedErrorResponseKind}"/>
+          </Grid>
+        </GroupBox>
       </Grid>
 
       <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" Height="5" Background="Transparent"/>
@@ -72,9 +88,9 @@
       <ListView Grid.Row="3" ItemsSource="{Binding LogItems}">
         <ListView.View>
           <GridView>
-            <GridViewColumn Header="Level" DisplayMemberBinding="{Binding LogLevel}"/>
-            <GridViewColumn Header="Id" DisplayMemberBinding="{Binding EventId}"/>
-            <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}"/>
+            <GridViewColumn Header="Level" DisplayMemberBinding="{Binding LogLevel}" Width="100"/>
+            <GridViewColumn Header="Id" DisplayMemberBinding="{Binding EventId}" Width="150"/>
+            <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="800"/>
           </GridView>
         </ListView.View>
       </ListView>
