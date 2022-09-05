@@ -415,7 +415,7 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
 {
     if (state_ == State::AwaitingResponse) {
         switch (status) {
-        default:
+        case lastfm::Status::Success:
             state_ = State::AuthenticatedIdle;
             ProcessLocked();
             break;
@@ -443,6 +443,7 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
             PauseProcessing(minutes(2));
             break;
 
+        case lastfm::Status::InvalidService:
         case lastfm::Status::InvalidResponse:
         case lastfm::Status::InternalError:
             PauseProcessing(minutes(1));
@@ -450,6 +451,10 @@ void LastfmScrobbleService::HandleResponseStatus(lastfm::Status status)
 
         case lastfm::Status::ConnectionError:
             PauseProcessing(seconds(30));
+            break;
+
+        default:
+            PauseProcessing(seconds(20));
             break;
         }
     } else {

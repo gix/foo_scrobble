@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [?] - ?
 ### Fixed
 - Handle all exceptions in API response handlers. (may fix #30)
+- Do not retry API requests endlessly on certain errors.
 ### Added
 - Provide foobar2000_sdk.user.props out-of-the-box when compiling from source. (#31)
 - Support for 64-bit foobar2000 and dark mode. (#42)
