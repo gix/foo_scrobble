@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [?] - ?
+## [1.6.0] - 2022-09-06
 ### Fixed
 - Handle all exceptions in API response handlers. (may fix #30)
 - Do not retry API requests endlessly on certain errors.
