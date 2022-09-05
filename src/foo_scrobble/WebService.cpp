@@ -391,9 +391,12 @@ pfc::string_base& operator<<(pfc::string_base& os, std::exception_ptr const& ptr
     try {
         std::rethrow_exception(ptr);
     } catch (web::http::http_exception const& ex) {
-        auto const code = ex.error_code();
-        os << Trimmed{ex.what()} << " [error code: " << code.value() << ", "
-           << Trimmed{code.message().c_str()} << "]";
+        os << Trimmed{ex.what()};
+        std::error_code const code = ex.error_code();
+        if (code.value() != 0) {
+            os << " [error code: " << code.value() << ", "
+               << Trimmed{code.message().c_str()} << "]";
+        }
     } catch (std::exception const& ex) {
         os << Trimmed{ex.what()};
     } catch (...) {
